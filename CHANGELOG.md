@@ -2,6 +2,19 @@
 
 Thin, sprint-level. Decisions live in docs/adr/, not here.
 
+## [Sprint 2 — CLOSED] — 2026-07-24
+- Instruments & calibration delivered: Detector protocol, EventFrame
+  validator, InstrumentRegistry (version-bump auto-uncalibration),
+  CalibrationHarness (no soft-pass); seasonality + RSI detectors with
+  planted fixtures; 87 tests; journal 7 records.
+- First real-data verification: VC GREEN (red=0 amber=0) on XAUUSD H1
+  vs MT5-derived reference; Drill S2 hindsight shift caught (144).
+- DEVQ-005 (BLOCKER): DOW marker contract ratified in the detector's
+  favor; IVF check was the artifact (rev 3). HC-sampler gap found and
+  fixed (real-evidence sampler). NOTE-007 ruff scoping ratified.
+- Owner sign-off recorded in GO-S2. Next: ARCH-003 (Sprint 3, Data
+  Plane).
+
 ## [Sprint 1 — CLOSED] — 2026-07-24
 - Ledger core delivered: Record + canonical serialization + hash-chained
   append-only RecordStore; error taxonomy; kernel firewall test; 35
