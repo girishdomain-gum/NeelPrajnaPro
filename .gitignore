@@ -24,6 +24,11 @@ dist/
 .ruff_cache/
 .mypy_cache/
 
+# --- IVF drill scratch (tampered copies; must never be tracked) ---
+ivf/reports/drill_s3_tmp/
+ivf/reports/*_tmp/
+*.json+
+
 # --- Exploration artifacts (notebooks etc.) ---
 experiments/
 *.ipynb_checkpoints/
