@@ -133,6 +133,12 @@ class SMCFVGDetector:
             direction = int(v)
             side = "bull" if direction == 1 else "bear"
             zone_hi, zone_lo = _zone(float(fvg["Top"].iloc[i]), float(fvg["Bottom"].iloc[i]))
+            # Strength: the gap size relative to the total range spanned by the
+            # three bars that form it (i-1, i, i+1) — a bounded (0, 1] measure,
+            # computed only from bars up to the knowability bar i+1 (causal).
+            span = max(df["high"].iloc[i - 1 : i + 2]) - min(df["low"].iloc[i - 1 : i + 2])
+            gap = zone_hi - zone_lo
+            strength = float(min(1.0, gap / span)) if span > 0 else 1.0
             rows.append(
                 {
                     "ts": int(ts[k]),
@@ -141,7 +147,7 @@ class SMCFVGDetector:
                     "level": (zone_hi + zone_lo) / 2.0,
                     "zone_hi": zone_hi,
                     "zone_lo": zone_lo,
-                    "strength": 1.0,
+                    "strength": strength,
                     "meta": json.dumps({"confirm_lag_bars": 1}, sort_keys=True),
                 }
             )

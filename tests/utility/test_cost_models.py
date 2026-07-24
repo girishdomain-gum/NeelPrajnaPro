@@ -114,8 +114,8 @@ def test_negative_cost_field_refused():
         CostModel(name="bad", spread=-0.1, slippage_per_side=0.0, commission_per_side=0.0)
 
 
-def test_instrument_surface_for_devq_009(model):
-    # The registration surface exists (kind pending DEVQ-009), but this sprint
+def test_instrument_surface_for_devq_008(model):
+    # The registration surface exists (kind pending DEVQ-008), but this sprint
     # writes no cost-model instrument_registered record to the real journal.
     assert model.kind == "judge"
     assert model.instrument_id == f"cost.{VENUE}"

@@ -18,11 +18,12 @@ Cost formula (per unit of size, round trip)::
 direction-independent) and is a pure, deterministic function: same trades in,
 byte-identical net out.
 
-**Instrument ``kind`` is a DEVQ (DEVQ-009).** A cost model is neither a data
+**Instrument ``kind`` is a DEVQ (DEVQ-008).** A cost model is neither a data
 source, a detector, nor cleanly a judge; the catalog's kind enum
 (``data``/``detector``/``judge``) has no obvious slot and the instruction forbids
-extending it silently. Pending the Architect's ruling, :meth:`as_instrument`
-exposes ``kind = "judge"`` (the closest fit: a cost model scores the economic
+extending it silently. Pending the Architect's ruling, the registration surface
+(``instrument_id`` / ``kind`` / ``params_schema`` / ``code_ref``) exposes
+``kind = "judge"`` (the closest fit: a cost model scores the economic
 outcome of trades, and — like a judge — is trusted only against hand-computed
 checks). No cost-model ``instrument_registered`` record is written to the real
 journal this sprint; the screener references cost models by name. The screener's
@@ -63,7 +64,7 @@ class CostModel:
     unit: str = ""
     currency: str = ""
 
-    kind = "judge"  # DEVQ-009 (pending) — see module docstring.
+    kind = "judge"  # DEVQ-008 (pending) — see module docstring.
     family = "utility"
     code_ref = "qrf.trading.utility.cost_models:CostModel"
 
@@ -104,7 +105,7 @@ class CostModel:
         out[NET_COLUMN] = out["gross_pnl"] - out[COST_COLUMN]
         return out
 
-    # -- registration surface (DEVQ-009; not written to the real journal) -----
+    # -- registration surface (DEVQ-008; not written to the real journal) -----
     @property
     def instrument_id(self) -> str:
         return f"cost.{self.name}"

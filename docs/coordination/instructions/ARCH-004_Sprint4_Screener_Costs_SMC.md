@@ -107,3 +107,60 @@ spot-recompute) + Drill S4 (planted verdict-writing screener AND a
 trial under-count — both must be caught) + HC tool rev 5 (ADR-009 zone
 overlays). Owner: visual HC on SMC zones + Go/No-Go → GO-S4 (with
 Retrospective section) → ARCH-005.
+
+---
+## COMPLETION REPORT (developer)
+Session S4-1 · 2026-07-25 · claude-code · branch claude/arch-004-t0-execution-fe57c0
+
+**T0 — chained.** GO-S3 `note` (01KYB5ARJPK3YK0AKCE9FP7DAH) appended via
+RecordStore.append (`scripts/note_go_s3.py`), parent = GO-S2 note
+01KYAVQFR4F94XPMT3C52TFFW0; records both Owner phrases, GO decision, TRAINING
+(01KYB4SSC96SSS8RA7D1NMTPEX) / VIRGIN (01KYB4SSD9VVKB577KRGB1W1P0) window ids.
+
+**1. Screener** (`qrf/trading/simulator/screener_vbt.py`). vectorbt sweep over
+EventFrames → shortlist parquet (BulkStore) + a `note` DECLARING metric/thresholds
++ an exact-grid-size `trial_count` bump, all from one `run()` code path (a
+shortlist without its bump is impossible). Guards TRAINING/EXPLORATION only via
+new `WindowLedger.check_screenable` (VIRGIN → ContaminationError). Writes no
+verdict / no window_burn — proven by an AST call-site audit test. Metric =
+net Sharpe (DEVQ-009).
+
+**2. Trial counting** (`qrf/kernel/corrections/trials.py`). `TrialCountLedger.bump/
+total` (§4.8); `trial_count` schema added (§2). Monotone accumulation, source enum,
+generator inheritance; kernel-clean (no trading vocab, firewall green).
+
+**3. Cost models** (`qrf/trading/utility/cost_models.py` + `configs/venues.yaml`).
+`xauusd_retail_median` (explicit honest estimates); `CostModel.apply` gross→net,
+deterministic, hand-computed to the cent. Instrument `kind` raised as DEVQ-008 —
+proceeding on name-reference (no cost-model record written to the real journal).
+
+**4. Detector #3 — SMC** (`qrf/trading/concepts/smc/detector.py`). Two family-`smc`
+detectors wrapping `smartmoneyconcepts==0.0.27`: `smc.fvg.bull/bear` (ts = confirm
+bar i+1) and `smc.order_block.bull/bear` (ts = first-stable-appearance prefix,
+swing_length tail margin). Zone events (zone_hi≥zone_lo). Hand-planted fixtures:
+truth 1.0 / silence 1.0 / insufficient; anti-hindsight property green; version pin
+in `code_ref`/instrument_registered. Non-causality reconciliation = DEVQ-010.
+Registered + calibrated through the real journal (`scripts/bootstrap_smc_s4.py`).
+
+**Acceptance** (`scripts/screen_s4.py`). AC1: 500-variant grid over
+`xauusd_h1_sample` TRAINING screened in ~12s; shortlist + trial_count(500) recorded
+in the real journal in one run; gross vs net visibly differ in the ranking. Under
+min_trades=30 this 504-bar sample admits 0 (honest — the admit path is exercised
+by unit tests on trending data). AC2: seeded random no-edge 500-grid → EMPTY
+shortlist (scratch store; verified in a unit test too). SMC planted cases pass;
+uncalibrated call refused; kernel firewall green (neither vectorbt nor
+smartmoneyconcepts imported by kernel/**).
+
+**Ledger:** journal 25 records, chain GREEN, head 134a60ef0e61. New real-journal
+records this sprint: GO-S3 note; 2 SMC instrument_registered + 2 calibration;
+sample FVG events manifest; shortlist manifest + trial_count + shortlist note.
+
+**Tests/lint:** 182 passed (was 133; +49), ruff clean, firewall green, gen_state
+run. Deps added: vectorbt 0.28.2, smartmoneyconcepts 0.0.27, pyyaml 6.0.3 (uv.lock).
+
+**DEVQs filed (all QUESTION, non-blocking, proceeding on recommendation):**
+DEVQ-008 cost-model instrument kind · DEVQ-009 screening metric · DEVQ-010 SMC
+version + zone causality.
+
+**Not done (out of scope / not the Developer's):** IVF S4 checks, Drill S4, HC
+tool rev 5, GO-S4 — the Architect/Owner close-out per ARCH-004 "Sprint close".
