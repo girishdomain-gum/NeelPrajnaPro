@@ -72,7 +72,12 @@ def test_summary(run: bool) -> tuple[str, str]:
         return "not run (--no-tests)", "not run"
     try:
         proc = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q", "--no-header", "-p", "no:cacheprovider"],
+            # -o addopts= neutralizes the project's ini addopts ("-q"); otherwise
+            # our own -q would stack to -qq and pytest suppresses the summary line.
+            [
+                sys.executable, "-m", "pytest",
+                "-o", "addopts=", "-q", "--no-header", "-p", "no:cacheprovider",
+            ],
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
