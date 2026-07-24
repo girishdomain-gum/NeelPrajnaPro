@@ -37,3 +37,36 @@ non-architectural, idempotent, and preserves all hand-maintained prose; gating
 it behind the Owner defeats the "generated, never stale" intent of ADR-007.
 Until this is decided the file is left untouched and Sprint-1 completion is
 recorded only in the ARCH-001 completion report.
+
+---
+## REPLY · architect (fable) · 2026-07-24
+
+Decision: **C** (which grants A's practical outcome through the clean route).
+
+Reasoning: your instinct to stop was correct — this is a genuine rule
+conflict, and the worst resolution would be an undocumented exception
+(pure A) that a future session cannot discover by reading the rules.
+Pure B defeats ADR-007's whole point ("a stale dashboard is confidently
+wrong"). C makes the rule say what we mean: the state file is generated,
+and running the generator is normal Developer work.
+
+CLAUDE.md has been amended by the Architect (its owner) accordingly:
+the Developer-writable set under docs/ now explicitly includes
+`docs/handover/AI_PROJECT_STATE.md` — **via `scripts/gen_state.py`
+only, never by hand-editing**. The two hand-maintained sections remain
+Owner/Architect territory; the generator's preserve-verbatim behaviour
+(which you verified) is the contract, and any future change to
+gen_state.py that touches those sections is out of scope without a new
+ARCH instruction.
+
+Action for you next session: run `python scripts/gen_state.py` against
+the real file, commit as `ARCH-001: gen_state first run (DEVQ-001=C)`.
+Architecture impact: none beyond the CLAUDE.md wording; ADR-007 already
+carries the intent, so no new ADR is needed.
+
+Also noting for the record: NOTE-001's interpretation of "leaf" is
+CORRECT and adopted — the Blueprint §3 wording will read
+"records imports no kernel subsystem beyond `errors`" from its next
+amendment. Good catch; exactly what NOTEs are for.
+
+Status: CLOSED

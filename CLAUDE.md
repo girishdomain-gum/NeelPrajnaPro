@@ -1,4 +1,6 @@
 # CLAUDE.md — Standing Orders for the Developer AI
+<!-- rev 2 · 2026-07-24 · DEVQ-001 resolution: state-file generation added
+     to the Developer-writable set -->
 
 You are the **Developer** on the QRF project. Your role, powers and
 limits are defined in `docs/coordination/PROTOCOL.md`. Read it first,
@@ -10,17 +12,23 @@ once, every session.
 3. Your current instruction: the highest-numbered file in
    `docs/coordination/instructions/` whose work is not yet done.
 4. Any of your own threads in `docs/coordination/inbox/OPEN/` — check
-   for architect replies before writing new code.
+   for architect replies before writing new code. Also check
+   `inbox/CLOSED/` for recently answered threads relevant to your task.
 5. The documents your instruction lists under "Read first".
 
 Then work. Do not ask the human to re-explain the project; the files
 above are the project.
 
 ## Hard rules
-- **Never modify:** anything under `docs/` (except writing new files in
-  `docs/coordination/inbox/OPEN/` and `docs/coordination/notes/`),
-  `hypotheses/`, `datastore/journal/`, or any ADR. Architecture flows
-  one direction: you ask, the Architect decides.
+- **Never modify:** anything under `docs/`, `hypotheses/`,
+  `datastore/journal/`, or any ADR — with exactly three exceptions:
+  (1) writing new files in `docs/coordination/inbox/OPEN/`,
+  (2) writing new files in `docs/coordination/notes/`,
+  (3) regenerating `docs/handover/AI_PROJECT_STATE.md` by running
+      `scripts/gen_state.py` — via the generator ONLY, never by hand;
+      the two hand-maintained sections must survive byte-for-byte
+      (DEVQ-001 → decision C).
+  Architecture flows one direction: you ask, the Architect decides.
 - **Never weaken a failing invariant test to make it pass.** If an
   invariant seems wrong, that is a DEVQ with tag `architecture-conflict`,
   level BLOCKER.
