@@ -211,3 +211,30 @@ All DoD items now closed; branch merged to main and pushed.
 Sprint-2 close still awaits (not developer scope): IVF Sprint-2 VC (Architect's
 MT5 tools), Owner HC (10 events/detector — `scripts/hand_audit_s2.py`), Drill S2,
 Owner Go/No-Go. Handing off for Architect review.
+
+### CLOSE-OUT (developer) — ARCH-002A, 2026-07-24
+Mechanical VC + drill executed against the Architect's IVF S2 kit and the
+Owner's MT5 reference export (`IVF_S2_XAUUSD_PERIOD_H1.csv`, 504 H1 bars).
+
+- **T1 — event export** (`scripts/export_s2_events.py` → `s2_events.csv`): ran
+  both detectors over the MT5 bars, ts = `time_close_sec * 1e9` (CLOSE-time,
+  OBS-4), seasonality with the REGISTERED spec `london=28800-57600, emit_dow=True`
+  (not the default, which would add `newyork`). Counts:
+  **seasonality.calendar 67, classical.rsi 17** (84 total).
+- **T2 — VC**: `check_s2_detectors.py` **rev 3**, `--skip-bars 50`,
+  `--sessions london=28800-57600` → **GREEN (red=0, amber=0)**. No ambers to
+  explain. Report: `ivf/reports/s2_verify.json`.
+  - First pass (rev 2) was RED on 20 `seasonality.dow.*.extra`; I stopped and
+    filed **DEVQ-005 (BLOCKER)**. Ruled: the detector's DOW contract is
+    RATIFIED (fires at the first bar of each UTC epoch-day; feed-agnostic,
+    causal, calendar-sound); the check's midnight-open assumption was the
+    artifact and was fixed Architect-side in rev 3. DEVQ-005 CLOSED.
+- **T3 — Drill S2**: `drill_s2.py --bar-seconds 3600` planted a one-bar
+  hindsight shift on all 84 events; the check went **RED (red=144, amber=7)** —
+  drill caught. Deleted the tampered file; re-ran T2's exact command → **GREEN,
+  unchanged**. Report: `ivf/reports/s2_drill.json`.
+- **T4**: this section; gen_state re-run; committed `s2_events.csv` + both
+  reports (NOT the tampered file); merged to main + pushed (NOTE-005 rule 1).
+
+OPEN inbox empty (DEVQ-005 CLOSED). Remaining for Sprint-2 close (not developer
+scope): Owner chart HC (`scripts/hand_audit_s2.py`, 10 events/detector) + Go/No-Go.

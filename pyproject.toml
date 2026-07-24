@@ -34,6 +34,11 @@ genesis_hash = "0000000000000000000000000000000000000000000000000000000000000000
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+# IVF tools are INDEPENDENT of the qrf package (IND-1): stdlib-only, authored in
+# a deliberately terse style, and never edited by the Developer. They are not
+# subject to qrf's lint conventions, so they are excluded from `ruff check .`
+# (see NOTE-007). This keeps CI green without touching ivf/** code.
+extend-exclude = ["ivf"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
