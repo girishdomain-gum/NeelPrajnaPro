@@ -149,3 +149,22 @@ class WindowLedger:
                 f"window {window_ref} is VIRGIN-designated; the observatory must "
                 "not read it (contamination of the out-of-sample reserve)"
             )
+
+    def check_screenable(self, window_ref: str) -> str:
+        """Return the designation of ``window_ref`` if it may be screened.
+
+        The screener is a telescope, not a judge (Blueprint §5 arrow 8): it may
+        sweep only TRAINING/EXPLORATION data. A VIRGIN window raises
+        :class:`ContaminationError` — screening it would spend the out-of-sample
+        reserve without a pre-registered hypothesis. Returns the designation
+        (``"TRAINING"`` or ``"EXPLORATION"``) on success.
+        """
+        w = self._window(window_ref)
+        designation = w.payload["designation"]
+        if designation == "VIRGIN":
+            raise ContaminationError(
+                f"window {window_ref} is VIRGIN-designated; the screener must not "
+                "read it (screening spends no window, but touching VIRGIN outside a "
+                "pre-registered battery run contaminates the out-of-sample reserve)"
+            )
+        return designation

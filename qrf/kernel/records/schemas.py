@@ -1,11 +1,12 @@
-"""Payload schemas for the v1 record types available through Sprint 3.
+"""Payload schemas for the v1 record types available through Sprint 4.
 
 Implementation Blueprint v1.0 §2. Sprint 1 registered ``note``, ``amendment``
 and ``instrument_registered``; Sprint 2 (ARCH-002) added ``calibration``;
 Sprint 3 (ARCH-003) adds the data-plane types ``bulk_manifest``,
 ``ingest_report``, ``window`` and ``window_burn``; the DEVQ-006 ruling adds
 ``ingest_report`` schema **version 2** (v1 plus a required ``params`` object) —
-additively, so existing v1 records are never touched. Every
+additively, so existing v1 records are never touched; Sprint 4 (ARCH-004) adds
+``trial_count`` (the multiple-testing burden, §4.8). Every
 ``RecordStore.append`` validates the payload against the schema registered for
 ``(record_type, schema_version)`` before writing (I-4); an unregistered pair is
 itself a :class:`SchemaViolation`.
@@ -33,6 +34,9 @@ _INGEST_VERDICTS = frozenset({"PASS", "FAIL"})
 
 # Enum from Blueprint §2, window.designation.
 _WINDOW_DESIGNATIONS = frozenset({"TRAINING", "EXPLORATION", "VIRGIN"})
+
+# Enum from Blueprint §2, trial_count.source.
+_TRIAL_SOURCES = frozenset({"human", "screener", "generator"})
 
 
 def _require(cond: bool, msg: str) -> None:
@@ -299,6 +303,32 @@ def _validate_window_burn(payload: dict) -> None:
     _require_str(payload, "consumed_by", "window_burn")
 
 
+def _validate_trial_count(payload: dict) -> None:
+    """trial_count (Blueprint §2, §4.8) — a multiple-testing burden record.
+
+    ``data_scope`` is a window_ref or a dataset name; ``n_attempts`` is the exact
+    number of variants evaluated (>= 1 — a bump of nothing is meaningless);
+    ``source`` is human/screener/generator; ``generator_ref`` is optional and
+    carries the id of a generator instrument when ``source == generator``.
+    """
+    _check_keys(
+        payload,
+        {"data_scope", "lineage", "n_attempts", "source"},
+        {"generator_ref"},
+        "trial_count",
+    )
+    _require_str(payload, "data_scope", "trial_count")
+    _require_str(payload, "lineage", "trial_count")
+    _require_int(payload, "n_attempts", "trial_count", non_negative=True)
+    _require(payload["n_attempts"] >= 1, "trial_count.n_attempts must be >= 1")
+    _require(
+        payload["source"] in _TRIAL_SOURCES,
+        f"trial_count.source must be one of {sorted(_TRIAL_SOURCES)}",
+    )
+    if "generator_ref" in payload:
+        _require_str(payload, "generator_ref", "trial_count")
+
+
 # Registry keyed by (record_type, schema_version). Additive schema evolution
 # bumps the version (Blueprint §2); removals never happen.
 SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
@@ -311,6 +341,7 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("ingest_report", 2): _validate_ingest_report_v2,
     ("window", 1): _validate_window,
     ("window_burn", 1): _validate_window_burn,
+    ("trial_count", 1): _validate_trial_count,
 }
 
 
