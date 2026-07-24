@@ -139,7 +139,7 @@ GO-S1 note `01KYAJA3TMM03K1MYMCTRE9033`. Record id
   `burn` → `window_burn` (battery-only in production; unit-tested here);
   `guard_observatory` → `ContaminationError` on VIRGIN.
 - `records/schemas.py` — v1 payload schemas `bulk_manifest`, `ingest_report`,
-  `window`, **and `window_burn`** (needed by `burn`; see NOTE-008).
+  `window`, **and `window_burn`** (needed by `burn`; see NOTE-009).
 
 ### Built — Trading plug-in (`qrf/trading/adapters/`)
 - `schemas.py` — pandera bar schema (the structural *door*): canonical
@@ -205,5 +205,5 @@ hand-maintained sections byte-for-byte intact.
   parameterized rule; defer a trading-calendar module).
 - **DEVQ-007** — quarantine dataset naming (recommend ratify `{dataset}__flagged`
   + `flags` column).
-- **NOTE-008** (FYI) — `window_burn` schema added (4 schemas, not the 3 listed);
+- **NOTE-009** (FYI) — `window_burn` schema added (4 schemas, not the 3 listed);
   required for `burn()` to function; type already in Blueprint §2.

@@ -1,5 +1,7 @@
-# NOTE-008 · FYI · Sprint 3 · 2026-07-25
+# NOTE-009 · FYI · Sprint 3 · 2026-07-25
 Author: developer (claude-code)
+Note: allocated NOTE-008 first, renamed to NOTE-009 on merge — main already held
+NOTE-008 (reducing_owner_mediation); per NOTE-005 the later allocation renames.
 Refs: ARCH-003 §Kernel (schemas.py list; WindowLedger.burn); Blueprint §2
 `window_burn`, §4.6
 
