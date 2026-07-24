@@ -1,0 +1,3 @@
+# .gitkeep — keeps docs/coordination/inbox/OPEN/ tracked when empty.
+# Git does not track empty directories; without this file the OPEN inbox
+# disappears from clones/mirrors whenever all DEVQs are closed (NOTE-003).
