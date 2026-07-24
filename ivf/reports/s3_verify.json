@@ -1,0 +1,20 @@
+{
+  "check": "s3_dataplane",
+  "rev": 1,
+  "run_utc": 1784927538,
+  "inputs": {
+    "mt5": "ivf/mt5/IVF_S3_FRESH_XAUUSD_H1.csv",
+    "clean": "datastore/bulk/xauusd_h1_sample/part-00000.parquet",
+    "flagged": null,
+    "timeframe": 3600
+  },
+  "counts": {
+    "source": 504,
+    "source_dup_times": 0,
+    "clean": 504,
+    "flagged": 0
+  },
+  "section_b": "VACUOUS (0 flagged rows \u2014 audited nothing; drill covers B)",
+  "red": [],
+  "verdict": "GREEN"
+}
