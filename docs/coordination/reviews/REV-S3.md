@@ -54,3 +54,22 @@ ivf/reports/s3_drill.json
 
 Architect verdict on the development scope: **PASS — recommend GO** once
 HC + VIRGIN + sign-off complete.
+
+---
+## ADDENDUM · HC-S3 result · 2026-07-25
+Owner sign-off, verbatim: **"HC-S3 PASS"**
+
+Evidence (NOTE-012 procedure, tool IVF_S3_HC_Screenshot.mq5 rev 4,
+server offset 0 = broker on UTC): 5/5 MATCH — ivf/reports/hc_s3/
+HC_S3_1704402000.png, HC_S3_1704783600.png, HC_S3_1705039200.png,
+HC_S3_1705554000.png, HC_S3_1705647600.png. Sampler seed=3 over
+xauusd_h1_sample (manifest 01KYAWHZ6A9X3YZQ2W0BDRFDS1). Architect
+countersigned the PNGs (axis dates, marker placement, candle-vs-caption
+agreement) before the Owner's verdict.
+
+Tool first-contact bugs, all caught by process before any wrong evidence
+entered the record: rev1 input-dialog truncation (0/0), rev2 unverified
+navigation (PNG showed chart end — caught by the OWNER's eye), rev3
+ALIGN_RIGHT capture anchor. Bug tally now: **Architect 7, Developer 2.**
+Standing improvement queued for S4 (NOTE-012): provenance caption line
+(dataset/manifest/row/seed/rev) + title-collision fix.
