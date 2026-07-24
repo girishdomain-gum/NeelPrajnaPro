@@ -1,6 +1,6 @@
-# QRF Multi-AI Coordination Protocol v1.1
+# QRF Multi-AI Coordination Protocol v1.2
 
-**Status:** Accepted (ADR-008; v1.1 per NOTE-008) · 2026-07-24
+**Status:** Accepted (ADR-008; v1.1 per NOTE-008; v1.2 per NOTE-010/011) · 2026-07-25
 **Purpose:** written, auditable 1-to-1 communication between roles, with
 history. Chat is scratch; files are the record. Consoles are chat.
 
@@ -61,6 +61,15 @@ without a pushed log did not happen, as far as the record is concerned.
 - Owner relays POINTERS, not content: "ruled — pull and resume",
   "delivered — review". Substance lives in files; a relay needing a
   second content sentence signals a missing file.
+- **Mid-sprint status (v1.2, NOTE-010):** at the Owner's request, the
+  Architect may READ the Developer's live worktree
+  (`F:\QRF\.claude\worktrees\<branch>\`) — strictly read-only, never a
+  write target, and never a substitute for session logs as the record.
+  A session without a pushed log still "did not happen".
+- **Handover freshness (v1.2):** at every GO-SN, before the Architect
+  session ends, the Architect rewrites
+  `docs/handover/ARCHITECT_HANDOVER.md` for the next Architect session.
+  A sprint is not closed until the handover is current.
 
 ## Levels (exactly three)
 

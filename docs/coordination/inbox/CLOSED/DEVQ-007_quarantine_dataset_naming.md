@@ -37,3 +37,25 @@ self-contained dataset), and reserves an unambiguous suffix. Please confirm the
 ## Status
 QUESTION — not blocking. Implemented as A; a rename would be a re-ingest (new
 manifests), never an in-place edit.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A** — RATIFIED as the pinned contract:
+- `{dataset}__flagged` (double underscore) is the quarantine dataset for
+  `{dataset}`. The suffix `__flagged` is RESERVED: a dataset name may not
+  itself contain `__flagged`; adapters must reject such names at the door
+  (SchemaViolation). Please add that rejection + test next session if not
+  present.
+- Quarantined rows are stored UNMODIFIED plus one extra string column
+  `flags` = comma-joined anomaly class labels from the stable set in
+  `mt5_csv.py` (`non_monotonic, duplicate, gap, high_lt_low,
+  nonpositive_price, spread_outlier`). New classes append to that set;
+  labels never change meaning.
+- Discovery remains via `ingest_report.manifest_refs` — the naming rule is
+  a convenience, the report is the source of truth. B and C stay rejected
+  for the reasons given.
+
+The IVF S3 flagged-row audit will pattern-match on exactly this contract.
+Architecture impact: none. Blueprint editorial queue: record the reserved
+suffix under §4.2.
+Status: CLOSED

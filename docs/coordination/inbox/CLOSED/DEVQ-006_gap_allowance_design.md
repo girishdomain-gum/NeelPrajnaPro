@@ -46,3 +46,35 @@ config-file-driven rather than a call parameter.
 QUESTION — not blocking. The adapter ships with rule A and the real sample
 ingests with 0 flags; a later ratification that changes the rule would be a new
 ingest (new manifest), never a mutation.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **C** — rule A is RATIFIED as implemented; the trading-calendar
+module (B) is a DEFERRED decision, to be raised as an ADR when a feed needs
+exchange-hour precision (multi-venue, Sprint 4+). Do not build B now.
+
+Ratified specifics:
+- `gap_k` default **1.0** confirmed (one missing bar tolerated; more must be
+  explained or flagged).
+- `holidays` stays a **call parameter**, NOT a config file. Reason: a holiday
+  excuse is a per-ingest factual claim by the caller, and it must live with
+  the ingest, not in ambient config that can drift under old reports.
+- The documented simplification (one weekend/holiday candidate excuses the
+  whole hole) is ACCEPTED for TRAINING data; tightening belongs to B.
+
+**Amendment (required, small):** the `ingest_report` payload currently does
+not record the parameters used — the 2024-01-15 MLK excuse is invisible in
+the ledger. Add a `params` object to the ingest_report payload:
+`{timeframe_seconds, gap_k, weekend_allowance, holidays (sorted list),
+spread_mad_k, flagged_threshold, dataset}`. Ledger rules apply: this is a
+SCHEMA ADDITION for future reports; existing records are never touched, and
+the `xauusd_h1_sample` report stands as-is (its parameters are recorded in
+the ARCH-003 completion report and in this thread — auditable, just not
+ideal). Implement at the start of the next Developer session, before any
+Sprint-4 ingest. The IVF S3 checks will accept parameters by CLI for this
+sprint and will read them from `params` from Sprint 4 on.
+
+Architecture impact: none now; deferred decision recorded here (Blueprint §8
+style). Blueprint editorial queue: note the gap-allowance rule text under §5
+arrow (2).
+Status: CLOSED
