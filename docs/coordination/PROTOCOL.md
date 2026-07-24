@@ -1,6 +1,7 @@
-# QRF Multi-AI Coordination Protocol v1.2
+# QRF Multi-AI Coordination Protocol v1.3
 
-**Status:** Accepted (ADR-008; v1.1 per NOTE-008; v1.2 per NOTE-010/011) · 2026-07-25
+**Status:** Accepted (ADR-008; v1.1 per NOTE-008; v1.2 per NOTE-010/011;
+v1.3 Owner-command rule) · 2026-07-25
 **Purpose:** written, auditable 1-to-1 communication between roles, with
 history. Chat is scratch; files are the record. Consoles are chat.
 
@@ -119,3 +120,23 @@ Owner may close anything at any time.
 Filenames `ID_slug.md` · ISO dates · UTF-8 · reference by ID, never
 copy contract text between files · coordination files are
 append-and-move only.
+
+## Owner-command rule (v1.3 — requested by the Owner)
+
+Any command intended for the Owner to run (from the Architect, the
+Developer, or a script's printed instructions) MUST be:
+- COMPLETE — copy-paste ready as one block; never shortened with `...`
+  and never containing placeholders like `<path>`. If a value is not
+  yet known, give a filled realistic example AND say in simple words
+  which part the Owner must change and to what.
+- BASH-READY — git-bash (MINGW64) syntax: forward slashes,
+  `/c/Users/...` style drive paths, quoted if spaces. Windows-style
+  `F:\...` backslash commands are for scripts, not for the Owner's
+  shell.
+- PLAIN — surrounded by simple-English explanation (Teaching
+  Standard): what the command does, what output to expect, and what to
+  do if it fails. The Owner is a non-native English speaker; exactness
+  is kindness.
+Scripts that print commands for the Owner must print them in this form
+(queued: exercise_quarantine_s3.py prints Windows-style — fix at next
+touch).

@@ -18,7 +18,7 @@
 input string   InpSymbol    = "XAUUSD";
 input ENUM_TIMEFRAMES InpTF = PERIOD_H1;
 input datetime InpFrom      = D'2024.01.01 00:00';
-input datetime InpTo        = D'2024.02.01 00:00';
+input datetime InpTo        = D'2025.01.01 00:00';
 input int      InpRSIPeriod = 14;
 
 int DowOf(datetime t)
