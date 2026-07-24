@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    QRF backup — commit the repo and mirror the ledger to a second location.
+    QRF backup - commit the repo and mirror the ledger to a second location.
 
 .DESCRIPTION
     ARCH-001 deliverable. Two independent durability steps:
       1. git add/commit (and push, once the Owner has added a remote).
-      2. robocopy datastore/journal/ to a configurable second path — an
+      2. robocopy datastore/journal/ to a configurable second path - an
          off-repo copy of THE ledger (datastore/journal/ is the tracked root
          of trust; bulk/ and index/ are rebuildable and not mirrored here).
 
@@ -23,12 +23,12 @@
     Skip the git commit/push step (mirror only).
 
 .EXAMPLE
-    pwsh scripts/backup.ps1 -BackupPath D:\backups\qrf -Message "backup: eod"
+    powershell -File scripts/backup.ps1 -BackupPath D:\backups\qrf
 #>
 [CmdletBinding()]
 param(
-    [string]$BackupPath = $(if ($env:QRF_BACKUP) { $env:QRF_BACKUP } else { $null }),
-    [string]$Message = "backup: $(Get-Date -Format 'yyyy-MM-dd HH:mm')",
+    [string]$BackupPath = "",
+    [string]$Message = "",
     [switch]$NoCommit
 )
 
@@ -36,6 +36,12 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $Journal = Join-Path $RepoRoot "datastore\journal"
 
+if (-not $Message) {
+    $Message = "backup: " + (Get-Date -Format 'yyyy-MM-dd HH:mm')
+}
+if (-not $BackupPath) {
+    $BackupPath = $env:QRF_BACKUP
+}
 if (-not $BackupPath) {
     $BackupPath = Join-Path (Split-Path -Parent $RepoRoot) "QRF_backup"
 }
@@ -65,7 +71,7 @@ if (-not $NoCommit) {
             git push origin $branch
             Write-Host "  pushed:    origin/$branch"
         } else {
-            Write-Host "  push:      SKIPPED — no git remote configured yet (Owner adds it)"
+            Write-Host "  push:      SKIPPED - no git remote configured yet (Owner adds it)"
         }
     } finally {
         Pop-Location
@@ -74,7 +80,7 @@ if (-not $NoCommit) {
 
 # --- 2. mirror the journal ---------------------------------------------------
 if (-not (Test-Path $Journal)) {
-    Write-Warning "journal directory not found: $Journal — nothing to mirror"
+    Write-Warning "journal directory not found: $Journal - nothing to mirror"
     exit 0
 }
 New-Item -ItemType Directory -Force -Path $BackupPath | Out-Null
