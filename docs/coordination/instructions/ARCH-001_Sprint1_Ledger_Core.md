@@ -111,3 +111,65 @@ Anything ambiguous → `docs/coordination/inbox/OPEN/DEVQ-NNN_slug.md`
 per PROTOCOL.md. Known intentional gap: `ivf/verify_journal.py` is NOT
 yours — the Architect writes it (independence rule IND-1); do not
 implement it even though it is referenced here.
+
+## COMPLETION REPORT (developer)
+Author: developer (claude-code) · 2026-07-24 · Status: DELIVERED (awaiting IVF Go/No-Go)
+
+### Session 0 — repository initialization
+- `git init` on branch `main`; `.gitignore` written before the first commit
+  (ignores `datastore/bulk/`, `datastore/index/`, `__pycache__/`, `.venv/`,
+  `*.pyc`, `experiments/`, journal `*.lock`; `datastore/journal/` stays
+  tracked). Added `.gitattributes` to force LF / mark the journal `-text` so a
+  fresh clone reproduces byte-identically (AC).
+- Initial commit `cc13b65` = docs + structure + coordination protocol.
+- **PENDING (Owner):** no remote created or pushed. The Owner must add the
+  private remote and `git push -u origin main`. CI (`.github/workflows/ci.yml`)
+  runs on push once the remote exists.
+
+### What was built (exact paths)
+- `pyproject.toml` (py3.13; deps python-ulid, duckdb, pyarrow, pandas, pandera;
+  dev: pytest, ruff; ruff + pytest + `[tool.qrf]` config) and committed `uv.lock`.
+- `.github/workflows/ci.yml` — `uv sync --locked` → ruff → pytest.
+- `qrf/` + `qrf/kernel/` + all package `__init__.py` (trading subtree stubs only).
+- `qrf/kernel/errors.py` — full §6 taxonomy, verbatim class names.
+- `qrf/kernel/records/record.py` — `canonical_bytes` (verbatim §1.3), `content_hash`
+  over the six semantic fields, monotonic ULID generation, frozen `Record` + wire I/O.
+- `qrf/kernel/records/schemas.py` — v1 payload schemas for note / amendment /
+  instrument_registered; unregistered `(type, version)` → `SchemaViolation`.
+- `qrf/kernel/records/store.py` — `RecordStore.append/get/query/verify/resolve`
+  (§4.1); append-only, single-writer file lock (msvcrt/fcntl), per-line fsync,
+  hash chain, verify-on-startup, torn-tail detection + opt-in healing.
+- `tests/test_kernel_firewall.py`, `tests/records/test_record.py`,
+  `tests/records/test_store.py`.
+- `scripts/gen_state.py` (v0, ADR-007) and `scripts/backup.ps1`.
+
+### Test / verification results
+- **35 tests pass**; ruff clean. Verified on a **fresh `git clone` + `uv sync
+  --locked` + `pytest`** (all green) — the reproducibility AC.
+- Acceptance criteria demonstrated by tests: chain tamper (byte flip) →
+  `LedgerIntegrityError` naming the record; broken chain link detected;
+  `UnknownParentError`; `SchemaViolation` for all three v1 types + unregistered
+  type; amendment `resolve()` (original unchanged); truncated-final-line
+  detection + heal-flag; query filters (type/producer/parent/ts_range); ULIDs
+  strictly increasing; hand-computed sha256 vector; NaN/Inf rejected.
+- Firewall: passes on the current kernel tree; negative cases prove it catches a
+  planted `qrf.trading` import (direct + submodule) and a planted forbidden
+  identifier, while allowing look-alikes (`pipeline`, `task`, `slot`).
+
+### Deviations / not done, and why
+- `scripts/gen_state.py` was built and verified (`--out <tmp>` diff touches only
+  the header + Status table; hand-maintained sections preserved) but **not run
+  against the real `docs/handover/AI_PROJECT_STATE.md`** — see **DEVQ-001**
+  (QUESTION): the DoD asks the Developer to update a `docs/` file, which
+  CLAUDE.md Hard rules forbid. Awaiting the Architect/Owner decision.
+- `qrf.kernel.records` imports `qrf.kernel.errors` — documented in **NOTE-001**
+  (FYI): interpreting Blueprint §3 "records is a leaf" as excluding the
+  stdlib-only shared error module. Not enforced against by the firewall.
+
+### Open DEVQs
+- DEVQ-001 (QUESTION) — gen_state.py writing under `docs/` vs the Hard rule.
+  Blocks only the "gen_state updates the state file" DoD line, nothing else.
+
+### Commits (branch `main`)
+cc13b65 initial · 2d7b83e plumbing · c681abb ledger core · b6973ab tests ·
+416fbfc scripts · a6e0274 DEVQ-001 + NOTE-001 · (this report follows).
