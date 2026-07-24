@@ -60,3 +60,52 @@ Session log (S3-3) pushed; tests green in CI; ruff clean; gen_state run;
 completion report appended below; merged to main and pushed; DEVQs for
 anything ambiguous (likely area: virgin-fraction boundary semantics —
 the boundary bar belongs to TRAINING, VIRGIN starts at the next bar).
+
+---
+## COMPLETION REPORT (developer)
+Author: developer (claude-code) · 2026-07-25 · Session S3-3 · Status: **COMPLETE**
+— three deliverables built + tested end-to-end, merged, pushed. No DEVQ needed:
+the one flagged-ambiguous area (virgin-fraction boundary) was resolved in the
+instruction itself (boundary bar → TRAINING) and implemented exactly.
+
+### 1. `--rebuild-bulk` (REV-S3 F-1) — `scripts/ingest_xauusd_s3.py`
+`rebuild_bulk()` reproduces the adapter's deterministic transform + write for the
+dataset's partition(s) and hash-verifies each rebuilt file against its EXISTING
+manifest via `BulkStore.read` (raises `BulkIntegrityError` on mismatch). Appends
+**nothing** to the journal, mints no manifest (asserted: `len(store)` unchanged).
+Verified live: deleted the real `xauusd_h1_sample` parquet, rebuilt, hash-verified
+read of manifest 01KYAWHZ6A9X3YZQ2W0BDRFDS1 succeeded, journal byte-identical
+(12785 bytes, 12 records). Test: ingest→snapshot→delete→rebuild→read-ok +
+journal-byte-identical.
+
+### 2. Quarantine exercise (closes drill-2 SKIP) — `scripts/exercise_quarantine_s3.py`
+Ingests a 9-row synthetic CSV into a **scratch** datastore (tmp dir; the real
+ledger is never touched) planting one row of every anomaly class
+(non_monotonic, duplicate, gap, high_lt_low, nonpositive_price, spread_outlier);
+prints scratch clean/flagged parquet paths, planted expectations, and the exact
+`check_s3_dataplane.py --flagged` / `drill_s3.py` commands. Verified against the
+real IVF tools on the scratch output: **check GREEN** (section B AUDITED, not
+vacuous; source=9 clean=3 flagged=6) and **drill 2 CAUGHT** (no longer SKIPPED).
+Test: ingest_report v2 `params` present; all 6 classes in `anomaly_counts`;
+flagged rows value-match the synthetic source.
+
+### 3. VIRGIN declaration tool — `scripts/declare_virgin_s3.py` (Owner runs it)
+Ingests the Owner's bigger export as `xauusd_h1_full` (ingest_report v2). Guards,
+in order: refuse if a `xauusd_h1_full` window already exists (re-run guard); a
+**dry pass** aborts with nothing written unless the export ingests with 0
+unexplained flags; verdict must be PASS. Then the interactive gate requires the
+exact phrase `DECLARE VIRGIN` before designating a TRAILING VIRGIN window
+(default final 30%, `--virgin-fraction`) and a leading TRAINING window over
+**disjoint half-open intervals** — TRAINING `[first, boundary)`, VIRGIN
+`[boundary, last+1)` — so contamination is impossible by construction (boundary
+bar is the last TRAINING bar; VIRGIN starts at the next). Prints all record ids.
+**Not run by the Developer** — the Owner runs it; the console phrase + printed ids
+go into GO-S3.md. Tests: exact-phrase gate; split semantics; clean-vs-dirty dry
+pass; disjoint TRAINING/VIRGIN + re-run guard trips.
+
+### Verification
+133 tests pass (+6 script tests), firewall GREEN, ruff clean, gen_state run
+(hand sections byte-for-byte intact), journal 12 records chain GREEN (this session
+appended **no** journal records — rebuild writes none, exercise uses a scratch
+store, and the VIRGIN declaration is the Owner's act). IVF check GREEN + drill 2
+CAUGHT confirmed on scratch output.
