@@ -173,3 +173,37 @@ Author: developer (claude-code) · 2026-07-24 · Status: DELIVERED (awaiting IVF
 ### Commits (branch `main`)
 cc13b65 initial · 2d7b83e plumbing · c681abb ledger core · b6973ab tests ·
 416fbfc scripts · a6e0274 DEVQ-001 + NOTE-001 · (this report follows).
+
+### CLOSE-OUT (developer) · ARCH-001A · 2026-07-24
+DEVQ-001 answered = **C** (CLAUDE.md rev 2: the Developer may regenerate
+`docs/handover/AI_PROJECT_STATE.md` via `scripts/gen_state.py` only). REV-S1:
+**APPROVED**. Tasks T1–T5:
+
+- **T1** — ran `gen_state.py` against the real state file; diff touched only the
+  generated-at header and the Status table; both hand-maintained sections
+  ("Next immediate task", "Don't change without discussion") preserved
+  byte-for-byte. First run surfaced a parsing bug in gen_state itself (project
+  ini `addopts="-q"` + our `-q` = `-qq`, suppressing pytest's summary line);
+  fixed in-place (`-o addopts=` + robust result-line search) — a Sprint-1
+  deliverable polish, mirror image of NOTE-002's "first real run finds the bug".
+- **T2 — genesis records** (producer `human:girish`, appended via RecordStore):
+  - record 1: `01KYAGHDTVF1ACNCGMW7CMSHXV`  (Genesis / Sprint 1 delivered)
+  - record 2: `01KYAGHDVRDNB3HHMTW7H365Y9`  (IVF first-run finding; parents=[record 1])
+- **T3 — VC** `ivf/verify_journal.py` on the real journal → **GREEN**,
+  records=2. Report: `ivf/reports/s1_verify.json`.
+- **T4 — Drill S1** (one-char flip of record 2's payload text, on a copy OUTSIDE
+  datastore/): verifier → **RED**, single finding
+  `C2.01KYAGHDVRDNB3HHMTW7H365Y9.content_hash` naming record 2. Report:
+  `ivf/reports/s1_drill.json`. Tampered copy deleted; the **real journal
+  re-verified GREEN** and is byte-identical to its T2 commit.
+- **T5** — this block; commit + push.
+
+The independent verifier (canonical serialization re-derived from Blueprint
+§1.3 spec text, importing no qrf code) agrees with the implementation on the
+real journal, and catches a planted tamper — the IVF §1 "trust through
+independent reproduction" bar, met. Remaining for full close (not Developer):
+Owner HC (raw 2-record read) and Architect Go/No-Go per IVF §8.
+
+### Commits (branch `main`, close-out)
+765ac38 backup.ps1 fix · (ARCH-001A) architect inputs · gen_state parse fixes ·
+gen_state first run · genesis records · this close-out + IVF reports.
