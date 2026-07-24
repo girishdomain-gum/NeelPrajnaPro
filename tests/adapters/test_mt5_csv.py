@@ -196,6 +196,41 @@ def test_door_rejects_missing_required_column(env, tmp_path):
         A.ingest_mt5_csv(csv, "ds", timeframe_seconds=TF, store=store, bulk_store=bulk)
 
 
+def test_door_rejects_reserved_flagged_suffix(env, tmp_path):
+    """DEVQ-007: a dataset name containing __flagged is refused at the door."""
+    store, bulk = env
+    df = _canon([WED_NOON, WED_NOON + TF])
+    csv = _write_csv(tmp_path, df)
+    with pytest.raises(SchemaViolation) as ei:
+        A.ingest_mt5_csv(csv, "ds__flagged", timeframe_seconds=TF, store=store, bulk_store=bulk)
+    assert A.QUARANTINE_SUFFIX in str(ei.value)
+    # Nothing was written (rejected before any manifest).
+    assert list(store.query(record_type="bulk_manifest")) == []
+
+
+def test_ingest_report_v2_records_params(env, tmp_path):
+    """DEVQ-006: the ingest_report is schema v2 and records the params used."""
+    store, bulk = env
+    df = _canon([WED_NOON, WED_NOON + TF])
+    csv = _write_csv(tmp_path, df)
+    res = A.ingest_mt5_csv(
+        csv, "ds", timeframe_seconds=TF, store=store, bulk_store=bulk,
+        holidays={"2024-01-15", "2024-01-01"}, gap_k=1.0, flagged_threshold=0.05,
+    )
+    assert res.report.schema_version == 2
+    params = res.report.payload["params"]
+    assert params == {
+        "timeframe_seconds": TF,
+        "gap_k": 1.0,
+        "weekend_allowance": True,
+        "holidays": ["2024-01-01", "2024-01-15"],  # sorted
+        "spread_mad_k": 5.0,
+        "flagged_threshold": 0.05,
+        "dataset": "ds",
+    }
+    assert store.verify().ok
+
+
 # --- the real Sprint-2 export ingests clean (AC) -----------------------------
 def test_real_ivf_export_ingests_zero_flags(env):
     store, bulk = env

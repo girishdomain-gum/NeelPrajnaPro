@@ -60,6 +60,48 @@ def test_ingest_report_valid_and_rejections():
         _ok("ingest_report", {**good, "manifest_refs": ["01A", 2]})
 
 
+def test_ingest_report_v2_params_valid_and_rejections():
+    params = {
+        "timeframe_seconds": 3600,
+        "gap_k": 1.0,
+        "weekend_allowance": True,
+        "holidays": ["2024-01-01", "2024-01-15"],
+        "spread_mad_k": 5.0,
+        "flagged_threshold": 0.05,
+        "dataset": "xauusd_h1_sample",
+    }
+    good = {
+        "manifest_refs": ["01A"],
+        "rows_clean": 500,
+        "rows_flagged": 4,
+        "anomaly_counts": {"gap": 4},
+        "verdict": "PASS",
+        "params": params,
+    }
+    schemas.validate("ingest_report", good, 2)
+
+    # v1 must reject the params key (unknown field under v1).
+    with pytest.raises(SchemaViolation):
+        schemas.validate("ingest_report", good, 1)
+    # v2 requires params.
+    with pytest.raises(SchemaViolation):
+        schemas.validate("ingest_report", {k: v for k, v in good.items() if k != "params"}, 2)
+    # holidays must be sorted.
+    with pytest.raises(SchemaViolation):
+        bad = {**good, "params": {**params, "holidays": ["2024-01-15", "2024-01-01"]}}
+        schemas.validate("ingest_report", bad, 2)
+    # weekend_allowance must be a bool.
+    with pytest.raises(SchemaViolation):
+        bad_wa = {**good, "params": {**params, "weekend_allowance": "yes"}}
+        schemas.validate("ingest_report", bad_wa, 2)
+    # timeframe_seconds must be a positive int.
+    with pytest.raises(SchemaViolation):
+        schemas.validate("ingest_report", {**good, "params": {**params, "timeframe_seconds": 0}}, 2)
+    # unknown param key rejected.
+    with pytest.raises(SchemaViolation):
+        schemas.validate("ingest_report", {**good, "params": {**params, "tz": "UTC"}}, 2)
+
+
 def test_window_valid_and_rejections():
     good = {"dataset": "ds", "ts_start": 10, "ts_end": 40, "designation": "TRAINING"}
     _ok("window", good)

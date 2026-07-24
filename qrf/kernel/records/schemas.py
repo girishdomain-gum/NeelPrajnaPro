@@ -3,7 +3,9 @@
 Implementation Blueprint v1.0 §2. Sprint 1 registered ``note``, ``amendment``
 and ``instrument_registered``; Sprint 2 (ARCH-002) added ``calibration``;
 Sprint 3 (ARCH-003) adds the data-plane types ``bulk_manifest``,
-``ingest_report``, ``window`` and ``window_burn``. Every
+``ingest_report``, ``window`` and ``window_burn``; the DEVQ-006 ruling adds
+``ingest_report`` schema **version 2** (v1 plus a required ``params`` object) —
+additively, so existing v1 records are never touched. Every
 ``RecordStore.append`` validates the payload against the schema registered for
 ``(record_type, schema_version)`` before writing (I-4); an unregistered pair is
 itself a :class:`SchemaViolation`.
@@ -179,13 +181,14 @@ def _validate_bulk_manifest(payload: dict) -> None:
         _require_str(col, "dtype", where)
 
 
-def _validate_ingest_report(payload: dict) -> None:
-    _check_keys(
-        payload,
-        {"manifest_refs", "rows_clean", "rows_flagged", "anomaly_counts", "verdict"},
-        set(),
-        "ingest_report",
-    )
+# ingest_report.params fields (schema v2, DEVQ-006 ruling) — the parameters the
+# adapter ran with, so a report's anomaly verdict (e.g. a holiday-excused gap) is
+# reconstructable from the ledger alone.
+_INGEST_PARAM_NUMBERS = ("gap_k", "spread_mad_k", "flagged_threshold")
+
+
+def _check_ingest_report_common(payload: dict) -> None:
+    """The v1 field checks, shared by every ingest_report schema version."""
     _require(
         isinstance(payload["manifest_refs"], list),
         "ingest_report.manifest_refs must be a list",
@@ -209,6 +212,66 @@ def _validate_ingest_report(payload: dict) -> None:
     _require(
         payload["verdict"] in _INGEST_VERDICTS,
         f"ingest_report.verdict must be one of {sorted(_INGEST_VERDICTS)}",
+    )
+
+
+def _validate_ingest_report(payload: dict) -> None:
+    _check_keys(
+        payload,
+        {"manifest_refs", "rows_clean", "rows_flagged", "anomaly_counts", "verdict"},
+        set(),
+        "ingest_report",
+    )
+    _check_ingest_report_common(payload)
+
+
+def _validate_ingest_report_v2(payload: dict) -> None:
+    """ingest_report v2 (DEVQ-006): v1 plus a required ``params`` object.
+
+    Additive schema evolution (Blueprint §2): v1 records are never touched; new
+    reports record the parameters the ingest ran under.
+    """
+    _check_keys(
+        payload,
+        {"manifest_refs", "rows_clean", "rows_flagged", "anomaly_counts", "verdict", "params"},
+        set(),
+        "ingest_report",
+    )
+    _check_ingest_report_common(payload)
+    where = "ingest_report.params"
+    _check_keys(
+        payload["params"],
+        {
+            "timeframe_seconds",
+            "gap_k",
+            "weekend_allowance",
+            "holidays",
+            "spread_mad_k",
+            "flagged_threshold",
+            "dataset",
+        },
+        set(),
+        where,
+    )
+    params = payload["params"]
+    _require_int(params, "timeframe_seconds", where)
+    _require(params["timeframe_seconds"] > 0, f"{where}.timeframe_seconds must be > 0")
+    _require_str(params, "dataset", where)
+    _require(
+        isinstance(params["weekend_allowance"], bool),
+        f"{where}.weekend_allowance must be a bool",
+    )
+    for num in _INGEST_PARAM_NUMBERS:
+        _require(
+            isinstance(params[num], (int, float)) and not isinstance(params[num], bool),
+            f"{where}.{num} must be a number",
+        )
+    _require(isinstance(params["holidays"], list), f"{where}.holidays must be a list")
+    for i, hol in enumerate(params["holidays"]):
+        _require(isinstance(hol, str), f"{where}.holidays[{i}] must be a string")
+    _require(
+        params["holidays"] == sorted(params["holidays"]),
+        f"{where}.holidays must be a sorted list",
     )
 
 
@@ -245,6 +308,7 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("calibration", 1): _validate_calibration,
     ("bulk_manifest", 1): _validate_bulk_manifest,
     ("ingest_report", 1): _validate_ingest_report,
+    ("ingest_report", 2): _validate_ingest_report_v2,
     ("window", 1): _validate_window,
     ("window_burn", 1): _validate_window_burn,
 }

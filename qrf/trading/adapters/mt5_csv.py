@@ -74,6 +74,11 @@ ANOMALY_CLASSES: tuple[str, ...] = (
 # Columns persisted to the store (canonical bar + close-time ts).
 _BASE_STORE_COLUMNS = ("ts", "time", "open", "high", "low", "close")
 
+# Reserved quarantine-dataset suffix (DEVQ-007 ruling): flagged rows for
+# ``{dataset}`` live in ``{dataset}__flagged``. A caller dataset name may not
+# itself contain this suffix — the adapter rejects it at the door.
+QUARANTINE_SUFFIX = "__flagged"
+
 
 def compute_close_ts(open_sec: int, timeframe_seconds: int) -> int:
     """OBS-4: close-time ``ts`` in int64 ns from an OPEN time in seconds."""
@@ -255,10 +260,19 @@ def ingest_mt5_csv(
     """Ingest an MT5 bar CSV: validate, flag, quarantine, and report.
 
     Clean rows -> ``{dataset}``; flagged rows -> ``{dataset}__flagged``; both via
-    :class:`BulkStore` manifests. Emits an ``ingest_report`` (parents = the
-    manifests). Verdict FAIL iff ``rows_flagged / rows_total > flagged_threshold``
-    — the data is stored in full regardless.
+    :class:`BulkStore` manifests. Emits an ``ingest_report`` (schema v2: records
+    the ``params`` used, DEVQ-006; parents = the manifests). Verdict FAIL iff
+    ``rows_flagged / rows_total > flagged_threshold`` — data stored in full either
+    way. The dataset name may not contain the reserved ``__flagged`` suffix
+    (DEVQ-007) — rejected at the door.
     """
+    if QUARANTINE_SUFFIX in dataset:
+        from qrf.kernel.errors import SchemaViolation
+
+        raise SchemaViolation(
+            f"dataset name {dataset!r} contains the reserved quarantine suffix "
+            f"{QUARANTINE_SUFFIX!r} (DEVQ-007); choose a name without it"
+        )
     raw = pd.read_csv(csv_path)
     canonical = to_canonical(raw, column_map)
     frame = build_bar_frame(canonical, timeframe_seconds)
@@ -291,7 +305,7 @@ def ingest_mt5_csv(
         manifest_refs.append(rec.record_id)
     if rows_flagged:
         rec = bulk_store.write(
-            f"{dataset}__flagged", _to_store_table(quarantine_df, with_flags=True),
+            f"{dataset}{QUARANTINE_SUFFIX}", _to_store_table(quarantine_df, with_flags=True),
             producer=producer, parents=[],
         )
         flagged_manifest = rec.record_id
@@ -304,6 +318,17 @@ def ingest_mt5_csv(
     flagged_share = (rows_flagged / rows_total) if rows_total else 0.0
     verdict = "FAIL" if flagged_share > flagged_threshold else "PASS"
 
+    # ingest_report v2 (DEVQ-006): the parameters ride with the report so a
+    # holiday-excused gap (or any verdict) is reconstructable from the ledger.
+    params = {
+        "timeframe_seconds": int(timeframe_seconds),
+        "gap_k": float(gap_k),
+        "weekend_allowance": bool(weekend_allowance),
+        "holidays": sorted(holidays or ()),
+        "spread_mad_k": float(spread_mad_k),
+        "flagged_threshold": float(flagged_threshold),
+        "dataset": dataset,
+    }
     report = store.append(
         "ingest_report",
         {
@@ -312,10 +337,12 @@ def ingest_mt5_csv(
             "rows_flagged": rows_flagged,
             "anomaly_counts": anomaly_counts,
             "verdict": verdict,
+            "params": params,
         },
         producer=producer,
         event_ts=ts_max,
         parents=manifest_refs,
+        schema_version=2,
     )
     return IngestResult(
         report=report,
