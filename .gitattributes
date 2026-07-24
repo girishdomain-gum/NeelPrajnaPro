@@ -1,0 +1,12 @@
+# Normalize line endings so a fresh clone reproduces text byte-identically.
+* text=auto eol=lf
+
+# Windows-native scripts keep CRLF.
+*.ps1 text eol=crlf
+
+# The ledger and any parquet/binary must never be line-ending converted —
+# byte-identical reproduction is an ARCH-001 acceptance criterion.
+datastore/journal/*.jsonl -text
+*.parquet binary
+*.docx binary
+uv.lock -text
