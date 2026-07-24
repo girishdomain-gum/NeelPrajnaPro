@@ -246,7 +246,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     dest = args.out or STATE_FILE
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(regenerated, encoding="utf-8")
+    # newline="\n": keep LF endings (.gitattributes enforces eol=lf); the default
+    # would emit CRLF on Windows and churn the file on every run.
+    dest.write_text(regenerated, encoding="utf-8", newline="\n")
     print(f"wrote {dest}")
     return 0
 
