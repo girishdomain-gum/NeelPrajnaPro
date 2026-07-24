@@ -27,6 +27,9 @@ def main() -> int:
     ap.add_argument("--clean", required=True)
     ap.add_argument("--n", type=int, default=5)
     ap.add_argument("--seed", type=int, default=3)
+    ap.add_argument("--mql", action="store_true",
+                    help="also print the InpBars string for "
+                         "ivf/mt5/IVF_S3_HC_Screenshot.mq5")
     a = ap.parse_args()
 
     import pyarrow.parquet as pq
@@ -46,6 +49,17 @@ def main() -> int:
             f"L={r['low']:.2f}  C={r['close']:.2f}"
         )
     print("\nCompare each bar against the MT5 chart (bar label = OPEN time).")
+    if a.mql:
+        entries = []
+        for i in picks:
+            r = rows[i]
+            t = datetime.fromtimestamp(int(r["time"]), UTC)
+            entries.append(
+                f"{t:%Y.%m.%d %H:%M}|{r['open']:.2f}|{r['high']:.2f}"
+                f"|{r['low']:.2f}|{r['close']:.2f}"
+            )
+        print("\nInpBars for IVF_S3_HC_Screenshot.mq5 (copy the next line):")
+        print(";".join(entries))
     return 0
 
 
