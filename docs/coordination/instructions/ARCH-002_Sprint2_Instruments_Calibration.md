@@ -186,3 +186,28 @@ from NOTE-004 per NOTE-005's ID-collision rule).
 ### Not done (blocked on DEVQ-004)
 `gen_state` refresh of `docs/handover/AI_PROJECT_STATE.md`. Awaiting the
 architect's decision on how to reconcile the stale generator with the ledger.
+
+## COMPLETION REPORT — FINAL (post Architect rulings, 2026-07-24)
+All DoD items now closed; branch merged to main and pushed.
+
+- **DEVQ-002 / DEVQ-003 RATIFIED**, **DEVQ-004 decided** — replies appended,
+  all three moved to `inbox/CLOSED/`. OPEN inbox empty.
+- **DEVQ-004 implemented**: `gen_state.py` v1 splits the Status table into
+  DERIVED rows (test counts, ADR range, journal record count = journal.jsonl
+  line count, git branch/commit — recomputed each run) and HAND rows (sprint
+  statuses, preserved verbatim like the two hand-maintained sections).
+  `tests/test_gen_state.py` (4) locks the model. Also fixed the write path to
+  emit LF (`.gitattributes eol=lf`). Ran it: state file refreshed — Sprint 1
+  CLOSED survives (the earlier regression is gone), Journal `7 records`, Test
+  suite `87 passed (green)`.
+- **ID collision resolved** (NOTE-005 rule): my pandas-ta note renamed
+  NOTE-004 → **NOTE-006**; all references updated. Merged the Architect's
+  NOTE-004 (status-reads) and NOTE-005 (push-in-DoD + ID rule) cleanly.
+- **Push-in-DoD (NOTE-005) satisfied**: branch pushed; `main` fast-forwarded to
+  the merged tip **428efa6** and pushed.
+- Final gate: **87 tests pass** (35 S1 + 48 S2 + 4 gen_state), ruff clean,
+  kernel firewall GREEN, journal 7 records chain GREEN.
+
+Sprint-2 close still awaits (not developer scope): IVF Sprint-2 VC (Architect's
+MT5 tools), Owner HC (10 events/detector — `scripts/hand_audit_s2.py`), Drill S2,
+Owner Go/No-Go. Handing off for Architect review.
