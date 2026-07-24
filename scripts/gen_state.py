@@ -80,7 +80,17 @@ def test_summary(run: bool) -> tuple[str, str]:
     except (subprocess.SubprocessError, OSError) as e:
         return f"could not run pytest ({e})", "unknown"
     lines = [ln.strip() for ln in proc.stdout.splitlines() if ln.strip()]
-    summary = lines[-1] if lines else "no output"
+    # Pick pytest's result line (e.g. "35 passed in 7.5s"), not the progress
+    # dots line, which can be last when output is captured (not a tty).
+    summary = "no output"
+    for ln in reversed(lines):
+        low = ln.lower()
+        if any(k in low for k in ("passed", "failed", "error", "no tests ran")):
+            summary = ln.lstrip(". ")
+            break
+    else:
+        if lines:
+            summary = lines[-1]
     return summary, "green" if proc.returncode == 0 else "RED"
 
 
