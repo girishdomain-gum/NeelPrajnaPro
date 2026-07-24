@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
-"""IVF Sprint-2 check: detectors vs MT5-derived independent references. (rev 2)
+"""IVF Sprint-2 check: detectors vs MT5-derived independent references. (rev 3)
 
-rev 2: added --skip-bars (default 50). MT5's RSI is seeded from history BEFORE
-the export window while qrf's detector sees only the window, so the two RSI
-series legitimately diverge for the first bars (Wilder RMA seeding; decays as
-(1-1/period)^n — under 3% residual after 50 bars). --skip-bars excludes that
-region from BOTH sides of the comparison symmetrically.
+rev 3 (DEVQ-005): §B DOW expectations rebuilt to the RATIFIED contract —
+`seasonality.dow.<mon..fri>` fires at the ts of the FIRST bar whose UTC
+epoch-day differs from the previous bar's (close-time basis), weekday from
+that ts, weekends silent. The previous midnight-open-bar assumption made the
+comparison vacuous on gapped feeds (0/504 midnight bars on real XAUUSD) and
+was the artifact; the detector's contract stands. Weekday is computed here
+from epoch arithmetic (1970-01-01 = Thursday), NOT from the CSV's open-time
+`dow` column, which disagrees on 23:00->00:00 bars. The --skip-bars boundary
+day is excluded symmetrically on both sides.
+rev 2: --skip-bars warm-up exclusion (MT5 RSI is history-seeded).
 
-INDEPENDENCE: stdlib only; imports nothing from qrf. Consumes two CSV files:
-  --mt5     IVF_S2_Export.mq5 output (time_open_sec,time_close_sec,o,h,l,c,
-            rsiN,dow)
-  --events  qrf-side event export: header ts,event_type,direction
-            (ts in int nanoseconds, close-time basis)
-  --sessions  session spec like "london=28800-57600" (UTC seconds-of-day,
-            [start,end)), repeatable — must match the detector's registered
-            params (read from the journal's instrument_registered record).
-  --rsi-overbought / --rsi-oversold  thresholds (default 70/30)
-
-Checks: A) RSI crossings recomputed from MT5's OWN rsi column vs qrf events
-(EXACT ts/direction; near-threshold divergence within --amber-band -> AMBER,
-REV-S2 OBS-5). B) session open/close + day-start DOW markers recomputed from
-bar times vs qrf seasonality events (EXACT).
-Report: IVF §5.2 JSON to --report. Exit 0 GREEN, 2 AMBER, 1 RED.
+INDEPENDENCE: stdlib only; imports nothing from qrf. Inputs:
+  --mt5     IVF_S2_Export.mq5 CSV (time_open_sec,time_close_sec,o,h,l,c,rsiN,dow)
+  --events  qrf event CSV (ts,event_type,direction; ts int ns, CLOSE-time basis)
+  --sessions  e.g. "london=28800-57600" (UTC seconds-of-day, [start,end)),
+              repeatable — must match the registered detector params.
+Checks: A) RSI crossings from MT5's OWN rsi column vs qrf events (EXACT;
+near-threshold divergence within --amber-band -> AMBER, REV-S2 OBS-5).
+B) session open/close + DOW markers per the ratified contract vs qrf events
+(EXACT). Report: IVF §5.2 JSON. Exit 0 GREEN, 2 AMBER, 1 RED.
 """
 
 from __future__ import annotations
@@ -29,6 +28,13 @@ from __future__ import annotations
 import argparse, csv, json, sys, time
 
 NS = 1_000_000_000
+DAY = 86_400
+# 1970-01-01 was a Thursday; index into names with (epoch_day + 3) % 7, Mon=0.
+_WD = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
+
+def weekday_of_sec(sec: int) -> str:
+    return _WD[((sec // DAY) + 3) % 7]
 
 
 def load_mt5(path):
@@ -41,7 +47,6 @@ def load_mt5(path):
                 "close_s": int(r["time_close_sec"]),
                 "close": float(r["close"]),
                 "rsi": (float(r[rsi_key]) if r[rsi_key] else None),
-                "dow": int(r["dow"]),
             })
     rows.sort(key=lambda x: x["open_s"])
     return rows
@@ -72,11 +77,13 @@ def main() -> int:
     bars = load_mt5(a.mt5)
     events = load_events(a.events)
 
-    # rev 2: symmetric warm-up exclusion (RSI seeding difference).
+    # Symmetric warm-up exclusion (rev 2) + boundary-day exclusion (rev 3).
+    skip_day: int | None = None
     if a.skip_bars > 0 and len(bars) > a.skip_bars:
         cutoff_ns = bars[a.skip_bars]["open_s"] * NS
         bars = bars[a.skip_bars:]
         events = [e for e in events if e["ts"] >= cutoff_ns]
+        skip_day = bars[0]["close_s"] // DAY  # partial first day: both sides skip
 
     diffs = []
 
@@ -119,7 +126,7 @@ def main() -> int:
                 "no reference crossing", f"qrf event dir {d}",
                 "qrf crossing absent in MT5-derived reference")
 
-    # ---- B) Sessions + DOW from bar times -----------------------------------
+    # ---- B) Sessions + DOW (ratified contract, rev 3) -----------------------
     sess = {}
     for spec in a.sessions:
         name, rng = spec.split("=")
@@ -127,24 +134,49 @@ def main() -> int:
         sess[name] = (lo, hi)
 
     exp_seas = set()
-    day_seen = set()
-    dow_name = {1: "mon", 2: "tue", 3: "wed", 4: "thu", 5: "fri"}
-    open_times = {b["open_s"] for b in bars}
-    for b in bars:
-        day = b["open_s"] - (b["open_s"] % 86400)
-        sec = b["open_s"] % 86400
-        if day not in day_seen and b["dow"] in dow_name:
-            day_seen.add(day)
-            if b["open_s"] == day:  # marker only when the day-start bar exists
-                exp_seas.add((day * NS, f"seasonality.dow.{dow_name[b['dow']]}"))
-        for nm, (lo, hi) in sess.items():
-            if sec == lo:
-                exp_seas.add((b["open_s"] * NS, "seasonality.session.open"))
-            if sec == hi and b["open_s"] in open_times:
-                exp_seas.add((b["open_s"] * NS, "seasonality.session.close"))
 
-    got_seas = {(e["ts"], e["event_type"]) for e in events
-                if e["event_type"].startswith("seasonality.")}
+    # B1: DOW — first bar (close-time basis) of each new UTC epoch-day.
+    prev_day = None
+    for b in bars:
+        d0 = b["close_s"] // DAY
+        if prev_day is None:
+            prev_day = d0  # boundary day of --skip-bars: no expectation
+            continue
+        if d0 != prev_day:
+            wd = weekday_of_sec(b["close_s"])
+            if wd in ("mon", "tue", "wed", "thu", "fri"):
+                exp_seas.add((b["close_s"] * NS, f"seasonality.dow.{wd}"))
+            prev_day = d0
+
+    # B2: session open/close — membership transitions on close-time sod.
+    prev_member = {name: False for name in sess}
+    first = True
+    for b in bars:
+        sod = b["close_s"] % DAY
+        for nm, (lo, hi) in sess.items():
+            member = lo <= sod < hi
+            if not first:
+                if member and not prev_member[nm]:
+                    exp_seas.add((b["close_s"] * NS, "seasonality.session.open"))
+                elif not member and prev_member[nm]:
+                    exp_seas.add((b["close_s"] * NS, "seasonality.session.close"))
+            prev_member[nm] = member
+        first = False
+
+    got_seas = set()
+    for e in events:
+        if not e["event_type"].startswith("seasonality."):
+            continue
+        if skip_day is not None and e["ts"] // NS // DAY == skip_day \
+                and e["event_type"].startswith("seasonality.dow."):
+            continue  # boundary-day dow markers excluded on both sides
+        got_seas.add((e["ts"], e["event_type"]))
+    # First filtered bar can't show a transition on the qrf side either:
+    # drop got session markers at the very first bar's ts to stay symmetric.
+    first_ts = bars[0]["close_s"] * NS if bars else None
+    got_seas = {k for k in got_seas
+                if not (k[0] == first_ts and k[1].startswith("seasonality.session."))}
+
     for k in sorted(exp_seas - got_seas):
         add("RED", f"B.seas.{k[0]}.{k[1]}.missing", k[1], "absent", "expected marker missing")
     for k in sorted(got_seas - exp_seas):
@@ -156,13 +188,13 @@ def main() -> int:
     report = {"check_id": "s2.detectors_vs_mt5", "sprint": 2,
               "class": "EXACT(+declared amber band, REV-S2 OBS-5)",
               "inputs": {"mt5": a.mt5, "events": a.events,
-                         "skip_bars": a.skip_bars},
+                         "skip_bars": a.skip_bars, "check_rev": 3},
               "rows_compared": len(bars),
               "green": len(bars) - len(diffs), "amber": ambers, "red": reds,
               "diffs": diffs, "verdict": verdict, "generated_ts": time.time_ns()}
     if a.report:
         json.dump(report, open(a.report, "w", encoding="utf-8"), indent=2)
-    print(f"[IVF s2] bars={len(bars)} qrf_events={len(events)} verdict={verdict} "
+    print(f"[IVF s2 rev3] bars={len(bars)} qrf_events={len(events)} verdict={verdict} "
           f"(red={reds} amber={ambers})")
     for d in diffs[:25]:
         print(f"  {d['status']} {d['key']}: {d['delta']}")

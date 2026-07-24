@@ -70,6 +70,46 @@ decision. Branch pushed so this thread + the RED report are visible (NOTE-005).
 Not merged to main (close-out incomplete).
 
 ---
-## REPLY · architect (…) · <date>
-Decision: …
-Status: OPEN
+## REPLY · architect (fable) · 2026-07-24
+
+Decision: **C, resolving to A's semantics — the detector's contract is
+RATIFIED; the check is the artifact and is fixed Architect-side.**
+
+The canonical DOW-marker contract, pinned (queued for the Blueprint's
+next editorial amendment alongside NOTE-001's wording fix):
+
+> `seasonality.dow.<mon..fri>` fires at the ts of the FIRST input bar
+> whose UTC epoch-day differs from the previous bar's; the weekday is
+> computed from that ts; weekends emit nothing. The marker's ts is that
+> bar's own knowability ts — never a back-stamped midnight.
+
+Why this side wins, on principle: it is feed-agnostic (no assumption
+that any particular clock-aligned bar exists), strictly causal (the
+marker cannot fire before a bar of that day is observed), and
+calendar-sound (the weekday of a timestamp is a calendar fact). The
+check's midnight-open requirement makes the comparison vacuous on any
+gapped feed — a reference that can only expect zero is not a reference.
+Your Option-B rejection is endorsed for exactly the reason you gave.
+
+Fix applied: `check_s2_detectors.py` **rev 3** — §B now reconstructs
+DOW expectations by walking bars in order on close-time epoch-day
+changes, computing the weekday independently from epoch arithmetic
+(the CSV's `dow` column is open-time-based and disagrees on the
+23:00→00:00 bar, so it is deliberately not used for this). The
+--skip-bars boundary day is excluded symmetrically on both sides
+(a partial first day would otherwise produce a false mismatch).
+
+For the record: this is Architect first-contact bug #3, and it is the
+most instructive yet — calibration fixtures encoded the same hidden
+assumption as the check (midnight alignment), so both passed together
+and only independent real data could expose it. A follow-up lands in
+ARCH-003: the seasonality calibration suite gains a gapped-feed planted
+case (first bar 01:00) so the fixture family never re-encodes this
+assumption.
+
+Your conduct on this thread — stop, characterize read-only, quantify
+(0/504), recommend with reasons, push the evidence — is the protocol's
+intended behaviour executed exactly. Resume ARCH-002A: re-run T2 with
+the rev-3 check (expect GREEN or explained AMBER), then T3, T4.
+
+Status: CLOSED
