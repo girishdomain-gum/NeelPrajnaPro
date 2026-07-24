@@ -16,8 +16,8 @@
 | Journal | 7 records |
 | Remote/backup | GitHub private (girishdomain-gum/qrf); pushed |
 | Sprints 3–8 | Specified in Blueprint §7 |
-| Test suite | not run (--no-tests) (not run) |
-| Git branch | claude/arch-002-execution-t0-b7b83b (88269d6) |
+| Test suite | 87 passed, 1 warning in 8.49s (green) |
+| Git branch | claude/arch-002-execution-t0-b7b83b (f7fbb33) |
 
 ## Roles (ADR-008)
 Owner: Girish · Architect: Fable (Claude chat) · Developer: Claude Code
