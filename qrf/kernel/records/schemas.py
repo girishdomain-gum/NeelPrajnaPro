@@ -1,10 +1,10 @@
-"""Payload schemas for the v1 record types available in Sprint 1.
+"""Payload schemas for the v1 record types available through Sprint 2.
 
-Implementation Blueprint v1.0 §2. Sprint 1 registers exactly three payload
-schemas: ``note``, ``amendment`` and ``instrument_registered`` (Blueprint §7,
-ARCH-001 scope). Every ``RecordStore.append`` validates the payload against the
-schema registered for ``(record_type, schema_version)`` before writing (I-4);
-an unregistered pair is itself a :class:`SchemaViolation`.
+Implementation Blueprint v1.0 §2. Sprint 1 registered ``note``, ``amendment``
+and ``instrument_registered``; Sprint 2 (ARCH-002) adds ``calibration``. Every
+``RecordStore.append`` validates the payload against the schema registered for
+``(record_type, schema_version)`` before writing (I-4); an unregistered pair is
+itself a :class:`SchemaViolation`.
 
 Validation here is deliberately hand-rolled and strict (unknown keys rejected)
 rather than delegated to a DataFrame validator — payloads are small dicts and
@@ -20,6 +20,9 @@ from qrf.kernel.errors import SchemaViolation
 
 # Enum from Blueprint §2, instrument_registered.kind.
 _INSTRUMENT_KINDS = frozenset({"data", "detector", "judge"})
+
+# Enum from Blueprint §2, calibration.cases[].kind.
+_CALIBRATION_CASE_KINDS = frozenset({"planted_truth", "planted_noise", "insufficient"})
 
 
 def _require(cond: bool, msg: str) -> None:
@@ -76,12 +79,59 @@ def _validate_instrument_registered(payload: dict) -> None:
     )
 
 
+def _validate_calibration(payload: dict) -> None:
+    _check_keys(
+        payload,
+        {
+            "instrument_ref",
+            "suite_id",
+            "cases",
+            "pass_rate_truth",
+            "silence_rate_noise",
+            "overall_pass",
+        },
+        set(),
+        "calibration",
+    )
+    _require(
+        isinstance(payload["instrument_ref"], str),
+        "calibration.instrument_ref must be a string",
+    )
+    _require(isinstance(payload["suite_id"], str), "calibration.suite_id must be a string")
+    _require(isinstance(payload["cases"], list), "calibration.cases must be a list")
+    for i, case in enumerate(payload["cases"]):
+        where = f"calibration.cases[{i}]"
+        _check_keys(case, {"case_id", "kind", "expected", "got", "pass"}, set(), where)
+        _require(isinstance(case["case_id"], str), f"{where}.case_id must be a string")
+        _require(
+            case["kind"] in _CALIBRATION_CASE_KINDS,
+            f"{where}.kind must be one of {sorted(_CALIBRATION_CASE_KINDS)}",
+        )
+        # 'expected' and 'got' are free-form (per-detector) but must be present.
+        _require(
+            isinstance(case["pass"], bool),
+            f"{where}.pass must be a bool",
+        )
+    for f64_field in ("pass_rate_truth", "silence_rate_noise"):
+        val = payload[f64_field]
+        _require(
+            isinstance(val, (int, float)) and not isinstance(val, bool),
+            f"calibration.{f64_field} must be a number",
+        )
+        _require(0.0 <= float(val) <= 1.0, f"calibration.{f64_field} must be in [0, 1]")
+    _require(
+        isinstance(payload["overall_pass"], bool),
+        "calibration.overall_pass must be a bool",
+    )
+
+
 # Registry keyed by (record_type, schema_version). Additive schema evolution
 # bumps the version (Blueprint §2); removals never happen.
 SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("note", 1): _validate_note,
     ("amendment", 1): _validate_amendment,
     ("instrument_registered", 1): _validate_instrument_registered,
+    ("calibration", 1): _validate_calibration,
 }
 
 

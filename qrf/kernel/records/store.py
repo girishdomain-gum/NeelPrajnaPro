@@ -168,6 +168,14 @@ class RecordStore:
             raise SchemaViolation("producer must be a non-empty string")
         if not isinstance(event_ts, int) or isinstance(event_ts, bool):
             raise SchemaViolation("event_ts must be an int (nanoseconds since epoch)")
+        # OBS-1 (REV-S1): a resolved view is marked meta={"resolved": true, ...};
+        # it is a derived view, never a journal record. Refuse to persist one so
+        # a caller can never chain or re-append a resolved payload.
+        if meta is not None and "resolved" in meta:
+            raise SchemaViolation(
+                "meta key 'resolved' is reserved for amendment-resolved views "
+                "(REV-S1 OBS-1); a resolved view must never be persisted"
+            )
 
         # I-4: payload must validate against the registered schema.
         schemas.validate(record_type, payload, schema_version)
@@ -275,6 +283,14 @@ class RecordStore:
         Amendments targeting the record (``payload.target_ref == record_id``)
         are applied in ULID order as shallow overrides onto the base payload.
         The original record in the journal is never modified.
+
+        When at least one amendment applies, the returned record is a *view*, not
+        a journal record: its ``content_hash`` is recomputed over the corrected
+        payload (so it differs from the stored hash) and it is loudly marked
+        ``meta={"resolved": True, "amendments": [ids...]}`` (REV-S1 OBS-1).
+        :meth:`append` refuses any record carrying that marker, so a resolved
+        view can never be persisted or chained. A record with no amendments
+        resolves to itself, unmarked.
         """
         base = self.get(record_id)
         amendments = [
@@ -298,7 +314,7 @@ class RecordStore:
             parents=base.parents,
             payload=corrected,
             prev_hash=base.prev_hash,
-            meta=base.meta,
+            meta={"resolved": True, "amendments": [am.record_id for am in amendments]},
         )
 
     # -- convenience ----------------------------------------------------------
