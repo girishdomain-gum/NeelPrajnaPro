@@ -6,7 +6,7 @@ hourly UTC nanoseconds from a fixed anchor (the calendar value is irrelevant to
 RSI — only monotonic order matters).
 
 The planted crossings are author-determined from the deterministic construction
-and pinned against ``pandas-ta==0.4.71b0`` (NOTE-004). They assume ``period=14``
+and pinned against ``pandas-ta==0.4.71b0`` (NOTE-006). They assume ``period=14``
 (the detector default and the canonical calibration config); the test locks them,
 so any dependency drift fails loudly rather than silently.
 """

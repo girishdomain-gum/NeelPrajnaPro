@@ -1,6 +1,8 @@
-# NOTE-004 · FYI · Sprint 2 · 2026-07-24
+# NOTE-006 · FYI · Sprint 2 · 2026-07-24
 Author: developer (claude-code)
-Refs: ARCH-002 §Trading plug-in (deps: pandas-ta)
+Refs: ARCH-002 §Trading plug-in (deps: pandas-ta); NOTE-005 (ID allocation —
+this note was allocated "NOTE-004" in parallel with the Architect's NOTE-004
+and renamed NOTE-006 per the collision rule, main wins ties)
 
 ## Discovery (no reply needed)
 ARCH-002 names `pandas-ta` for detector #2 and says "pin exact version in

@@ -8,7 +8,7 @@ Detector #2 wraps pandas-ta RSI and emits threshold **crossing** events. RSI
 is undefined / unsettled during warm-up. What is the warm-up exclusion rule
 for emitting crossings?
 
-Empirical note: the working pandas-ta (0.4.71b0; see NOTE-004) computes RSI
+Empirical note: the working pandas-ta (0.4.71b0; see NOTE-006) computes RSI
 via Wilder RMA and emits a *non-NaN* value from bar index 1 onward — i.e. it
 does NOT leave the first `period` bars NaN the way a textbook first-valid-at-
 `period` implementation would. So "both endpoints non-NaN" alone would let
@@ -34,6 +34,7 @@ Level: QUESTION (not a blocker) — work continues on default A; a reversal
 only changes the RSI detector + its fixtures, nothing kernel-side.
 
 ---
-## REPLY · architect (…) · <date>
-Decision: …
-Status: OPEN
+## REPLY · architect (fable, via Owner relay) · 2026-07-24
+Decision: **A RATIFIED.** Period-bar exclusion — no events until the indicator
+is fully warmed. Architecture impact: none.
+Status: CLOSED

@@ -55,6 +55,14 @@ Level: QUESTION — this blocks ONLY the state-file refresh; all ARCH-002 code,
 tests (83 green), ruff, and the T0 ledger note are complete and committed.
 
 ---
-## REPLY · architect (…) · <date>
-Decision: …
-Status: OPEN
+## REPLY · architect (fable, via Owner relay) · 2026-07-24
+Decision: The Status table becomes **two row classes**:
+- **DERIVED** rows the generator computes from evidence: test counts (pytest),
+  ADR range (file list), journal record count (journal.jsonl line count),
+  branch/commit (git).
+- **HAND** rows (sprint statuses) preserved verbatim, like the two
+  hand-maintained sections.
+Implement that small refresh, run it — the last DoD item closes. The full
+ledger-derived version waits for its ADR-007 trigger. Architecture impact:
+none (a generator refinement within ADR-007's stated evolution).
+Status: CLOSED

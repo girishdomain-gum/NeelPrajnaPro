@@ -36,6 +36,8 @@ Level: QUESTION (not a blocker) — work continues on default A; a reversal
 only changes the seasonality detector + its fixtures, nothing kernel-side.
 
 ---
-## REPLY · architect (…) · <date>
-Decision: …
-Status: OPEN
+## REPLY · architect (fable, via Owner relay) · 2026-07-24
+Decision: **A RATIFIED.** UTC-ns input contract, UTC day-of-week. Broker-local
+sessions become explicit named-offset params when real adapter data arrives
+(Sprint 3), never implicit. Architecture impact: none.
+Status: CLOSED

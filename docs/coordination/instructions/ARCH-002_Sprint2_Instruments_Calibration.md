@@ -144,7 +144,7 @@ Trading plug-in (`qrf/trading/concepts/`):
   `period`-bar warm-up exclusion; sub-`period+1` inputs are `insufficient`.
 - `hand_audit.py` + `scripts/hand_audit_s2.py` — Owner's HC hook: 10 sampled
   events per detector with their source bars.
-- Dep added, pinned: `pandas-ta==0.4.71b0` (see NOTE-004; the legacy 0.3.x is
+- Dep added, pinned: `pandas-ta==0.4.71b0` (see NOTE-006; the legacy 0.3.x is
   dead under numpy 2 / pandas 3; numpy pinned to 2.2.6 as a consequence).
 
 Ledger bootstrap (`scripts/bootstrap_s2_instruments.py`, idempotent) — both
@@ -180,7 +180,8 @@ events/detector with source bars.
   pending" (it is CLOSED per GO-S1 / the T0 note). I did NOT overwrite the
   tracked state file (one-direction rule). This is the ONLY unmet DoD item
   ("gen_state run → refresh"); all code, tests, ruff, and T0 are complete.
-NOTE-004 (FYI) — pandas-ta version choice + numpy/numba consequences.
+NOTE-006 (FYI) — pandas-ta version choice + numpy/numba consequences (renamed
+from NOTE-004 per NOTE-005's ID-collision rule).
 
 ### Not done (blocked on DEVQ-004)
 `gen_state` refresh of `docs/handover/AI_PROJECT_STATE.md`. Awaiting the
