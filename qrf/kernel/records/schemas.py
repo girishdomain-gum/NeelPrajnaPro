@@ -1,7 +1,9 @@
-"""Payload schemas for the v1 record types available through Sprint 2.
+"""Payload schemas for the v1 record types available through Sprint 3.
 
 Implementation Blueprint v1.0 §2. Sprint 1 registered ``note``, ``amendment``
-and ``instrument_registered``; Sprint 2 (ARCH-002) adds ``calibration``. Every
+and ``instrument_registered``; Sprint 2 (ARCH-002) added ``calibration``;
+Sprint 3 (ARCH-003) adds the data-plane types ``bulk_manifest``,
+``ingest_report``, ``window`` and ``window_burn``. Every
 ``RecordStore.append`` validates the payload against the schema registered for
 ``(record_type, schema_version)`` before writing (I-4); an unregistered pair is
 itself a :class:`SchemaViolation`.
@@ -24,6 +26,12 @@ _INSTRUMENT_KINDS = frozenset({"data", "detector", "judge"})
 # Enum from Blueprint §2, calibration.cases[].kind.
 _CALIBRATION_CASE_KINDS = frozenset({"planted_truth", "planted_noise", "insufficient"})
 
+# Enum from Blueprint §2, ingest_report.verdict.
+_INGEST_VERDICTS = frozenset({"PASS", "FAIL"})
+
+# Enum from Blueprint §2, window.designation.
+_WINDOW_DESIGNATIONS = frozenset({"TRAINING", "EXPLORATION", "VIRGIN"})
+
 
 def _require(cond: bool, msg: str) -> None:
     if not cond:
@@ -37,6 +45,20 @@ def _check_keys(payload: dict, required: set[str], optional: set[str], where: st
     _require(not missing, f"{where}: missing required field(s) {sorted(missing)}")
     unknown = keys - required - optional
     _require(not unknown, f"{where}: unknown field(s) {sorted(unknown)}")
+
+
+def _require_int(payload: dict, key: str, where: str, *, non_negative: bool = False) -> None:
+    val = payload[key]
+    _require(
+        isinstance(val, int) and not isinstance(val, bool),
+        f"{where}.{key} must be an int",
+    )
+    if non_negative:
+        _require(val >= 0, f"{where}.{key} must be >= 0")
+
+
+def _require_str(payload: dict, key: str, where: str) -> None:
+    _require(isinstance(payload[key], str), f"{where}.{key} must be a string")
 
 
 def _validate_note(payload: dict) -> None:
@@ -125,6 +147,95 @@ def _validate_calibration(payload: dict) -> None:
     )
 
 
+def _validate_bulk_manifest(payload: dict) -> None:
+    _check_keys(
+        payload,
+        {
+            "path",
+            "dataset",
+            "row_count",
+            "byte_size",
+            "file_sha256",
+            "columns",
+            "ts_min",
+            "ts_max",
+        },
+        set(),
+        "bulk_manifest",
+    )
+    _require_str(payload, "path", "bulk_manifest")
+    _require_str(payload, "dataset", "bulk_manifest")
+    _require_str(payload, "file_sha256", "bulk_manifest")
+    _require_int(payload, "row_count", "bulk_manifest", non_negative=True)
+    _require_int(payload, "byte_size", "bulk_manifest", non_negative=True)
+    _require_int(payload, "ts_min", "bulk_manifest")
+    _require_int(payload, "ts_max", "bulk_manifest")
+    _require(payload["ts_max"] >= payload["ts_min"], "bulk_manifest.ts_max must be >= ts_min")
+    _require(isinstance(payload["columns"], list), "bulk_manifest.columns must be a list")
+    for i, col in enumerate(payload["columns"]):
+        where = f"bulk_manifest.columns[{i}]"
+        _check_keys(col, {"name", "dtype"}, set(), where)
+        _require_str(col, "name", where)
+        _require_str(col, "dtype", where)
+
+
+def _validate_ingest_report(payload: dict) -> None:
+    _check_keys(
+        payload,
+        {"manifest_refs", "rows_clean", "rows_flagged", "anomaly_counts", "verdict"},
+        set(),
+        "ingest_report",
+    )
+    _require(
+        isinstance(payload["manifest_refs"], list),
+        "ingest_report.manifest_refs must be a list",
+    )
+    for i, ref in enumerate(payload["manifest_refs"]):
+        _require(
+            isinstance(ref, str),
+            f"ingest_report.manifest_refs[{i}] must be a string",
+        )
+    _require_int(payload, "rows_clean", "ingest_report", non_negative=True)
+    _require_int(payload, "rows_flagged", "ingest_report", non_negative=True)
+    _require(
+        isinstance(payload["anomaly_counts"], dict),
+        "ingest_report.anomaly_counts must be an object",
+    )
+    for k, v in payload["anomaly_counts"].items():
+        _require(
+            isinstance(v, int) and not isinstance(v, bool),
+            f"ingest_report.anomaly_counts[{k!r}] must be an int",
+        )
+    _require(
+        payload["verdict"] in _INGEST_VERDICTS,
+        f"ingest_report.verdict must be one of {sorted(_INGEST_VERDICTS)}",
+    )
+
+
+def _validate_window(payload: dict) -> None:
+    _check_keys(
+        payload,
+        {"dataset", "ts_start", "ts_end", "designation"},
+        set(),
+        "window",
+    )
+    _require_str(payload, "dataset", "window")
+    _require_int(payload, "ts_start", "window")
+    _require_int(payload, "ts_end", "window")
+    _require(payload["ts_end"] > payload["ts_start"], "window.ts_end must be > ts_start")
+    _require(
+        payload["designation"] in _WINDOW_DESIGNATIONS,
+        f"window.designation must be one of {sorted(_WINDOW_DESIGNATIONS)}",
+    )
+
+
+def _validate_window_burn(payload: dict) -> None:
+    _check_keys(payload, {"window_ref", "lineage", "consumed_by"}, set(), "window_burn")
+    _require_str(payload, "window_ref", "window_burn")
+    _require_str(payload, "lineage", "window_burn")
+    _require_str(payload, "consumed_by", "window_burn")
+
+
 # Registry keyed by (record_type, schema_version). Additive schema evolution
 # bumps the version (Blueprint §2); removals never happen.
 SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
@@ -132,6 +243,10 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("amendment", 1): _validate_amendment,
     ("instrument_registered", 1): _validate_instrument_registered,
     ("calibration", 1): _validate_calibration,
+    ("bulk_manifest", 1): _validate_bulk_manifest,
+    ("ingest_report", 1): _validate_ingest_report,
+    ("window", 1): _validate_window,
+    ("window_burn", 1): _validate_window_burn,
 }
 
 

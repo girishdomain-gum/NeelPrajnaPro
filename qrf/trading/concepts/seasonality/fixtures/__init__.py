@@ -27,6 +27,12 @@ _DAY = 24 * _HOUR
 _MON_2024_01_01 = 1_704_067_200 * _NS
 # 2024-01-06 00:00:00 UTC — a Saturday (epoch-day 19728; (19728+3)%7 == 5 == Sat).
 _SAT_2024_01_06 = _MON_2024_01_01 + 5 * _DAY
+# Gapped-feed anchors: Fri 2024-01-05, then post-weekend Mon 2024-01-08 and
+# Tue 2024-01-09 — the DEVQ-005 shape (first bar of each day at 01:00, no
+# midnight bar; the post-weekend Monday marker lands at 01:00, not midnight).
+_FRI_2024_01_05 = _MON_2024_01_01 + 4 * _DAY
+_MON_2024_01_08 = _MON_2024_01_01 + 7 * _DAY
+_TUE_2024_01_09 = _MON_2024_01_01 + 8 * _DAY
 
 # London session as UTC seconds-of-day, [start, end).
 CANONICAL_PARAMS: dict = {
@@ -44,6 +50,9 @@ def _weekday(ts_ns: int) -> str:
 
 assert _weekday(_MON_2024_01_01) == "mon", "anchor day is not a Monday — fixture drift"
 assert _weekday(_SAT_2024_01_06) == "sat", "silence-case day is not a Saturday"
+assert _weekday(_FRI_2024_01_05) == "fri", "gapped-feed anchor is not a Friday"
+assert _weekday(_MON_2024_01_08) == "mon", "gapped-feed post-weekend day is not a Monday"
+assert _weekday(_TUE_2024_01_09) == "tue", "gapped-feed third day is not a Tuesday"
 
 
 def _bars(ts_values: list[int]) -> pa.Table:
@@ -93,6 +102,42 @@ def _insufficient_case() -> CalibrationCase:
     )
 
 
+def _gapped_feed_case() -> CalibrationCase:
+    """Gapped feed (DEVQ-005 ratified contract): first bar of each day at 01:00.
+
+    Three trading days — Fri 2024-01-05, then post-weekend Mon 2024-01-08 and
+    Tue 2024-01-09 — each with hourly bars 01:00..23:00 and **no 00:00 bar**;
+    the weekend (Sat/Sun) has no bars at all. This is the real-broker shape that
+    exposed DEVQ-005: the dow marker must fire at the ts of the FIRST bar of each
+    UTC epoch-day (weekday from that ts), never a back-stamped midnight — so the
+    post-weekend ``dow.mon`` lands at Mon **01:00**, not Mon 00:00. The fixture
+    family must never re-encode midnight alignment (GO-S2 carried item).
+    """
+    ts_values: list[int] = []
+    for day in (_FRI_2024_01_05, _MON_2024_01_08, _TUE_2024_01_09):
+        ts_values.extend(day + h * _HOUR for h in range(1, 24))  # 01:00..23:00, no 00:00
+    expected: list[dict] = []
+    for day, name in ((_FRI_2024_01_05, "fri"), (_MON_2024_01_08, "mon"), (_TUE_2024_01_09, "tue")):
+        expected.append(_desc(day + 1 * _HOUR, f"seasonality.dow.{name}"))  # first bar = 01:00
+        expected.append(_desc(day + 8 * _HOUR, "seasonality.session.open"))
+        expected.append(_desc(day + 16 * _HOUR, "seasonality.session.close"))
+    expected.sort(key=lambda r: (r["ts"], r["event_type"], r["direction"]))
+    return CalibrationCase(
+        case_id="gapped_feed_first_bar_0100", kind="planted_truth",
+        data=_bars(ts_values), expected=expected,
+    )
+
+
 def seasonality_cases() -> list[CalibrationCase]:
-    """The full planted suite for the seasonality detector."""
-    return [_planted_truth_case(), _planted_noise_case(), _insufficient_case()]
+    """The full planted suite for the seasonality detector.
+
+    Two planted-truth cases (midnight-aligned and gapped-feed), one structured
+    noise case, one insufficient case. The gapped-feed case (GO-S2 carried item)
+    locks the ratified DEVQ-005 dow contract into the fixture family.
+    """
+    return [
+        _planted_truth_case(),
+        _gapped_feed_case(),
+        _planted_noise_case(),
+        _insufficient_case(),
+    ]

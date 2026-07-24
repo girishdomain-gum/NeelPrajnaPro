@@ -46,9 +46,32 @@ def test_output_is_valid_eventframe_with_meta_flags():
 
 def test_structured_noise_and_insufficient_are_silent():
     det = _det()
-    cases = det.planted_cases()
-    for case in cases[1:]:  # noise + insufficient
+    # Select silence cases by kind (the suite now has two planted-truth cases).
+    for case in det.planted_cases():
+        if case.kind == "planted_truth":
+            continue
         assert det.detect(case.data).num_rows == 0
+
+
+def test_gapped_feed_dow_fires_at_first_bar_not_midnight():
+    """DEVQ-005 contract: post-weekend dow marker lands at the day's first bar.
+
+    On a feed whose first bar of each day is 01:00 (no 00:00 bar), the dow
+    markers must fire at 01:00 — and the post-weekend Monday marker at Mon 01:00,
+    never a back-stamped Mon 00:00.
+    """
+    det = _det()
+    gapped = next(c for c in det.planted_cases() if c.case_id == "gapped_feed_first_bar_0100")
+    got = descriptors(det.detect(gapped.data))
+    assert got == gapped.expected  # exact match, ratified contract
+
+    hour = 3600 * 1_000_000_000
+    dow = {d["event_type"]: d["ts"] for d in got if d["event_type"].startswith("seasonality.dow.")}
+    # Every dow marker sits at 01:00 of its day (offset 1h from midnight), never 00:00.
+    for ts in dow.values():
+        assert (ts // hour) % 24 == 1
+    # The post-weekend Monday marker exists and is at Mon 01:00 (the DEVQ-005 case).
+    assert dow["seasonality.dow.mon"] == SF._MON_2024_01_08 + hour
 
 
 def test_weekend_emits_no_dow_marker():

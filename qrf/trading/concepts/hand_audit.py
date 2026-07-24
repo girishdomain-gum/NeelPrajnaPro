@@ -5,7 +5,9 @@ showing N events from a detector run alongside the bar that produced each, so a
 human can eyeball that the events are real. Deterministic sampling (fixed step,
 no RNG) keeps the output reproducible for sign-off.
 
-Used by :mod:`scripts.hand_audit_s2` (CLI) and covered by tests.
+Covered by tests. (The Sprint-2 CLI ``scripts/hand_audit_s2.py`` was renamed to
+``scripts/calibration_audit_s2.py`` in ARCH-003, which now inspects the planted
+calibration suite directly rather than via this hook.)
 """
 
 from __future__ import annotations

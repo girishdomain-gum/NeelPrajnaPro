@@ -68,13 +68,14 @@ def test_rates_reflect_partial_failure(env):
     det = SeasonalityDetector(params=SF.CANONICAL_PARAMS)
     registry.register(det)
     cases = det.planted_cases()
-    truth = cases[0]
+    truth = next(c for c in cases if c.kind == "planted_truth")
+    noise = next(c for c in cases if c.kind == "planted_noise")
     # Two truth cases: one correct, one with a broken expectation -> 0.5 rate.
     broken = type(truth)(
         case_id="broken", kind="planted_truth", data=truth.data,
         expected=[{"ts": 0, "event_type": "nope", "direction": 0}],
     )
-    rec = harness.run(det, [truth, broken, cases[1]])
+    rec = harness.run(det, [truth, broken, noise])
     assert rec.payload["pass_rate_truth"] == 0.5
     assert rec.payload["silence_rate_noise"] == 1.0
     assert rec.payload["overall_pass"] is False
