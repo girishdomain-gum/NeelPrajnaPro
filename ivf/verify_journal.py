@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""IVF Sprint-1 verifier: independent journal integrity check.
+"""IVF Sprint-1 verifier: independent journal integrity check.  (rev 2)
+
+rev 2 (2026-07-24): fixed a crash in the summary computation when a finding
+key has no dot (e.g. the missing-file finding) — see NOTE-002. First-run bug
+in the IVF itself, caught on first invocation; recorded per IVF §5.4.
 
 INDEPENDENCE (IVF v1.0 rules IND-1..IND-4):
   * This file imports NOTHING from qrf.* — stdlib only.
@@ -54,6 +58,13 @@ def is_ulid(s) -> bool:
     return isinstance(s, str) and len(s) == 26 and set(s) <= ULID_ALPHABET
 
 
+def implicated(key: str) -> str:
+    """Record/site implicated by a finding key: the part after the first dot,
+    or the whole key if it has none (rev-2 fix — never assume a dot)."""
+    parts = key.split(".", 2)
+    return parts[1] if len(parts) > 1 else key
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("journal")
@@ -86,7 +97,7 @@ def main() -> int:
 
     for lineno, ln in enumerate(x for x in raw.split(b"\n") if x):
         n += 1
-        where = f"line {lineno}"
+        where = f"line{lineno}"
         try:
             d = json.loads(ln.decode("utf-8"))
         except (ValueError, UnicodeDecodeError) as e:
@@ -116,7 +127,6 @@ def main() -> int:
         except (KeyError, ValueError) as e:
             red(f"C2.{where}.inputs", "six hashed fields present/serializable",
                 str(e), "cannot recompute")
-            want = None
 
         # C3: chain link
         if d.get("prev_hash") != prev_hash:
@@ -129,21 +139,22 @@ def main() -> int:
             red(f"C4.{where}.ulid_form", "26-char Crockford ULID", rid, "bad id")
         elif prev_id and rid <= prev_id:
             red(f"C4.{where}.order", f"> {prev_id}", rid, "ids not increasing")
-        prev_id = rid if isinstance(rid, str) else prev_id
+        if isinstance(rid, str):
+            prev_id = rid if is_ulid(rid) else prev_id
+            seen.add(rid)
 
         # C5: parents strictly earlier
         for p in d.get("parents", []):
-            if p not in seen:
+            if p not in seen or p == rid:
                 red(f"C5.{where}.parent", "earlier record id", p,
                     "unknown or forward parent reference")
-        if isinstance(rid, str):
-            seen.add(rid)
 
     verdict = "GREEN" if not diffs else "RED"
+    bad_sites = {implicated(d0["key"]) for d0 in diffs}
     report = {
         "check_id": "s1.verify_journal", "sprint": 1, "class": "EXACT",
         "inputs": {"journal": args.journal}, "rows_compared": n,
-        "green": n - len({d0["key"].split(".")[1] for d0 in diffs}) if diffs else n,
+        "green": max(n - len(bad_sites), 0),
         "amber": 0, "red": len(diffs), "diffs": diffs, "verdict": verdict,
         "generated_ts": time.time_ns(),
     }
