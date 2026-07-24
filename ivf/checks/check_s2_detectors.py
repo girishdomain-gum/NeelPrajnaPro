@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
-"""IVF Sprint-2 check: detectors vs MT5-derived independent references.
+"""IVF Sprint-2 check: detectors vs MT5-derived independent references. (rev 2)
+
+rev 2: added --skip-bars (default 50). MT5's RSI is seeded from history BEFORE
+the export window while qrf's detector sees only the window, so the two RSI
+series legitimately diverge for the first bars (Wilder RMA seeding; decays as
+(1-1/period)^n — under 3% residual after 50 bars). --skip-bars excludes that
+region from BOTH sides of the comparison symmetrically.
 
 INDEPENDENCE: stdlib only; imports nothing from qrf. Consumes two CSV files:
   --mt5     IVF_S2_Export.mq5 output (time_open_sec,time_close_sec,o,h,l,c,
             rsiN,dow)
   --events  qrf-side event export: header ts,event_type,direction
-            (ts in int nanoseconds, close-time basis; see checklist_s2.md
-            for the sanctioned qrf-side export snippet)
+            (ts in int nanoseconds, close-time basis)
   --sessions  session spec like "london=28800-57600" (UTC seconds-of-day,
-            [start,end)), repeatable. Must match the detector's registered
-            params (read them from the journal's instrument_registered
-            record — by eye, not by import).
+            [start,end)), repeatable — must match the detector's registered
+            params (read from the journal's instrument_registered record).
   --rsi-overbought / --rsi-oversold  thresholds (default 70/30)
 
-What it does, independently of qrf code:
-  A) Recomputes RSI crossings from MT5's OWN rsi column (prev<=OB<cur up;
-     prev>=OS>cur down), warm-up = rows with empty rsi skipped, and compares
-     to the qrf classical.rsi events: EXACT on (ts_close, direction).
-     Divergences where MT5 RSI is within --amber-band (default 0.5) of the
-     threshold are AMBER (near-threshold implementation sensitivity,
-     REV-S2 OBS-5); all other divergences are RED.
-  B) Recomputes session open/close and day-start DOW markers from bar
-     times and compares to qrf seasonality events: EXACT.
-
-Report: IVF §5.2 JSON to --report; human summary to stdout.
-Exit 0 GREEN, 2 AMBER (all ambers explained-able), 1 RED.
+Checks: A) RSI crossings recomputed from MT5's OWN rsi column vs qrf events
+(EXACT ts/direction; near-threshold divergence within --amber-band -> AMBER,
+REV-S2 OBS-5). B) session open/close + day-start DOW markers recomputed from
+bar times vs qrf seasonality events (EXACT).
+Report: IVF §5.2 JSON to --report. Exit 0 GREEN, 2 AMBER, 1 RED.
 """
 
 from __future__ import annotations
@@ -38,12 +35,12 @@ def load_mt5(path):
     rows = []
     with open(path, newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f):
+            rsi_key = [k for k in r if k.startswith("rsi")][0]
             rows.append({
                 "open_s": int(r["time_open_sec"]),
                 "close_s": int(r["time_close_sec"]),
                 "close": float(r["close"]),
-                "rsi": (float(r[[k for k in r if k.startswith("rsi")][0]])
-                        if r[[k for k in r if k.startswith("rsi")][0]] else None),
+                "rsi": (float(r[rsi_key]) if r[rsi_key] else None),
                 "dow": int(r["dow"]),
             })
     rows.sort(key=lambda x: x["open_s"])
@@ -67,11 +64,20 @@ def main() -> int:
     ap.add_argument("--rsi-overbought", type=float, default=70.0)
     ap.add_argument("--rsi-oversold", type=float, default=30.0)
     ap.add_argument("--amber-band", type=float, default=0.5)
+    ap.add_argument("--skip-bars", type=int, default=50,
+                    help="exclude first N bars from BOTH sides (RSI seeding)")
     ap.add_argument("--report", default=None)
     a = ap.parse_args()
 
     bars = load_mt5(a.mt5)
     events = load_events(a.events)
+
+    # rev 2: symmetric warm-up exclusion (RSI seeding difference).
+    if a.skip_bars > 0 and len(bars) > a.skip_bars:
+        cutoff_ns = bars[a.skip_bars]["open_s"] * NS
+        bars = bars[a.skip_bars:]
+        events = [e for e in events if e["ts"] >= cutoff_ns]
+
     diffs = []
 
     def add(status, key, expected, got, why):
@@ -105,7 +111,6 @@ def main() -> int:
             add("RED", f"A.rsi.{ts}.direction", d, got_cross[ts], "direction mismatch")
     for ts, d in sorted(got_cross.items()):
         if ts not in exp_cross:
-            # near-threshold? find the bar
             bar = next((b for b in bars if b["close_s"] * NS == ts), None)
             near = bool(bar and bar["rsi"] is not None and
                         min(abs(bar["rsi"] - a.rsi_overbought),
@@ -150,7 +155,8 @@ def main() -> int:
     verdict = "RED" if reds else ("AMBER" if ambers else "GREEN")
     report = {"check_id": "s2.detectors_vs_mt5", "sprint": 2,
               "class": "EXACT(+declared amber band, REV-S2 OBS-5)",
-              "inputs": {"mt5": a.mt5, "events": a.events},
+              "inputs": {"mt5": a.mt5, "events": a.events,
+                         "skip_bars": a.skip_bars},
               "rows_compared": len(bars),
               "green": len(bars) - len(diffs), "amber": ambers, "red": reds,
               "diffs": diffs, "verdict": verdict, "generated_ts": time.time_ns()}
