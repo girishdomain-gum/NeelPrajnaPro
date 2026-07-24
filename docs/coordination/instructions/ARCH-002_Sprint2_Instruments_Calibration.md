@@ -104,3 +104,84 @@ it), Owner Go/No-Go.
 DEVQs as ever. Known judgment areas where a DEVQ is expected rather
 than a guess: session boundary handling across broker timezones
 (if bar data lacks tz info), and RSI warm-up period exclusion rules.
+
+## COMPLETION REPORT (developer)
+Author: developer (claude-code) · 2026-07-24 · Status: code COMPLETE, one
+DoD item (state refresh) held on DEVQ-004.
+
+### T0 — done first
+GO-S1 close appended as a `note` record, producer `human:girish`, parented
+to both genesis records. Record id **01KYAJA3TMM03K1MYMCTRE9033**. Chain
+re-verified GREEN. Commit `ARCH-002: T0 GO-S1 ledger note`.
+
+### Built
+Kernel (`qrf/kernel/instruments/`, domain-blind):
+- `base.py` — `Detector` protocol, `CalibrationCase`, EventFrame contract
+  (`EVENTFRAME_SCHEMA`, `build_event_frame`, `empty_event_frame`,
+  `validate_event_frame`) enforcing §4.3 names/dtypes, int64-ns `ts`
+  (a `timestamp`/`int32` column is rejected), and `zone_hi ≥ zone_lo`.
+- `registry.py` — `InstrumentRegistry`: register → `instrument_registered`;
+  `get`/`info_for_ref`; `is_calibrated` (passing + in-date, no soft-pass);
+  `require_calibrated`/`run_detector` as the calibration gate. instrument_ref
+  = the registration record id, so a version bump (new ref) is uncalibrated
+  until re-calibrated.
+- `calibration.py` — `CalibrationHarness.run` → `calibration` record; records
+  pass AND fail (the block lives in `is_calibrated`).
+- `records/schemas.py` — added the v1 `calibration` payload schema (§2).
+
+REV-S1 follow-ups in `records/store.py`:
+- OBS-1 — `resolve()` returns a view marked
+  `meta={"resolved": true, "amendments":[…]}`; `append()` refuses any record
+  whose meta carries `resolved`, so a resolved view can never be persisted.
+- OBS-3 — amendment-of-an-amendment test documents the shallow, non-transitive,
+  ULID-ordered (last-write-wins) resolution.
+
+Trading plug-in (`qrf/trading/concepts/`):
+- `seasonality/detector.py` (+ `fixtures/`) — session open/close + DOW markers
+  over UTC-ns bars; pure integer arithmetic; anti-hindsight by construction.
+- `classical/detector_rsi.py` (+ `fixtures/`) — pandas-ta RSI threshold
+  crossings; `level` = bar close, RSI in `meta`; `ts` = completing bar close;
+  `period`-bar warm-up exclusion; sub-`period+1` inputs are `insufficient`.
+- `hand_audit.py` + `scripts/hand_audit_s2.py` — Owner's HC hook: 10 sampled
+  events per detector with their source bars.
+- Dep added, pinned: `pandas-ta==0.4.71b0` (see NOTE-004; the legacy 0.3.x is
+  dead under numpy 2 / pandas 3; numpy pinned to 2.2.6 as a consequence).
+
+Ledger bootstrap (`scripts/bootstrap_s2_instruments.py`, idempotent) — both
+detectors registered + calibrated into the real journal:
+- seasonality.calendar@0.1.0 — instrument_registered **01KYAKYY1298M1N3JWAA8HBQ5P**,
+  calibration **01KYAKYY2BQHJPMSZA6WTMPQJG** (truth 1.0, silence 1.0).
+- classical.rsi@0.1.0 — instrument_registered **01KYAKYY4RVVBFWKY6PWH43CFS**,
+  calibration **01KYAKYY5TK1N5YV7BNYGJB4WZ** (truth 1.0, silence 1.0).
+Journal now 7 records, chain GREEN.
+
+### Tests
+83 passed (35 prior + 48 new); ruff clean; kernel firewall GREEN. New:
+instruments — EventFrame validator matrix (11), registry incl. gate +
+version-bump + staleness (9), calibration record fields + block-on-fail (4);
+records — OBS-1 (4), OBS-3 (3); concepts — seasonality (6), rsi (8),
+hand-audit (3). Anti-hindsight is a property test on each detector (prefixes
+never change prior events).
+
+### Acceptance criteria
+Met: both detectors registered+calibrated via records; uncalibrated/failed use
+raises `UncalibratedInstrumentError`; version bump forces recalibration;
+EventFrame validator rejects each contract violation with `SchemaViolation`;
+anti-hindsight property passes; OBS-1 marked+refused; hand-audit hook prints 10
+events/detector with source bars.
+
+### Open DEVQs
+- DEVQ-002 (QUESTION) — seasonality timezone contract; proceeding on UTC-ns
+  input + UTC DOW (option A).
+- DEVQ-003 (QUESTION) — RSI warm-up exclusion; proceeding on `period`-bar
+  exclusion + insufficient handling (option A).
+- DEVQ-004 (QUESTION) — **`gen_state.py` v0 rows are stale**: running it would
+  regress the rev-3 Status table and falsely show Sprint 1 as "Go/No-Go
+  pending" (it is CLOSED per GO-S1 / the T0 note). I did NOT overwrite the
+  tracked state file (one-direction rule). This is the ONLY unmet DoD item
+  ("gen_state run → refresh"); all code, tests, ruff, and T0 are complete.
+NOTE-004 (FYI) — pandas-ta version choice + numpy/numba consequences.
+
+### Not done (blocked on DEVQ-004)
+`gen_state` refresh of `docs/handover/AI_PROJECT_STATE.md`. Awaiting the
+architect's decision on how to reconcile the stale generator with the ledger.
