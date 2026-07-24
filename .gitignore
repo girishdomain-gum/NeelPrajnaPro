@@ -1,0 +1,31 @@
+# QRF .gitignore — ARCH-001 Session 0
+# Rule: datastore/journal/ IS tracked (the ledger). bulk/ and index/ are
+# derived/heavy and rebuildable, so they are ignored.
+
+# --- Derived / heavy datastore (rebuildable, never authoritative) ---
+datastore/bulk/
+datastore/index/
+
+# --- Ledger single-writer lock (runtime only) ---
+datastore/journal/*.lock
+*.jsonl.lock
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+build/
+dist/
+
+# --- Tooling caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Exploration artifacts (notebooks etc.) ---
+experiments/
+*.ipynb_checkpoints/
+
+# NOTE: uv.lock is intentionally NOT ignored — it must be committed.
