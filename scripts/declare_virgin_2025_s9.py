@@ -48,9 +48,6 @@ BULK_ROOT = "datastore/bulk"
 DATASET = "xauusd_h1_primary_full"
 VIRGIN_FRACTION = 0.30  # Owner-ruled: match the 2024 split.
 NS = 1_000_000_000
-# The 2025 extension begins where the original 2024 export ended (the old
-# xauusd_h1_full VIRGIN ended at this ts = 2025-01-01 00:00, server label).
-EXT_START_NS = 1735689600 * NS
 
 
 def _fmt_server(ts_ns: int) -> str:
@@ -67,30 +64,56 @@ def _primary_manifest(store: RecordStore) -> Record:
     )
 
 
-def _existing_2025_window(store: RecordStore) -> Record | None:
-    for w in store.query(record_type="window"):
-        p = w.payload
-        if p["dataset"] == DATASET and p["ts_end"] > EXT_START_NS:
-            return w
-    return None
+def _reserve_ranges(store: RecordStore) -> list[tuple[int, int]]:
+    """Every VIRGIN window's [ts_start, ts_end) — RESERVE-BY-MARKET-TIME (DEVQ-022
+    ruling ii): a reserve protects market hours regardless of which dataset/manifest
+    the bars sit under, so reserves from ANY dataset bound the extension."""
+    return [
+        (int(w.payload["ts_start"]), int(w.payload["ts_end"]))
+        for w in store.query(record_type="window")
+        if w.payload["designation"] == "VIRGIN"
+    ]
+
+
+def _in_any_reserve(ts: int, reserves: list[tuple[int, int]]) -> bool:
+    return any(lo <= ts < hi for lo, hi in reserves)
 
 
 def main() -> None:
     store = RecordStore(JOURNAL)  # verifies the chain on open
 
-    prior = _existing_2025_window(store)
-    if prior is not None:
-        raise SystemExit(
-            f"already declared: window {prior.record_id} ({prior.payload['designation']}) "
-            f"on {DATASET} in the 2025 extension; refusing to run twice"
-        )
+    reserves = _reserve_ranges(store)
+    if not reserves:
+        raise SystemExit("no VIRGIN reserve exists yet — the 2024 reserve must precede this")
+    # DEVQ-022 SEAM FIX (ruling i): the extension begins STRICTLY AFTER the last
+    # reserve's ts_end (the 2024 VIRGIN ts_end is 1735689600000000001, so the bar
+    # with close-ts 1735689600e9 is the reserve's LAST bar, not the extension's
+    # first). ext_start = the latest reserve boundary; the bar at 1735689600e9 stays
+    # in the 2024 reserve where it belongs.
+    ext_start = max(hi for _, hi in reserves)
+
+    for w in store.query(record_type="window"):
+        p = w.payload
+        if p["dataset"] == DATASET and p["ts_end"] > ext_start:
+            raise SystemExit(
+                f"already declared: window {w.record_id} ({p['designation']}) "
+                f"on {DATASET} in the 2025 extension; refusing to run twice"
+            )
 
     bulk = BulkStore(store, BULK_ROOT)
     manifest = _primary_manifest(store)
     ts_all = sorted(int(x) for x in bulk.read(manifest.record_id).column("ts").to_pylist())
-    ext = [t for t in ts_all if t >= EXT_START_NS]
+    ext = [t for t in ts_all if t >= ext_start]
     if len(ext) < 2:
         raise SystemExit(f"2025 extension has {len(ext)} bars (< 2); nothing to split")
+    # RESERVE-BY-MARKET-TIME assertion (ruling ii): no extension bar may fall inside
+    # any reserve range, whatever manifest it came from.
+    leaked = [t for t in ext if _in_any_reserve(t, reserves)]
+    if leaked:
+        raise SystemExit(
+            f"reserve leak: {len(leaked)} extension bar(s) fall inside a VIRGIN range "
+            f"(first {leaked[0]}) — refusing to designate over reserved market hours"
+        )
 
     split = split_boundary(ext, VIRGIN_FRACTION)
     train_start, boundary, last = ext[0], ext[split], ext[-1]

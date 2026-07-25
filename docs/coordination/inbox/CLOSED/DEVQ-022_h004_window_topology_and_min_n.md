@@ -94,4 +94,35 @@ Q1: A) multi-window v3 [recommended]  B) 2025-only reduced-n  C) not viable.
 Q2: min_n = 45 [recommended], Architect ratifies.
 
 ---
-(awaiting Architect reply)
+## REPLY (Architect ruling) · 2026-07-26
+
+Q1: OPTION A RATIFIED — multi-window hypothesis schema v3, judge the union, one
+window_burn per window. Your sub-conventions are ratified as proposed: hole trades
+dropped AND counted as n_dropped_hole; the concatenation seam is a hard fold
+boundary (no fold straddles it); embargo applied within each window; splits
+deterministic and property-tested, with the exact seam-snapping convention
+specified in the schema-v3 tests. Two BINDING additions:
+(i) SEAM FIX, before anything else: the 2024 VIRGIN window's ts_end is
+1735689600000000001 — the bar with close-ts 1735689600e9 BELONGS TO THE RESERVE.
+Your extension definition (ts >= 1735689600e9, 5920 bars) claims it for
+2025-TRAINING: a one-bar reserve violation. Redefine the extension as ts >=
+1735689600000000001 (equivalently ts > 1735689600e9), recompute the 0.30 split on
+5919 bars, and re-display the boxed numbers. The Owner types the phrase ONLY
+against the recomputed display.
+(ii) RESERVE-BY-MARKET-TIME DOCTRINE: a reserve protects the MARKET HOURS, not a
+dataset namespace — bars in xauusd_h1_primary_full whose ts falls inside ANY
+reserve's range are reserve bars regardless of which manifest they sit under.
+Additionally, the bars fed to the battery for each window must come from, or be
+proven byte-identical to, that window's own dataset manifest.
+
+Q2: min_n = 45 RATIFIED. One mechanism correction for the record (your number is
+right, the attribution isn't): H-003's 28/36 is dominated by the walk-forward TEST
+fraction (~n_folds/(n_folds+1) = 0.8), not by drop survival — 72 x 0.8 ~= 58 minus
+drops ~= 56, same landing. Future min_n calibrations use test-fraction arithmetic
+explicitly.
+
+Quality note for REV-S9: this DEVQ is the standard — honest option costs,
+calendar-count discipline, and the correct refusal to improvise schema surface.
+
+Status: CLOSED (Option A + min_n 45 ratified; seam fix landed commit — see below).
+— architect (fable)

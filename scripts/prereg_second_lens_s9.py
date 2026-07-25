@@ -74,33 +74,74 @@ PREREG_TEXT = (
 )
 
 
+_CORRECTION_MARKER = "ARCH-009 S4.1 PRE-REGISTRATION CORRECTION (DEVQ-022 seam fix):"
+
+# DEVQ-022 ruling (i)+(ii): the first note's 2024-VIRGIN upper bound was one ns
+# short (the reserve window ts_end is ...001), and the reserve-by-market-time
+# doctrine is now explicit. Sealed BEFORE any overlap (parented on the first note).
+CORRECTION_TEXT = (
+    f"{_CORRECTION_MARKER} corrects the reserve ts ranges in the first "
+    "pre-registration note per the Architect's DEVQ-022 ruling (i)+(ii), sealed "
+    "BEFORE any overlap. (i) 2024-VIRGIN upper bound: the 2024 VIRGIN window's "
+    "ts_end is 1735689600000000001, so the bar with close-ts 1735689600e9 IS the "
+    "reserve's LAST bar. The first note's 2024 exclusion [1726128000e9, "
+    "1735689600e9) was one ns short and would have let that reserve bar into the "
+    "overlap. CORRECTED 2024-VIRGIN exclusion = [1726128000000000000, "
+    "1735689600000000001) (the window's exact half-open range). (ii) "
+    "RESERVE-BY-MARKET-TIME: a reserve protects market hours, not a dataset "
+    "namespace -- exclude every bar whose ts falls in a reserve range from ANY "
+    "manifest (xauusd_h1_primary_full's 2024 portion duplicates the xauusd_h1_full "
+    "reserve hours and is excluded on the same range). The bars fed to any window's "
+    "computation must come from, or be proven byte-identical to, that window's own "
+    "dataset manifest. 2025-VIRGIN is UNCHANGED by the seam fix: recomputing the "
+    "0.30 split on the corrected 5919-bar extension (ts >= 1735689600000000001) "
+    "still yields first-VIRGIN ts 1757685600e9 (2025-09-12 14:00) -- the dropped "
+    "reserve bar and the shifted split index cancel, so TRAINING 4144->4143 and "
+    "VIRGIN stays 1776. All other terms of the first note (clock-era alignment "
+    "procedure, OHLC tolerance 0.50/0.75, agreement_rate>=0.95 interpretation) "
+    "stand unchanged."
+)
+
+
+def _find_note(store: RecordStore, marker: str):
+    for n in store.query(record_type="note"):
+        if n.payload["text"].startswith(marker):
+            return n
+    return None
+
+
 def main() -> None:
     store = RecordStore(JOURNAL)  # verifies the chain on open
 
-    for n in store.query(record_type="note"):
-        if n.payload["text"].startswith(_MARKER):
-            print(f"pre-registration already sealed ({n.record_id}); idempotent, nothing to do.")
-            return
-
-    reports = [r.record_id for r in store.query(record_type="ingest_report")
-               if r.payload.get("params", {}).get("dataset") in ("xauusd_h1_primary_full",
-                                                                  "xauusd_h1_secondfeed")]
-    if len(reports) != 2:
-        raise SystemExit(
-            f"expected the two lens-feed ingest_reports; found {len(reports)} — "
-            "run scripts/ingest_lens_feeds_s9.py first"
+    base = _find_note(store, _MARKER)
+    if base is None:
+        reports = [r.record_id for r in store.query(record_type="ingest_report")
+                   if r.payload.get("params", {}).get("dataset") in ("xauusd_h1_primary_full",
+                                                                      "xauusd_h1_secondfeed")]
+        if len(reports) != 2:
+            raise SystemExit(
+                f"expected the two lens-feed ingest_reports; found {len(reports)} — "
+                "run scripts/ingest_lens_feeds_s9.py first"
+            )
+        base = store.append(
+            "note", {"text": PREREG_TEXT}, producer="human:girish",
+            event_ts=time.time_ns(), parents=sorted(reports),
         )
+        print(f"sealed second-lens pre-registration note {base.record_id}")
+    else:
+        print(f"base pre-registration already sealed ({base.record_id}).")
 
-    rec = store.append(
-        "note",
-        {"text": PREREG_TEXT},
-        producer="human:girish",
-        event_ts=time.time_ns(),
-        parents=sorted(reports),
-    )
+    if _find_note(store, _CORRECTION_MARKER) is None:
+        corr = store.append(
+            "note", {"text": CORRECTION_TEXT}, producer="human:girish",
+            event_ts=time.time_ns(), parents=[base.record_id],
+        )
+        print(f"sealed DEVQ-022 seam-fix correction note {corr.record_id} "
+              f"(parent {base.record_id})")
+    else:
+        print("seam-fix correction already sealed; idempotent, nothing to do.")
+
     rep = store.verify()
-    print(f"sealed second-lens pre-registration note {rec.record_id}")
-    print(f"  parents (ingest_reports) = {list(rec.parents)}")
     print(f"journal verify ok={rep.ok} n_records={rep.n_records} head={rep.head_hash[:12]}")
 
 
