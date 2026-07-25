@@ -1,0 +1,57 @@
+# H-003 — Monday day-of-week drift (PRE-REGISTERED in ARCH-008 §3, thresholds
+# fixed BEFORE any run). A FRESH family (xauusd_h1/seasonality.calendar) with
+# expected N_trials 0/near — the DEVQ-017 zero-deflation boundary IN THE WILD: if
+# it PASSes marginally, the Bayesian ADR triggers before any promotion (per the
+# ruling), and no promotion can happen anyway until a second lens exists.
+#
+# Setup (DEVQ-019): enter LONG at next-open after the seasonality detector's
+# `seasonality.dow.mon` marker (the first UTC bar of each Monday), hold 22 H1 bars
+# (~Monday 22:00 UTC, approximating the Monday active-session close within the
+# calendar day). Direction is FIXED long; the marker is lifted to a long entry in
+# the judge. Editing any field re-registers as a NEW hypothesis id.
+
+lineage: h003_dow_monday_drift
+scope: xauusd_h1
+
+window: 01KYB4SSC96SSS8RA7D1NMTPEX   # same TRAINING window; fresh lineage
+
+instruments:
+  - seasonality.calendar@0.1.0   # calibrated day-of-week / session detector
+
+setup_dsl:
+  event: seasonality.dow.mon     # first UTC bar of each Monday
+  direction: long                # fixed long-at-open (lifted in the judge)
+  entry: next_open
+
+execution:
+  hold_bars: 22                  # ~Monday close within the calendar day (DEVQ-019)
+  size: 1.0
+  strength_min: 0.0
+  stop_offset: null
+  target_offset: null
+
+cost_model_ref: xauusd_retail_median
+
+split_spec:
+  n_folds: 4
+  embargo_bars: 23               # >= hold_bars + 1 (= 23)
+
+thresholds:
+  min_n: 40                      # ~52 Mondays in 2024 minus fold/tail drops
+  base_alpha: 0.05               # one-sided
+  correction:
+    method: bonferroni           # fresh family -> N_trials ~0 -> effective ~= base
+
+# v2 pre-commitments (DEVQ-014/015) — written BEFORE running.
+thesis: >-
+  Monday (UTC) long-at-open, held to the Monday close, is profitable net of costs
+  on XAUUSD.
+family: xauusd_h1/seasonality.calendar
+observatory_ancestry: []
+outcome_interpretations:
+  PASS: >-
+    calendar seasonality exists at retail costs — replication + second lens next.
+  FAIL: >-
+    no Monday drift net of costs.
+  INSUFFICIENT: >-
+    not enough Mondays in one year — needs more data, not looser thresholds.

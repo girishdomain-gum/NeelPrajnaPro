@@ -64,7 +64,10 @@ def main() -> None:
     report = store.verify()
     print(f"S8 T0 appended GO-S7 note {rec.record_id}")
     print(f"  parents = {list(rec.parents)}")
-    print(f"journal verify ok={report.ok} n_records={report.n_records} head={report.head_hash[:12]}")
+    print(
+        f"journal verify ok={report.ok} n_records={report.n_records} "
+        f"head={report.head_hash[:12]}"
+    )
 
 
 if __name__ == "__main__":
