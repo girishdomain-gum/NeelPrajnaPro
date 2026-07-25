@@ -50,7 +50,8 @@ def _recorded_shas(mod) -> dict[str, str]:
 def test_rebuild_all_matches_recorded_manifests(rebuild_bulk):
     """Every anchored verdict_trades.* rebuilds to its manifest's exact sha256."""
     recorded = _recorded_shas(rebuild_bulk)
-    assert len(recorded) == 3, "expected h001/h002/h003 anchored trades datasets"
+    # h001/h002/h003 (single-window 2024) + h004 (multi-window 2024+2025 union, S9-2).
+    assert len(recorded) == 4, "expected h001/h002/h003/h004 anchored trades datasets"
 
     store = RecordStore(rebuild_bulk.JOURNAL)
     n_before = len(store)

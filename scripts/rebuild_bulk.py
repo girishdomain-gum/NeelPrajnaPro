@@ -47,6 +47,7 @@ from qrf.trading.utility import cost_models
 JOURNAL = "datastore/journal/journal.jsonl"
 BULK_ROOT = "datastore/bulk"
 DATASET_FULL = "xauusd_h1_full"
+DATASET_PRIMARY = "xauusd_h1_primary_full"  # spans 2024+2025 (H-004's multi-window union)
 
 # scripts/ is not a package (see tests/scripts/test_arch003a.py). Load the sibling
 # judges by file path so the ONE bars-rebuild path and the ONE set of setup-event
@@ -63,18 +64,28 @@ def _load_sibling(name: str):
 
 _judge_h001 = _load_sibling("judge_h001")
 _wave1 = _load_sibling("judge_family_wave1_s8")
+_lens = _load_sibling("ingest_lens_feeds_s9")
 rebuild_bars = _judge_h001.rebuild_bulk
+rebuild_lens_bars = _lens.rebuild  # rebuilds xauusd_h1_primary_full (+ secondfeed) parquet
 _intra_week_events = _wave1._intra_week_events
 _monday_long_events = _wave1._monday_long_events
 
+# Which ingested dataset carries each lineage's window bars. Single-window 2024
+# lineages ride xauusd_h1_full; H-004's multi-window union (2024+2025) rides
+# xauusd_h1_primary_full (whose 2024 slice is byte-identical to xauusd_h1_full).
+_LINEAGE_DATASET = {
+    "h001_fvg_follow_through": DATASET_FULL,
+    "h002_fvg_intraweek_follow_through": DATASET_FULL,
+    "h003_dow_monday_drift": DATASET_FULL,
+    "h004_dow_monday_drift_v2": DATASET_PRIMARY,
+}
 
-def _full_manifest(store: RecordStore) -> Record:
+
+def _manifest_for(store: RecordStore, dataset: str) -> Record:
     for m in store.query(record_type="bulk_manifest"):
-        if m.payload["dataset"] == DATASET_FULL:
+        if m.payload["dataset"] == dataset:
             return m
-    raise SystemExit(
-        f"no bulk_manifest for {DATASET_FULL}; the bars were never ingested"
-    )
+    raise SystemExit(f"no bulk_manifest for {dataset}; the bars were never ingested")
 
 
 def _events_for_lineage(
@@ -83,15 +94,19 @@ def _events_for_lineage(
     """Reconstruct the EXACT setup events each recorded verdict was judged on.
 
     Dispatch by lineage; every branch calls the same detector/filter the original
-    judge used (imported, not copied). A lineage with no registered builder is a
-    loud failure so a new verdict can never be silently left un-rebuilt.
+    judge used (imported, not copied). ``bars_table``/``bars_full`` are that
+    lineage's own dataset (see :data:`_LINEAGE_DATASET`). A lineage with no
+    registered builder is a loud failure so a new verdict can never be silently
+    left un-rebuilt.
     """
     if lineage == "h001_fvg_follow_through":
         return SMCFVGDetector().detect(bars_table).to_pandas()
     if lineage == "h002_fvg_intraweek_follow_through":
         fvg = SMCFVGDetector().detect(bars_table).to_pandas()
         return _intra_week_events(bars_full, fvg)
-    if lineage == "h003_dow_monday_drift":
+    if lineage in ("h003_dow_monday_drift", "h004_dow_monday_drift_v2"):
+        # H-004 shares H-003's Monday-long builder; the difference is the MULTI-WINDOW
+        # union (sealed in the hypothesis, applied by the battery), not the events.
         seasonality = SeasonalityDetector().detect(bars_table).to_pandas()
         return _monday_long_events(seasonality)
     raise SystemExit(
@@ -107,15 +122,24 @@ def rebuild_all(*, verbose: bool = True) -> list[str]:
     Returns the list of manifest_refs rebuilt. Raises on any mismatch, any missing
     builder, or any accidental record append.
     """
-    # 1. Bars parquet first (root of trust for events) — reuse judge_h001's path.
+    # 1. Bars parquets first (root of trust for events) — reuse the ingest paths.
+    #    xauusd_h1_full (2024) via judge_h001; xauusd_h1_primary_full (2024+2025, for
+    #    H-004's union) via the lens ingest. Both are hash-verified on read below.
     rebuild_bars()
+    rebuild_lens_bars()
 
     store = RecordStore(JOURNAL)  # verifies the chain on open
     bulk = BulkStore(store, BULK_ROOT)
     n_before = len(store)
 
-    bars_table = bulk.read(_full_manifest(store).record_id)  # hash-verified
-    bars_full = bars_table.to_pandas()
+    # Load each dataset once, hash-verified, and cache by name.
+    bars_cache: dict[str, tuple] = {}
+
+    def _bars(dataset: str) -> tuple:
+        if dataset not in bars_cache:
+            table = bulk.read(_manifest_for(store, dataset).record_id)  # hash gate
+            bars_cache[dataset] = (table, table.to_pandas())
+        return bars_cache[dataset]
 
     hyps = {h.record_id: h for h in store.query(record_type="hypothesis")}
 
@@ -127,11 +151,19 @@ def rebuild_all(*, verbose: bool = True) -> list[str]:
 
         hyp = hyps[verdict.payload["hypothesis_ref"]]
         lineage = hyp.payload["lineage"]
+        dataset = _LINEAGE_DATASET.get(lineage)
+        if dataset is None:
+            raise SystemExit(
+                f"no dataset registered for lineage {lineage!r} — add it to "
+                "scripts/rebuild_bulk.py:_LINEAGE_DATASET"
+            )
+        bars_table, bars_full = _bars(dataset)
         events = _events_for_lineage(lineage, bars_table, bars_full)
 
         cost_model = cost_models.load_cost_model(hyp.payload["cost_model_ref"])
         # Same pipeline the verdict ran (default engine_seed == seeds.for_run),
-        # WITHOUT burning — evaluate() is the placebo/replay entry point.
+        # WITHOUT burning — evaluate() is the placebo/replay entry point. For a
+        # multi-window lineage evaluate slices each window from these bars itself.
         result = EvidenceBattery(store, bulk).evaluate(
             hyp.record_id,
             simulator=EventEngine(),
