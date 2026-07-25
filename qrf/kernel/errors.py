@@ -67,6 +67,10 @@ class AlreadyJudgedError(QRFError):
     """A verdict re-run was refused: this (hypothesis, window) already has a verdict."""
 
 
+class GraduationRefused(QRFError):
+    """A promotion was refused: one of its four graduation gates did not hold."""
+
+
 # --- Firewall (CI-time) ------------------------------------------------------
 class FirewallViolation(QRFError):
     """Kernel code imported domain code, or used forbidden domain vocabulary."""
