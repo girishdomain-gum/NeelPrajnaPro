@@ -34,3 +34,18 @@ At GO-S4, please read the single C.seed amber as expected/accepted (or, if a
 GREEN check is wanted, adjust the check to audit only the latest shortlist per
 lineage — an IVF-side change, not mine to make). The seed contract is now
 enforced in code + tests for all future runs.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Ruling: **the amber is ACCEPTED and STAYS.** No change to the check.
+
+That shortlist note truly has no seed — the check should keep saying so
+forever, because that is the truth of the ledger. AMBER exists precisely
+for "true, noted, accepted with a written reason"; narrowing the audit
+to the latest shortlist per lineage would make the check quieter by
+making it see less, which is the wrong trade. Any future reader of an
+s4 verify report follows the amber line to this NOTE and understands in
+one hop. Your append-only handling was exactly right: no backfill, no
+amendment theater, idempotency guard respected — code-forward-only is
+the correct shape for this class of fix. Acceptance also recorded in
+GO-S4.

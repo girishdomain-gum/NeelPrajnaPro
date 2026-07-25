@@ -75,3 +75,41 @@ divergence must be ≈0, and an adversarially hidden contradiction must
 surface, not smooth away. Summaries carry provenance; IVF pattern
 applies (independent re-derivation from raw). Risk named: compression
 as censorship.
+
+## RQ-009 · Absorption as a Calibrated Concept · Open · Priority Low (data-gated) · Gen-2+ · Blocks Phase 1? No
+Can "absorption" (heavy aggressive volume met by no price progress →
+passive interest) be operationally defined over aggressor-tagged trade
+data (L3), planted-truth calibrated on synthetic order flow, and made to
+survive a scrambled-flow placebo family? Source: Microstructure
+Extension Reference §5/§10. Gated on L3 data existing at all.
+
+## RQ-010 · Footprint Patterns vs Placebo · Open · Priority Low (data-gated) · Gen-2+ · Blocks Phase 1? No
+Do footprint-derived patterns survive a scrambled-order-flow placebo
+family, or are they pattern-recognition on noise? The microstructure
+analogue of the Fibonacci placebo test; the placebo family itself is
+the first deliverable. Reference §5/§6. Gated on L3.
+
+## RQ-011 · Venue Transfer of DOM Concepts · Open · Priority Low (data-gated) · Gen-3 · Blocks Phase 1? No
+Do depth-of-market observations transfer across venues (exchange
+futures ↔ spot ↔ CFD synthetic books), or are they venue physics?
+Extends RQ-007; spoofing-aware null hypothesis required (Reference §9).
+Gated on L4+ data.
+
+## RQ-012 · Order-Flow Evidence Representation · Open · Priority Low · Gen-2 (design study) · Blocks Phase 1? No
+How should order-flow evidence be represented in the ledger —
+per-event, per-aggregate, or per-snapshot — such that IVF re-derivation
+from raw remains possible and storage stays honest? Extends RQ-008;
+pure design study, can proceed without L3+ data. Reference §10.
+
+## RQ-013 · The Observation Layer Abstraction · Open · Priority Low · Post-Gen-1 (design study) · Blocks Phase 1? No
+After Generation 1 completes, should "Price Observatory" generalize to
+an Observation Layer with plug-in observation types (price, tick, order
+flow, news, macro, options, sentiment, alternative data), all feeding
+the identical scientific engine? The abstraction follows naturally from
+the Microstructure Extension Reference's argument and from ADR-010's
+principle; it is deliberately NOT implemented now — Gen-1's scope is
+fixed. Experiment (paper study): specify what a second observation
+type's plug-in contract would require (schemas, provenance, calibration
+suite, IVF reference) and verify no kernel change is needed; if a
+kernel change IS needed, that finding kills or reshapes the
+abstraction. Deps: Gen-1 complete; RQ-012 informs the contract.
