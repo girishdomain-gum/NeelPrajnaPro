@@ -49,29 +49,42 @@ Non-blocking. Engine + fills complete and green under A.
 Ratify A (incl. pessimistic tie), or direct me to add the configurable entry enum.
 
 ---
-## DEVELOPER ADDENDUM · Owner-commanded refinement · 2026-07-25 (session S5-2)
-The Owner directed two refinements to the DEVQ-012 fill rule, now implemented with
-tests (still OPEN — this records them for the Architect's ruling, not a self-close):
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED**, including the pessimistic stop-before-target
+tie as the HOUSE RULE: a judging simulator never resolves ambiguity in
+its own favour. Fixed next-open entry is right for the foundation;
+configurability returns, if ever, as a declared per-hypothesis enum via
+a new DEVQ, and every added rule must carry its own no-look-ahead
+property test.
 
-1. **Pessimistic gap-through, both ways** (fills.py). A level the market GAPS
-   THROUGH no longer fills at the untraded level. On the triggering bar the fill is
-   the trader-adverse side of {level, bar open}, both exit types, both directions:
-   - STOP fills at the WORSE of stop and open (long `min(stop, open)`, short
-     `max(stop, open)`) — an adverse gap fills you BEYOND the stop.
-   - TARGET is CAPPED at the level — a favorable gap-open past the target is NOT
-     credited. Gaps can only ever hurt, never help.
-   Tests: long/short stop gap-through → worse open fill; long/short target favorable
-   gap → capped at target; non-gapping touch → exact level (unchanged).
+**Two clarifications to confirm (micro-task if either is absent):**
+1. **Gap-through fills, pessimistic both ways:** if a bar OPENS beyond
+   the stop level, the stop fills at that worse OPEN (not the level);
+   if a bar opens beyond the target, the target fills at the LEVEL
+   (never the better open). Confirm implemented or add + test.
+2. **Dropped tails must be counted:** trades not opened because the
+   time-stop bar lies beyond the data are correct to drop, but the
+   engine result must REPORT `n_dropped_tail` so a sample is never
+   silently trimmed — an edge concentrated at the window's end would
+   otherwise vanish without trace. Confirm implemented or add + test.
+Status: CLOSED
 
-2. **n_dropped_tail reporting** (engine.py). Eligible events the data tail cannot
-   open+close (no next bar to enter on, or time-stop exit beyond the data) are still
-   never filled on absent bars — but they are now COUNTED in `Trades.n_dropped_tail`
-   and carried in the canonical image, so the drop is visible, not silent (the same
-   no-silent-truncation discipline as the screener's trial_count). Tests: count of
-   no-exit + no-entry tail drops; presence in canonical_payload.
+---
+## DEVELOPER CONFIRMATION · claude-code · 2026-07-25 (session S5-2)
+Both clarifications **implemented + tested** (commit on branch
+claude/arch-005-t0-execution-7549cc; relayed by the Owner):
 
-Both are additive/realism-improving and do not touch the no-look-ahead guarantee or
-the determinism byte-image contract (n_dropped_tail is deterministic; still byte-
-identical across a process restart). 655 tests green, ruff clean, firewall GREEN.
-If the eventual ruling prefers different semantics (e.g. crediting favorable target
-gaps, or a separate no-entry vs no-exit split), both are localized one-place changes.
+1. **Gap-through, pessimistic both ways** — `qrf/trading/simulator/fills.py`. On the
+   triggering bar the fill is the trader-adverse of {level, open}: STOP at the WORSE
+   of stop/open (long `min(stop, open)`, short `max(stop, open)`); TARGET CAPPED at
+   the level (favorable gap-open never credited), both directions. Tests: long/short
+   stop gap-through → worse-open fill; long/short target favorable gap → capped;
+   non-gapping touch → exact level (unchanged).
+2. **`n_dropped_tail`** — `qrf/trading/simulator/engine.py`. Eligible events the data
+   tail cannot open+close (no next bar, or time-stop exit beyond the data) are counted
+   in `Trades.n_dropped_tail` and carried in the canonical image — visible, not silent.
+   Tests: no-exit + no-entry tail count; presence in `canonical_payload`.
+
+No change to the no-look-ahead guarantee or the determinism byte-image contract
+(`n_dropped_tail` is deterministic; byte-identical across a process restart holds).
+655 tests green · ruff clean · firewall GREEN · journal unchanged at 26.

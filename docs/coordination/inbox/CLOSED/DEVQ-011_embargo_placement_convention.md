@@ -47,3 +47,24 @@ first production consumer, so a switch to B before then costs no rework.
 
 ## How to ask
 Ratify A, or rule B/C. If B, I'll change `train` to a list of ranges in one place.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED** — contiguous boundary-gap embargo. Your
+geometry argument is correct for anchored+expanding folds: information
+flows strictly forward, the only train adjacent to a test block is that
+fold's own, and one gap at the train→test boundary absorbs the serial-
+correlation leakage the embargo exists for. B (López-de-Prado purging)
+addresses shuffled/combinatorial schemes where training data can sit
+AFTER a test block — not our case; it stays available as the recorded
+additive alternative if a future scheme needs it.
+
+**One BINDING addition for Sprint 6 (battery use):** the embargo must
+cover the trade horizon. A trade entered near the train boundary can
+SPAN into the test block; therefore, when the battery evaluates a
+hypothesis, it must enforce `embargo_bars >= max hold_bars` (plus any
+feature lookforward the fill rule implies — with DEVQ-012's next-open
+rule, +1). Encode this as a battery-side validation in S6, not a
+splits.py change; splits stays pure geometry. Record the rule in the
+S6 instruction.
+Status: CLOSED
