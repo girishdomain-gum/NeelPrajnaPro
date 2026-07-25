@@ -65,3 +65,21 @@ FVG-definition ADDENDUM), ivf/reports/s4_verify.json, s4_drill.json
 
 Architect verdict on the development scope: **PASS — recommend GO**
 once the micro-tasks land and the visual HC completes.
+
+---
+## ADDENDUM · HC-S4 result · 2026-07-25
+Owner sign-off, verbatim: **"HC-S4 PASS"**
+
+Evidence (ADR-009 first full outing — zone overlays): 5/5 FVG MATCH,
+tool IVF_S4_HC_Zones.mq5 rev 1, sampler seed=4 over
+xauusd_h1_sample_smc_fvg_events (manifest 01KYB7WQFND907DMH550GPKMW0).
+PNGs: ivf/reports/hc_s4/HC_S4_1704387600 / 1704877200 / 1704974400 /
+1705435200 / 1706551200 .png. All five zone rectangles countersigned by
+the Architect against visible gap structure (Jan-16 20:00 is the
+textbook displacement case); MATCH verdicts evidenced by the tool's
+color rule (lime = MATCH only) and the Experts log.
+
+Tool nit (Architect, rev-2 queue): caption line 1 truncates on narrow
+renders — split zone values onto their own line. Cosmetic; verdicts
+unaffected. HC procedure improvement queue also carries: bash-ready
+command printing everywhere (PROTOCOL v1.3 compliance in tools).
