@@ -1,0 +1,22 @@
+QRF data export provenance (rev 1)
+exported_utc: 2026.07.25 18:45:06
+terminal_company: Exness Technologies Ltd
+terminal_name: MetaTrader 5 EXNESS
+account_server: Exness-MT5Trial7
+account_company: Exness Technologies Ltd
+symbol: XAUUSDm
+symbol_description: Gold vs US Dollar
+symbol_path: Standard\Forex\XAUUSDm
+digits: 3
+timeframe: PERIOD_H1 (3600 s)
+requested_range_server_time: 2024.01.01 00:00 .. 2026.01.01 00:00
+server_vs_gmt_offset_seconds_NOW: 0
+NOTE: offset is measured NOW; DST-era offsets in history may differ.
+bars_written: 11844
+first_bar_open_server: 2024.01.01 23:00 (epoch 1704150000)
+last_bar_open_server: 2025.12.31 21:00 (epoch 1767214800)
+gaps_gt_1_period: 516
+max_gap_seconds: 266400 (after bar 2024.03.28 20:00)
+history_complete_vs_request: YES
+owner_provenance_statement: Exness Technologies Ltd MT5 trial server (Exness-MT5Trial7), symbol XAUUSDm, 3-digit gold pricing; a retail broker entirely separate from Winprofx; Exness's upstream liquidity sourcing is not known to me.
+declared_independence_tier: broker

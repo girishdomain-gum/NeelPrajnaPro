@@ -33,7 +33,12 @@ Filesystem; instructions/reviews/ADRs/IVF; NEVER developer code; write
 on main only in Owner-declared write windows; READ worktrees any time).
 Developer **Claude Code** (worktrees; CLAUDE.md; new session per
 task/sprint — never reuse a spent session). Verifier = IVF + Owner.
-Motto: "prediction first, ontology later". MT5 = UTC verified; data
+Motto: "prediction first, ontology later". **MT5 clock = BROKER
+SERVER TIME, NOT UTC** (+10800 s measured 2026-07; NY-close-aligned
+GMT+2/+3 pattern; the old "UTC verified" was a circular internal-
+consistency test — ARCH-009 ADDENDUM 2, Architect bug #16; all
+internal analysis stays valid on the one shared clock, but cross-feed
+work MUST align clocks first); data
 folder id E92643EDFF963E7E489F140FDF338076; HC input files are WRITTEN
 by you into ...\MQL5\Files\ and READ BACK (GO-S7 rule), and are
 regenerable byte-for-byte by the committed sampler. READ
@@ -84,9 +89,9 @@ pre-registered BEFORE overlap computed (DEVQ-020) · OB gate unpaid
 mandatory · VIRGIN behind typed phrases only.
 
 ## 4. Tally and lessons
-**Architect 15, Developer 2.** #14/#15 were both ruling PROSE asserting
-unverified properties (of shipped artifacts; of real data) — both
-self-caught. Standing rules that now bind you: machine-verify numeric
+**Architect 16, Developer 2.** #14/#15/#16 were all the same species:
+prose asserting unverified properties (of shipped artifacts; of real
+data; of the absolute clock) — all self-caught. Standing rules that now bind you: machine-verify numeric
 examples; re-implement from NORMATIVE definitions; read back every
 written artifact; verify calendar/session geometry against the REAL
 feed's bars, never a constructed clock. The HC layer sees what machine

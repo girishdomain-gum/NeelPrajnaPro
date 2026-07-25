@@ -127,6 +127,57 @@ judged placebo-first · journal chain GREEN · VIRGIN(s) untouched ·
 firewall GREEN · session logs per session · DEVQs to inbox/OPEN at any
 genuine decision point.
 
+## ADDENDUM (Architect, 2026-07-25, pre-boot) — VIRGIN exclusion from overlap
+The second feed's export spans the VIRGIN months. BINDING: the §4
+overlap/agreement computation runs on the TRAINING-window timespan
+ONLY — timestamps inside any VIRGIN-designated window (2024's reserve
+and the new 2025-extension reserve alike) are EXCLUDED from the
+cross-feed comparison and from the agreement_summary. A bar-integrity
+comparison is not a hypothesis evaluation, but the reserve's value is
+that NOTHING computes on it without the typed-phrase authorization —
+no exceptions by category. The exclusion is stated in the
+pre-registration note (before overlap is computed) and the IVF will
+audit it. The raw second-feed CSV/parquet may of course CONTAIN those
+rows — storage is not computation; the exclusion applies to the
+overlap/agreement calculation and anything derived from it.
+
+## ADDENDUM 2 (Architect, 2026-07-26, pre-boot) — CLOCK DOCTRINE
+The QRF_Data_Export provenance measured the PRIMARY terminal at
+server-vs-GMT = +10800 s (2026-07). FINDING: the primary feed's
+timestamps are BROKER SERVER TIME (NY-close-aligned, GMT+2 winter /
+GMT+3 summer pattern), NOT absolute UTC. The historical "UTC verified"
+claim was an INTERNAL-consistency verification only — chart and CSV
+share the server clock, so HC offset-0 matches could never test the
+absolute clock. Corroboration from our own data: no Sunday bars +
+Mondays beginning at the 01:00-open bar is the signature of an
+EET-style clock, not UTC. Consequences, BINDING:
+(a) NO ledger impact: every existing verdict/scan/burn computed on one
+    consistent timeline; nothing is re-run. Prose labels saying "UTC"
+    for primary-feed timestamps are re-read as "server time"; H-003's
+    "Monday" is server-Monday (begins ~Sun 22:00 true UTC).
+(b) §4 overlap MUST establish clock alignment BEFORE agreement is
+    measured, and the alignment procedure is PRE-REGISTERED in the
+    same note as the agreement threshold. Alignment is PIECEWISE BY
+    CLOCK ERA (2026-07-26 refinement, from the delivered feeds: the
+    primary runs +2h winter / +3h summer while the second feed is UTC
+    year-round, so no single constant shift can align the full span —
+    the per-bar stamp-difference distribution is bimodal by design):
+    compute the per-bar stamp-difference of matched market hours,
+    segment the timespan at the primary's DST-transition instants
+    (the shift-change points), and record PER ERA the chosen
+    integer-hour shift (candidates at least {0, ±1h, ±2h, ±3h}),
+    chosen by maximum shared-timestamp count within that era over the
+    TRAINING timespan. The era boundaries, per-era shift tables, and
+    winners are all RECORDED in the agreement_summary notes. Within
+    any era, if the runner-up shift comes within 5% of the winner's
+    shared count, STOP and DEVQ.
+(c) Both feeds' measured offsets + the caveat that historical DST-era
+    offsets may differ are recorded in the ingest params (the
+    provenance sidecars are the source documents).
+(d) Tally: Architect bug #16 — an absolute claim ("UTC verified")
+    resting on a circular test; self-caught by the provenance tool
+    before the second feed could turn it into a real error.
+
 ## Sprint close (Architect duties, recorded for symmetry)
 IVF-S9: drill first (planted rebuilt-parquet byte-drift; planted
 overlap-computed-before-threshold), then checks (rebuild determinism;

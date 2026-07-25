@@ -1,0 +1,22 @@
+QRF data export provenance (rev 1)
+exported_utc: 2026.07.25 18:49:38
+terminal_company: Winprofx Limited
+terminal_name: Winprofx MT5 Terminal
+account_server: Winprofx-Live
+account_company: Winprofx Limited
+symbol: XAUUSD
+symbol_description: Gold vs US Dollar / Spot
+symbol_path: Metals\XAUUSD
+digits: 2
+timeframe: PERIOD_H1 (3600 s)
+requested_range_server_time: 2024.01.01 00:00 .. 2026.01.01 00:00
+server_vs_gmt_offset_seconds_NOW: 10800
+NOTE: offset is measured NOW; DST-era offsets in history may differ.
+bars_written: 11857
+first_bar_open_server: 2024.01.02 01:00 (epoch 1704157200)
+last_bar_open_server: 2025.12.31 23:00 (epoch 1767222000)
+gaps_gt_1_period: 516
+max_gap_seconds: 266400 (after bar 2024.03.28 23:00)
+history_complete_vs_request: YES
+owner_provenance_statement: (Owner fills: where does this feed's price come from?)
+declared_independence_tier: (Owner fills: broker | lp | venue | unknown)
