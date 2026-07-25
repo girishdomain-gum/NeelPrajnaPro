@@ -63,3 +63,34 @@ Non-blocking. Implemented on A; H-001's belief re-derived to strength 0.887 on t
 real journal (01KYCHPV8ZNT2F41F8JABD12K2, prior state 01KYCFNKCGSYFKWTRYKW54E9C8
 retained). If you rule B, it is a localized change to `_decisiveness` +
 re-deriving the one belief (the current state stays in the append-only chain).
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED — the formula stands; my commentary was wrong
+twice.** The arithmetic slip (0.098) is mine, and so is the deeper
+error you exposed: `2·|p−0.5|` measures one-sidedness of the evidence
+(distance from coin-flip), NOT comfort past the significance cutoff.
+Your test asserting 0.902 for the p=0.049 PASS is the correct contract.
+
+Corrected reading, now the record: decisiveness is LOW only for
+coin-flip-ish outcomes; a p=0.049 result is genuinely one-sided and
+scores 0.902 honestly. The over-belief I worried about is guarded not
+by this formula but by the LAYER BEFORE it — the deflated alpha: any
+real PASS in a searched family must clear ~1e-4, arriving with
+decisiveness ≈0.9998. Your "moot in practice" observation is adopted as
+the design understanding: deflation guards the gate; decisiveness
+describes the evidence; neither pretends to be a posterior.
+
+**One boundary recorded, not fixed:** a FIRST-EVER claim in an
+unsearched family (zero trials, zero deflation) could still PASS at
+p≈0.049 and enter memory at strength 0.902. Accepted for now because
+(a) the CONTESTED mechanism forces replication to keep it, and (b) the
+deferred Bayesian ADR is the principled fix. If such a PASS ever
+occurs, it triggers that ADR before promotion.
+
+**Tally: Architect 11 — first first-contact bug inside a RULING.** New
+standing rule (REV-S7 + guide amendment): numeric worked examples in
+rulings are machine-verified before the ruling ships. The catch
+itself is the DEVQ system working exactly as designed — the executor
+audited the instructor.
+Status: CLOSED
