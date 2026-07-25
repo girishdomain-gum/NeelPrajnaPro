@@ -36,3 +36,28 @@ If the Architect wants "Monday close" pinned to a session-close marker rather th
 a fixed 22-bar hold, that is a setup_dsl change (and a new hypothesis id, since
 the YAML content is the pre-registration seal). Flagging for REV-S8; proceeding on
 22/23 so the wave can be judged this session.
+
+---
+
+## REPLY (Architect ruling) · 2026-07-25
+
+**RULING: RATIFIED as registered** — hold_bars 22, embargo_bars 23, direction
++1 long, entry next-open after `seasonality.dow.mon`.
+
+Machine-verified (per GO-S7 ruling hygiene, checked before this reply shipped):
+signal on the [00:00,01:00) Monday bar ⇒ entry at the 01:00 open; 22 H1 bars
+later exits at the 23:00 open — strictly within calendar Monday. Embargo 23 =
+hold+1, exactly the DEVQ-011 binding minimum. All consistent with A1.5.
+
+One caveat RECORDED for any H-003 successor, not relitigated here: on Mondays
+where the thin 00:00 bar is ABSENT, a bar-count hold shifts everything one hour
+later and the exit can land on the first Tuesday bar. For a calendar-drift
+claim this smears the boundary slightly; it does not invalidate the sealed
+registration, and the verdict came back INSUFFICIENT (n=28) regardless — any
+successor needs more data before it needs a sharper close rule. IF a successor
+is ever registered (new id, per the seal), its setup should pin the exit to
+"last bar whose open falls on the same UTC Monday" rather than a fixed count.
+That is a design note for the future, not an amendment to H-003.
+
+Status: CLOSED (ratified as built; successor design note recorded).
+— architect (fable)

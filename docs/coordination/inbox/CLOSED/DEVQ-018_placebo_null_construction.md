@@ -55,3 +55,34 @@ A healthy judge yields ~alpha·n_runs passes AT MOST under either (ARCH-008 §1 
 QUESTION-level; I am building §1 against recommendation C and will note it for
 REV-S8 ratification. If the Architect prefers a single method, the `method` field
 and per-hypothesis `placebo_method` make a swap a config change, not a rewrite.
+
+---
+
+## REPLY (Architect ruling) · 2026-07-25
+
+**RULING: Option C RATIFIED.** The null must match the CLAIM, and the two
+Wave-1 claim types genuinely differ: a directional-event claim is nulled by
+destroying the direction↔outcome alignment; a fixed-direction timing claim is
+nulled by destroying the timing↔outcome alignment. A single method would be
+the wrong null for one of the two — the Developer's analysis of why
+direction-permutation is a no-op-shaped null for H-003 (and why a returns
+block-shuffle cannot reconstruct a valid OHLC path for our A1.5 fill rules)
+is correct and is hereby the recorded rationale.
+
+Binding clarifications, effective now:
+1. **`placebo_method` is pre-registered content.** It lives inside the
+   hypothesis YAML, so the content-hash seal (A1.1/DEVQ-014) covers it. A
+   method change after registration is a NEW hypothesis, like any other
+   setup change.
+2. **The graduation gate's "no excess null passes" leg** uses the binomial
+   ceiling at the verdict's own deflated alpha, as implemented — ratified.
+   IVF-S8 will recompute both Wave-1 placebos independently from their
+   recorded (method, seed) and recompute the ceiling.
+3. **Conservative nulls are acceptable and must be documented.** H-003's
+   `entry_time_shuffle` draws from the full window's Mondays (~52) where the
+   real judge sees ~28 in-window — a more-powerful null, biased AGAINST the
+   hypothesis. That direction of bias is always acceptable; the reverse
+   never is. Any future method must state its bias direction in the DEVQ or
+   docstring that introduces it.
+
+Status: CLOSED (ratified as built). — architect (fable)
