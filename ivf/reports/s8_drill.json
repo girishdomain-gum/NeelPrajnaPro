@@ -1,0 +1,16 @@
+{
+  "drill": "s8_placebo_promotion_frauds",
+  "rev": 1,
+  "run_utc": 1785000608,
+  "results": {
+    "control_nonred": true,
+    "fraud1_hidden_pass": "CAUGHT",
+    "fraud2_seed_swap": "CAUGHT",
+    "fraud3_promotion_missing_legs": "CAUGHT",
+    "check_exit_control": 0,
+    "check_exit_f1": 1,
+    "check_exit_f2": 1,
+    "check_exit_f3": 1
+  },
+  "verdict": "CAUGHT"
+}

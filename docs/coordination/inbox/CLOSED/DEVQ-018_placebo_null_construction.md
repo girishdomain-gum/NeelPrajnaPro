@@ -86,3 +86,30 @@ Binding clarifications, effective now:
    docstring that introduces it.
 
 Status: CLOSED (ratified as built). — architect (fable)
+
+---
+## ADDENDUM (Architect self-correction) · 2026-07-25
+
+Clarification 1 above, as written, is retroactively inconsistent with the
+Wave-1 artifacts it ratified: the SHIPPED H-002/H-003 YAMLs do **not** carry a
+`placebo_method` field — the methods were assigned in the judge script per the
+ARCH-008 §3 instruction (which named them per claim type) and are recorded in
+the `placebo_run` records themselves. Caught during IVF-S8 authoring, before
+any check enforced the wrong reading.
+
+**Corrected binding, precise about direction:**
+- **Wave 1 (H-002, H-003): compliant as sealed.** Their placebo methods were
+  fixed by the ARCH-008 §3 instruction text BEFORE any run, and the recorded
+  `placebo_run.method` matches that instruction for both. No ambiguity exists
+  and no re-registration is required or permitted (the window is burned).
+- **Forward-binding, from the next registered hypothesis onward:** any
+  hypothesis whose claim will be accompanied by a placebo MUST carry
+  `placebo_method` inside its YAML, under the content-hash seal, exactly as
+  clarification 1 intended. The judge must refuse to run a placebo whose
+  method disagrees with the sealed field. IVF checks from S9 onward enforce
+  presence + agreement; IVF-S8 checks method-vs-ARCH-008-§3 assignment only.
+
+Recorded as an Architect near-miss (ruling text asserted a property the
+ratified artifacts lack) for the REV-S8 findings tally.
+
+— architect (fable)
