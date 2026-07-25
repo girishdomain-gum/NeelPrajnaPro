@@ -158,3 +158,55 @@ DEVQ-020 (second_lens schema) · DEVQ-021 (smc-toolkit pin + §4 completion in a
 networked session). IVF S8 can recompute both placebos from their recorded (method,
 seed) and the H-002 weekend filter from `scans._spans_weekend` (the setup reuses that
 exact function — one source of truth).
+
+---
+## ADDENDUM — §4 CLOSED (DEVQ-021 micro-session) · 2026-07-25 · claude-code
+
+**§4 is now fully closed.** Per the DEVQ-021 CLOSED ruling (the PyPI
+`smc-toolkit==0.1.0` is an empty publish — FINDING F-021-1 — so there was nothing to
+`pip install`), the genuinely independent second FVG implementation is **vendored**,
+not depended-on:
+
+- **Vendored** `github.com/Louisjzhao/smc-toolkit` `core.py` + `__init__.py` at commit
+  `812de852f0e0a6bf454720d0ea11ad5c7c64b4ef` into
+  `tests/third_party/smc_toolkit_vendored/`, with the upstream MIT `LICENSE` alongside
+  and a provenance header (repo, commit, retrieval date, upstream sha256) in each file.
+  Integrity is sha256-gated offline by `tests/third_party/test_smc_toolkit_vendored_provenance.py`
+  — `core.py` = `056a9fdb…b92288f`, `__init__.py` = `82267473…8acf449` (both match the
+  ruling exactly).
+- **Gate flipped.** `tests/concepts/test_smc_cross_impl_s8.py` drops `importorskip` and
+  imports the vendored `extract_fvg` plainly (deterministic, offline-proof).
+- **Independence boundary** (ruling item 3): the kernel firewall now asserts `qrf/**`
+  NEVER imports the vendored fixture (scanner + planted-violation test in
+  `tests/test_kernel_firewall.py`). The vendored module is tests-only.
+
+### Reconciliation result (the library-level IVF, over the sample dataset)
+`_ours` (our calibrated `smc.fvg`) first shown to EQUAL the clean-room plain-gap rule
+(6 = 6, no divergence), so the only difference against the vendored lib is its two
+extra filter conditions:
+
+| metric | count | trace to DIFFERENCE_MAP |
+|---|---|---|
+| our `smc.fvg` events (= plain gaps) | 6 | — |
+| vendored `extract_fvg` events | 2 | strict SUBSET |
+| **matched** (ts+direction, zones identical) | **2** | `pattern_and_knowability`, `zone_bounds` |
+| only-ours | 4 `[(5,+1),(8,+1),(9,+1),(13,−1)]` | `mid_close_condition` + `displacement_filter` |
+| only-theirs | **0** | (their extra conditions only REMOVE) |
+| zone-mismatch | **0** | identical band on the intersection |
+
+**Interpretation:** the two implementations AGREE on the core 3-candle gap rule, the
+knowability bar (both stamp the third/confirming bar), and the zone bounds — they
+differ ONLY where the vendored lib additionally requires the middle bar to close
+beyond bar-1's extreme AND a displacement (body move > 2× the expanding mean of
+absolute body moves; its spurious `/100` cancels, internally consistent). Every
+divergence is therefore accounted for by exactly one documented axis, verified against
+the vendored source (`test_difference_map_matches_vendored_source`). The vendored
+`mitigated` column is LOOKAHEAD by construction (scans each event's entire future) and
+is NEVER consumed by the reconciliation (`test_vendored_reconciliation_never_consumes_mitigation`).
+
+### DoD delta
+Tests **786 passed** (was 777 + 1 skip; the skipped external-library leg is now a real
+passing test, +8 net) · ruff clean (vendored dir excluded, byte-identical) · firewall
+GREEN (now incl. the vendored independence boundary) · journal 54 UNCHANGED (test-only
+change; no records written) · VIRGIN untouched · gen_state regenerated. Merged + pushed.
+DEVQ-021 CLOSED and fully discharged.
