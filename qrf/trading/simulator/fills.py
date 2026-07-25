@@ -39,6 +39,11 @@ from __future__ import annotations
 import bisect
 from dataclasses import dataclass
 
+# Nanoseconds per UTC calendar day. epoch_day(ts) = ts // this — the SAME day index
+# the SeasonalityDetector uses for its dow markers (``(ts//1e9)//86400``), so a
+# calendar-day exit closes on exactly the day the marker opened (ARCH-009 §4).
+_NS_PER_DAY = 86_400_000_000_000
+
 
 @dataclass(frozen=True)
 class ExitFill:
@@ -46,7 +51,7 @@ class ExitFill:
 
     exit_index: int
     exit_price: float
-    reason: str  # "time_stop" | "stop" | "target"
+    reason: str  # "time_stop" | "stop" | "target" | "calendar_day"
 
 
 def entry_bar_index(signal_ts: int, ts_sorted: list[int]) -> int | None:
@@ -60,6 +65,37 @@ def entry_bar_index(signal_ts: int, ts_sorted: list[int]) -> int | None:
     return idx if idx < len(ts_sorted) else None
 
 
+def _calendar_day_exit_index(
+    entry_index: int, ts_sorted: list[int], hold_bars: int
+) -> int | None:
+    """The index of the LAST bar sharing ``entry_index``'s UTC calendar day (or None).
+
+    Walks forward from the entry bar while the epoch-day is unchanged, up to the
+    ``hold_bars`` cap. Returns the last same-day bar ONLY when the day is CONFIRMED
+    to have ended within the data — i.e. the very next bar exists and belongs to a
+    later day. Returns ``None`` (the engine drops + counts the trade) when:
+
+    * the same-day run reaches the data tail (``j`` is the last bar) — the day may
+      be TRUNCATED by the data / fold / window boundary, so a same-Monday exit
+      cannot be confirmed without look-ahead (this is the inter-window HOLE case);
+    * the day would extend beyond ``entry_index + hold_bars`` — honoring it would
+      breach the embargo bound the split relies on, so the trade is dropped.
+    """
+    n = len(ts_sorted)
+    if entry_index >= n:
+        return None
+    entry_day = ts_sorted[entry_index] // _NS_PER_DAY
+    cap = entry_index + hold_bars
+    j = entry_index
+    while j + 1 < n and (ts_sorted[j + 1] // _NS_PER_DAY) == entry_day:
+        if j + 1 > cap:
+            return None  # the day exceeds the hold bound — cannot honor it in-bound
+        j += 1
+    if j + 1 >= n:
+        return None  # day-end unconfirmed at the data tail — truncated / hole
+    return j
+
+
 def resolve_exit(
     *,
     entry_index: int,
@@ -71,22 +107,42 @@ def resolve_exit(
     lows: list[float],
     stop_offset: float | None,
     target_offset: float | None,
+    ts_sorted: list[int] | None = None,
+    exit_rule: str = "time_stop",
 ) -> ExitFill | None:
     """Resolve the exit for a trade opened at ``entry_index`` in ``direction`` (+1/-1).
 
-    The time stop is bar ``entry_index + hold_bars``; if that bar is beyond the
-    data the trade cannot be closed without look-ahead and ``None`` is returned
-    (the engine drops it). When ``stop_offset`` / ``target_offset`` are given,
-    bars ``entry_index+1 … entry_index+hold_bars`` are checked intrabar in order;
-    the first to touch a level closes the trade there — the stop before the target
-    on a bar that spans both, and each level filled with pessimistic gap-through
-    (see module docstring). If no level is touched, the trade closes at the OPEN of
-    the time-stop bar.
+    ``exit_rule`` selects the time stop:
+
+    * ``"time_stop"`` (default) — the exit bar is ``entry_index + hold_bars``.
+    * ``"calendar_day"`` (ARCH-009 §4) — the exit bar is the LAST bar sharing the
+      entry bar's UTC calendar day (:func:`_calendar_day_exit_index`), capped at
+      ``hold_bars``; requires ``ts_sorted``. This is the DEVQ-019 successor exit
+      ("exit at the open of the last bar whose open falls on the same Monday").
+
+    If the exit bar is beyond the data (or, for the calendar rule, the day is
+    truncated / over-long) the trade cannot be closed without look-ahead and
+    ``None`` is returned (the engine drops it). When ``stop_offset`` /
+    ``target_offset`` are given, bars ``entry_index+1 … exit_index`` are checked
+    intrabar in order; the first to touch a level closes the trade there — the stop
+    before the target on a bar that spans both, and each level filled with
+    pessimistic gap-through (see module docstring). If no level is touched, the
+    trade closes at the OPEN of the exit bar.
     """
     n = len(opens)
-    exit_index = entry_index + hold_bars
-    if exit_index >= n:
-        return None  # cannot close within the data — no look-ahead permitted
+    if exit_rule == "calendar_day":
+        if ts_sorted is None:
+            raise ValueError("calendar_day exit requires ts_sorted")
+        ci = _calendar_day_exit_index(entry_index, ts_sorted, hold_bars)
+        if ci is None:
+            return None  # day truncated / over-long — drop (no look-ahead)
+        exit_index = ci
+        time_stop_reason = "calendar_day"
+    else:
+        exit_index = entry_index + hold_bars
+        if exit_index >= n:
+            return None  # cannot close within the data — no look-ahead permitted
+        time_stop_reason = "time_stop"
 
     stop_price = _stop_price(direction, entry_price, stop_offset)
     target_price = _target_price(direction, entry_price, target_offset)
@@ -101,7 +157,9 @@ def resolve_exit(
                 # Cap at the target: a favorable gap-open is never credited.
                 return ExitFill(j, float(target_price), "target")
 
-    return ExitFill(exit_index=exit_index, exit_price=float(opens[exit_index]), reason="time_stop")
+    return ExitFill(
+        exit_index=exit_index, exit_price=float(opens[exit_index]), reason=time_stop_reason
+    )
 
 
 def _stop_fill(direction: int, stop_price: float, open_j: float) -> float:

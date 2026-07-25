@@ -52,7 +52,7 @@ from qrf.kernel.battery.simulator import require_audited_simulator
 from qrf.kernel.corrections.deflation import deflate, deflate_family
 from qrf.kernel.errors import ContaminationError, JudgeNotCalibratedError, SchemaViolation
 from qrf.kernel.protocol import seeds
-from qrf.kernel.protocol.splits import SplitSpec, walk_forward
+from qrf.kernel.protocol.splits import SplitSpec, walk_forward_multi
 from qrf.kernel.protocol.windows import WindowLedger
 from qrf.kernel.records.bulk import BulkStore
 from qrf.kernel.records.record import Record, now_ns
@@ -110,6 +110,7 @@ class PipelineResult:
     pooled_gross: list[float]
     n_total: int
     n_dropped: int
+    n_dropped_hole: int
     statistics: dict
     deflation: object
     family: str | None
@@ -124,16 +125,43 @@ class EvidenceBattery:
         self._windows = WindowLedger(store)
 
     # -- helpers --------------------------------------------------------------
-    def _hypothesis_window(self, hyp: Record) -> str:
-        windows = [
-            p for p in hyp.parents if self._store.get(p).record_type == "window"
-        ]
+    def _hypothesis_windows(self, hyp: Record) -> list[Record]:
+        """The ordered window record(s) this hypothesis is judged over.
+
+        A v3 (multi-window) hypothesis carries a ``window_refs`` list in its
+        payload (sealed, mirroring its parents); the union is judged in that order,
+        the seam between consecutive windows a hard fold boundary. A v1/v2
+        (single-window) hypothesis has exactly one ``window`` parent. Either way the
+        ids must resolve to ``window`` records; for a v3 record the payload list and
+        the parent set must agree (the seal is checked at registration, re-asserted
+        here so a hand-built store cannot slip a mismatch past the judge).
+        """
+        refs = hyp.payload.get("window_refs")
+        if refs is not None:
+            parents = tuple(p for p in hyp.parents if self._store.get(p).record_type == "window")
+            if tuple(refs) != parents:
+                raise SchemaViolation(
+                    f"hypothesis {hyp.record_id} window_refs {list(refs)} disagree with its "
+                    f"window parents {list(parents)} — the multi-window seal is broken"
+                )
+            return [self._store.get(r) for r in refs]
+        windows = [p for p in hyp.parents if self._store.get(p).record_type == "window"]
         if len(windows) != 1:
             raise SchemaViolation(
                 f"hypothesis {hyp.record_id} must have exactly one window parent, "
                 f"found {len(windows)}"
             )
-        return windows[0]
+        return [self._store.get(windows[0])]
+
+    def _check_designations(self, windows: list[Record]) -> None:
+        """Every judged window must be TRAINING/EXPLORATION (VIRGIN → refuse)."""
+        for w in windows:
+            designation = w.payload["designation"]
+            if designation not in _JUDGEABLE_DESIGNATIONS:
+                raise ContaminationError(
+                    f"window {w.record_id} is {designation}-designated; the battery judges "
+                    "only TRAINING/EXPLORATION windows (VIRGIN is the untouched reserve)"
+                )
 
     def _window_bars(self, bars: pd.DataFrame, window: Record) -> pd.DataFrame:
         """The window's bars, in ts order — sliced from the caller's bar frame."""
@@ -141,6 +169,49 @@ class EvidenceBattery:
         ts_end = window.payload["ts_end"]
         wb = bars[(bars["ts"] >= ts_start) & (bars["ts"] < ts_end)]
         return wb.sort_values("ts", kind="mergesort").reset_index(drop=True)
+
+    def _concat_window_bars(
+        self, bars: pd.DataFrame, windows: list[Record]
+    ) -> tuple[pd.DataFrame, list[int]]:
+        """The union's bars in window order + each window's bar count (the seams).
+
+        Each window's bars are sliced from the caller's frame and concatenated in
+        window order — the index space :func:`walk_forward_multi` folds over. The
+        returned lengths mark the seams (a hard fold boundary between consecutive
+        windows). A single window yields its own bars and one length (the
+        single-window path is the degenerate case).
+        """
+        wbs = [self._window_bars(bars, w) for w in windows]
+        lengths = [len(wb) for wb in wbs]
+        wb_concat = pd.concat(wbs, ignore_index=True) if len(wbs) > 1 else wbs[0]
+        return wb_concat.reset_index(drop=True), lengths
+
+    def _count_hole_drops(
+        self, simulator, cost_model, bars, windows, events, exec_dict, *, seed: int
+    ) -> int:
+        """Trades that cannot close within their own window — dropped at a SEAM.
+
+        For every window EXCEPT the last, run the injected engine over that window's
+        OWN bars and count the events it cannot open+close there (``n_dropped_tail``
+        over a full window can only occur at its trailing edge — the seam). Such a
+        trade's exit would have to cross the inter-window hole (e.g. the 2024 VIRGIN
+        reserve), which is not tradable bars, so it is DROPPED and COUNTED
+        (``n_dropped_hole``) — the seam is a hard boundary no trade spans (DEVQ-022).
+        This is a structural diagnostic over the union geometry (like the DEVQ-022
+        calendar arithmetic); it writes nothing and burns nothing. The last window's
+        trailing drops are ordinary data-tail drops, not hole drops, so it is
+        excluded here (its tail is the end of the data, not a seam).
+        """
+        if len(windows) < 2:
+            return 0
+        total = 0
+        for w in windows[:-1]:
+            wb = self._window_bars(bars, w)
+            lo, hi = w.payload["ts_start"], w.payload["ts_end"]
+            wev = events[(events["ts"] >= lo) & (events["ts"] < hi)]
+            trades = simulator.simulate(wb, wev, cost_model, seed=seed, execution=exec_dict)
+            total += int(trades.n_dropped_tail)
+        return total
 
     def _selftest_gate(self, simulator, cost_model, *, seed: int) -> None:
         """Step 2: today's calibration gate; JudgeNotCalibratedError on failure."""
@@ -161,9 +232,15 @@ class EvidenceBattery:
                 f"(selftest seed {seed})"
             )
 
-    def _run_folds(self, simulator, cost_model, exec_dict, spec, seed, wb, events):
-        """Step 5: run the engine over each fold's TEST range only."""
-        folds = walk_forward(len(wb), spec)
+    def _run_folds(self, simulator, cost_model, exec_dict, folds, seed, wb, events):
+        """Step 5: run the engine over each fold's TEST range only.
+
+        ``folds`` are precomputed by the caller (single window: :func:`walk_forward`;
+        multi-window union: :func:`walk_forward_multi` over the concatenated frame
+        ``wb``). A fold's test index range is sliced from ``wb`` and its events are
+        the ``wb``-ts-range events — since the union's windows are disjoint in ts and
+        no fold straddles a seam, each fold's events come from exactly one window.
+        """
         ts_col = wb["ts"].tolist()
         outcomes: list[_FoldOutcome] = []
         for fold in folds:
@@ -258,9 +335,15 @@ class EvidenceBattery:
 
     # -- shared pipeline core (steps 4-7, no writes) --------------------------
     def _pipeline(
-        self, hyp: Record, simulator, cost_model, bars, window, events, *, engine_seed: int
+        self, hyp: Record, simulator, cost_model, bars, windows, events, *, engine_seed: int
     ) -> PipelineResult:
         """Steps 4-7: splits -> engine per fold TEST range -> pooled stats -> tri-state.
+
+        ``windows`` is the ordered list of window records the hypothesis is judged
+        over (one for v1/v2; the disjoint union for v3 multi-window). Folds are
+        computed per window (embargo within each window, the seam a hard boundary)
+        over the concatenated bar frame, and the fold TEST outcomes are POOLED
+        across the whole union — one evidence set, one tri-state.
 
         Pure computation: appends nothing, burns nothing. Both :meth:`run` (which then
         writes the verdict + burn) and :meth:`evaluate` (which does not) call this, so a
@@ -280,11 +363,17 @@ class EvidenceBattery:
                 f"split_spec.embargo_bars ({embargo}) < hold_bars + 1 ({hold + 1}) — "
                 "DEVQ-011 BINDING; run refused"
             )
-        wb = self._window_bars(bars, window)
+        wb, window_lengths = self._concat_window_bars(bars, windows)
 
-        # 5. engine per fold TEST range only.
+        # 5. engine per fold TEST range only; folds per window (seam = hard boundary).
         spec = SplitSpec(n_folds=split_spec["n_folds"], embargo_bars=embargo)
-        outcomes = self._run_folds(simulator, cost_model, exec_dict, spec, engine_seed, wb, events)
+        folds = walk_forward_multi(window_lengths, spec)
+        outcomes = self._run_folds(simulator, cost_model, exec_dict, folds, engine_seed, wb, events)
+
+        # Trades whose same-day exit would cross an inter-window hole: dropped + counted.
+        n_dropped_hole = self._count_hole_drops(
+            simulator, cost_model, bars, windows, events, exec_dict, seed=engine_seed
+        )
 
         pooled_net = [v for oc in outcomes for v in oc.net]
         pooled_gross = [v for oc in outcomes for v in oc.gross]
@@ -318,6 +407,7 @@ class EvidenceBattery:
             pooled_gross=pooled_gross,
             n_total=n_total,
             n_dropped=n_dropped,
+            n_dropped_hole=n_dropped_hole,
             statistics=st,
             deflation=defl,
             family=family,
@@ -347,18 +437,13 @@ class EvidenceBattery:
             raise SchemaViolation(
                 f"record {hypothesis_ref} is a {hyp.record_type!r}, not a hypothesis"
             )
-        window_ref = self._hypothesis_window(hyp)
-        window = self._store.get(window_ref)
-        designation = window.payload["designation"]
-        if designation not in _JUDGEABLE_DESIGNATIONS:
-            raise ContaminationError(
-                f"window {window_ref} is {designation}-designated; the battery judges "
-                "only TRAINING/EXPLORATION windows (VIRGIN is the untouched reserve)"
-            )
+        windows = self._hypothesis_windows(hyp)
+        self._check_designations(windows)
         if engine_seed is None:
-            engine_seed = seeds.for_run(hypothesis_ref, window_ref)
+            # Seed anchored on the first window (deterministic; same for run/evaluate).
+            engine_seed = seeds.for_run(hypothesis_ref, windows[0].record_id)
         return self._pipeline(
-            hyp, simulator, cost_model, bars, window, events, engine_seed=engine_seed
+            hyp, simulator, cost_model, bars, windows, events, engine_seed=engine_seed
         )
 
     # -- the pipeline ---------------------------------------------------------
@@ -390,27 +475,24 @@ class EvidenceBattery:
             )
         lineage = hyp.payload["lineage"]
         thresholds = hyp.payload["thresholds"]
-        window_ref = self._hypothesis_window(hyp)
-        window = self._store.get(window_ref)
+        windows = self._hypothesis_windows(hyp)
+        window_refs = [w.record_id for w in windows]
+        primary_ref = window_refs[0]
 
-        engine_seed = seeds.for_run(hypothesis_ref, window_ref)
+        engine_seed = seeds.for_run(hypothesis_ref, primary_ref)
         selftest_seed = _SELFTEST_SEED
 
         # 2. selftest gate (records the seed; aborts on failure).
         self._selftest_gate(simulator, cost_model, seed=selftest_seed)
 
-        # 3. window checks: designation + not burned for this lineage.
-        designation = window.payload["designation"]
-        if designation not in _JUDGEABLE_DESIGNATIONS:
-            raise ContaminationError(
-                f"window {window_ref} is {designation}-designated; the battery judges "
-                "only TRAINING/EXPLORATION windows (VIRGIN is the untouched reserve)"
-            )
-        self._windows.check_available(window_ref, lineage)  # WindowBurnedError on re-run
+        # 3. window checks: EVERY window TRAINING/EXPLORATION + none burned for this lineage.
+        self._check_designations(windows)
+        for wref in window_refs:
+            self._windows.check_available(wref, lineage)  # WindowBurnedError on re-run
 
         # 4-7. splits -> engine -> stats -> tri-state (the shared pipeline core).
         result = self._pipeline(
-            hyp, simulator, cost_model, bars, window, events, engine_seed=engine_seed
+            hyp, simulator, cost_model, bars, windows, events, engine_seed=engine_seed
         )
         outcomes = result.outcomes
         pooled_net = result.pooled_net
@@ -421,12 +503,13 @@ class EvidenceBattery:
         defl = result.deflation
         family = result.family
         verdict = result.verdict
+        is_multi = "window_refs" in hyp.payload
 
         # 8. persist trades, append verdict, then burn — one code path.
         trades_manifest = self._trades_manifest(hyp, outcomes)
         payload = {
             "hypothesis_ref": hypothesis_ref,
-            "window_ref": window_ref,
+            "window_ref": primary_ref,
             "verdict": verdict,
             "n_trades": n_total,
             "n_dropped_tail": n_dropped,
@@ -473,14 +556,22 @@ class EvidenceBattery:
         if family is not None:
             payload["corrections"]["family"] = family
             verdict_schema_version = 2
+        # v3 verdict (multi-window): the full window_refs union + the seam-hole drop
+        # count. window_ref (singular) stays the primary window for v1/v2 readers.
+        if is_multi:
+            payload["window_refs"] = list(window_refs)
+            payload["n_dropped_hole"] = result.n_dropped_hole
+            verdict_schema_version = 3
         verdict_rec = self._store.append(
             "verdict",
             payload,
             producer=producer,
             event_ts=now_ns(),
-            parents=[hypothesis_ref, window_ref],
+            parents=[hypothesis_ref, *window_refs],
             schema_version=verdict_schema_version,
         )
-        # A verdict without its burn is impossible: the burn follows unconditionally.
-        self._windows.burn(window_ref, lineage, verdict_rec.record_id)
+        # A verdict without its burn is impossible: the burn follows unconditionally —
+        # once PER window (each training span in the union is spent for this lineage).
+        for wref in window_refs:
+            self._windows.burn(wref, lineage, verdict_rec.record_id)
         return verdict_rec

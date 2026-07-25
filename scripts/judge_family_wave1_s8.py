@@ -145,7 +145,7 @@ def judge_one(
     if preview:
         # Read-only: prove the config resolves + the window/tri-state are sane,
         # WITHOUT sealing a hypothesis id or writing a verdict.
-        payload, ver = registry._resolved_payload(
+        payload, ver, _window_refs = registry._resolved_payload(
             HypothesisRegistry.load_config(config_path), available
         )
         print(f"[preview] {config_path}: resolves to schema v{ver}, "

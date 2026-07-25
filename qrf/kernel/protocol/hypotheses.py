@@ -54,7 +54,9 @@ from qrf.kernel.records.store import RecordStore
 _RESTATEMENT_GATED_PREFIX = "smc.order_block"
 
 # The execution keys the record carries, in ExecutionSpec.as_dict() shape.
-_EXECUTION_KEYS = ("hold_bars", "strength_min", "stop_offset", "target_offset", "size")
+_EXECUTION_KEYS = (
+    "hold_bars", "strength_min", "stop_offset", "target_offset", "size", "exit_rule"
+)
 
 # The v2 pre-commitments (DEVQ-014/015): the plain-words claim, the conclusion to
 # draw for each outcome (fixed BEFORE running), and the family the multiplicity
@@ -205,6 +207,56 @@ class HypothesisRegistry:
             )
         return window_ref
 
+    def _resolve_windows(self, config: dict[str, Any]) -> tuple[list[str], bool]:
+        """Resolve the window binding: ``(window_refs, is_multi)``.
+
+        A hypothesis binds to EITHER a single ``window`` (v1/v2 path) OR a
+        ``window_refs`` list (v3 multi-window path, ARCH-009 §4 / DEVQ-022 Option
+        A) — never both. Each id must EXIST and be a ``window`` record. The
+        multi-window ids must name DISJOINT ``[ts_start, ts_end)`` intervals (a
+        union that double-counts a bar is not a union); their order in the list is
+        preserved (the battery concatenates windows in this order and the seam
+        between consecutive windows is a hard fold boundary).
+        """
+        has_single = "window" in config
+        has_multi = "window_refs" in config
+        if has_single and has_multi:
+            raise SchemaViolation(
+                "hypothesis config sets both 'window' and 'window_refs'; use exactly one "
+                "('window' = single-window v1/v2, 'window_refs' = multi-window v3)"
+            )
+        if not has_multi:
+            return [self._window_ref(config)], False
+
+        refs = config["window_refs"]
+        if not isinstance(refs, list) or not refs:
+            raise SchemaViolation(
+                "hypothesis 'window_refs' must be a non-empty list of window record ids"
+            )
+        intervals: list[tuple[int, int]] = []
+        resolved: list[str] = []
+        for wref in refs:
+            if not isinstance(wref, str) or not wref:
+                raise SchemaViolation("hypothesis 'window_refs' entries must be non-empty ids")
+            rec = self._store.get(wref)  # UnknownRecordError if absent
+            if rec.record_type != "window":
+                raise SchemaViolation(
+                    f"hypothesis 'window_refs' entry {wref} is a {rec.record_type!r}, not a window"
+                )
+            intervals.append((rec.payload["ts_start"], rec.payload["ts_end"]))
+            resolved.append(wref)
+        for i in range(len(intervals)):
+            for j in range(i + 1, len(intervals)):
+                a0, a1 = intervals[i]
+                b0, b1 = intervals[j]
+                if a0 < b1 and b0 < a1:
+                    raise SchemaViolation(
+                        f"hypothesis 'window_refs' {resolved[i]} [{a0},{a1}) and "
+                        f"{resolved[j]} [{b0},{b1}) overlap; a multi-window union must be "
+                        "over disjoint windows (DEVQ-022)"
+                    )
+        return resolved, True
+
     def _v2_extra(self, config: dict[str, Any]) -> dict | None:
         """Assemble the v2 pre-commitments from ``config``, or None if absent.
 
@@ -298,14 +350,31 @@ class HypothesisRegistry:
 
     def _resolved_payload(
         self, config: dict[str, Any], cost_model_refs: Collection[str]
-    ) -> tuple[dict, int]:
-        """The canonical hypothesis payload + its schema version (v1 or v2)."""
+    ) -> tuple[dict, int, list[str]]:
+        """The canonical hypothesis payload, its schema version, and its window refs.
+
+        Returns ``(payload, schema_version, window_refs)``. A single-window
+        hypothesis is v1 (no pre-commitments) or v2 (with them); a multi-window
+        hypothesis is v3 — v2 plus a ``window_refs`` list IN the payload (mirroring
+        the parents, ARCH-009 §4). Multi-window REQUIRES the v2 pre-commitments (a
+        union judged across a training-span gap is exactly the kind of claim whose
+        interpretation must be fixed in advance).
+        """
         payload = self._build_payload(config, cost_model_refs)
+        window_refs, is_multi = self._resolve_windows(config)
         v2 = self._v2_extra(config)
+        if is_multi:
+            if v2 is None:
+                raise SchemaViolation(
+                    "a multi-window hypothesis (window_refs) must declare the v2 "
+                    "pre-commitments (thesis, outcome_interpretations, family) — ARCH-009 §4"
+                )
+            payload = {**payload, **v2, "window_refs": list(window_refs)}
+            return payload, 3, window_refs
         if v2 is not None:
             payload = {**payload, **v2}
-            return payload, 2
-        return payload, 1
+            return payload, 2, window_refs
+        return payload, 1, window_refs
 
     # -- registration ---------------------------------------------------------
     def register(
@@ -330,12 +399,12 @@ class HypothesisRegistry:
         """
         if isinstance(config, (str, Path)):
             config = self.load_config(config)
-        window_ref = self._window_ref(config)
-        payload, schema_version = self._resolved_payload(config, cost_model_refs)
+        payload, schema_version, window_refs = self._resolved_payload(config, cost_model_refs)
+        parents = tuple(window_refs)
 
-        # Idempotency: same resolved payload + same window parent => same hypothesis.
+        # Idempotency: same resolved payload + same window parents => same hypothesis.
         for rec in self._store.query(record_type="hypothesis"):
-            if rec.payload == payload and rec.parents == (window_ref,):
+            if rec.payload == payload and rec.parents == parents:
                 return rec
 
         if schema_version < 2:
@@ -349,7 +418,7 @@ class HypothesisRegistry:
             payload,
             producer=producer,
             event_ts=event_ts if event_ts is not None else now_ns(),
-            parents=[window_ref],
+            parents=list(window_refs),
             schema_version=schema_version,
         )
 
@@ -380,9 +449,8 @@ class HypothesisRegistry:
             )
         if isinstance(config, (str, Path)):
             config = self.load_config(config)
-        window_ref = self._window_ref(config)
-        payload, _ = self._resolved_payload(config, cost_model_refs)
-        if rec.payload != payload or rec.parents != (window_ref,):
+        payload, _, window_refs = self._resolved_payload(config, cost_model_refs)
+        if rec.payload != payload or rec.parents != tuple(window_refs):
             raise TamperedHypothesisError(
                 f"hypothesis {hypothesis_ref} no longer matches its config: the YAML "
                 "was edited after registration (a changed hypothesis must re-register "

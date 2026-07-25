@@ -39,6 +39,15 @@ from qrf.trading.utility.cost_models import CostModel
 
 _REQUIRED_BAR_COLUMNS: tuple[str, ...] = ("ts", "open", "high", "low", "close")
 
+# Exit rules (DEVQ-012 scope + ARCH-009 §4 calendar successor):
+#   "time_stop"    — held exactly hold_bars bars, then exit at that bar's open.
+#   "calendar_day" — held until the OPEN of the LAST bar sharing the entry bar's UTC
+#                    calendar day (epoch-day), capped at hold_bars; the DEVQ-019
+#                    successor exit for day-of-week claims (H-004). hold_bars stays
+#                    the conservative MAX-hold bound, so embargo >= hold_bars + 1
+#                    still clears any calendar exit (no boundary leak).
+_EXIT_RULES: frozenset[str] = frozenset({"time_stop", "calendar_day"})
+
 
 @dataclass(frozen=True)
 class ExecutionSpec:
@@ -56,6 +65,7 @@ class ExecutionSpec:
     stop_offset: float | None = None
     target_offset: float | None = None
     size: float = 1.0
+    exit_rule: str = "time_stop"
 
     def __post_init__(self) -> None:
         if (
@@ -74,6 +84,10 @@ class ExecutionSpec:
                 raise SchemaViolation(
                     f"execution.{name} must be a positive number or None, got {v!r}"
                 )
+        if self.exit_rule not in _EXIT_RULES:
+            raise SchemaViolation(
+                f"execution.exit_rule must be one of {sorted(_EXIT_RULES)}, got {self.exit_rule!r}"
+            )
 
     def as_dict(self) -> dict:
         return {
@@ -82,6 +96,7 @@ class ExecutionSpec:
             "stop_offset": None if self.stop_offset is None else float(self.stop_offset),
             "target_offset": None if self.target_offset is None else float(self.target_offset),
             "size": float(self.size),
+            "exit_rule": self.exit_rule,
         }
 
     @classmethod
@@ -98,6 +113,7 @@ class ExecutionSpec:
             stop_offset=(None if d.get("stop_offset") is None else float(d["stop_offset"])),
             target_offset=(None if d.get("target_offset") is None else float(d["target_offset"])),
             size=float(d.get("size", 1.0)),
+            exit_rule=str(d.get("exit_rule", "time_stop")),
         )
 
 
@@ -238,6 +254,8 @@ class EventEngine:
                 lows=lows,
                 stop_offset=execution.stop_offset,
                 target_offset=execution.target_offset,
+                ts_sorted=ts_sorted,
+                exit_rule=execution.exit_rule,
             )
             if fill is None:
                 n_dropped_tail += 1  # time-stop exit bar lies beyond the data

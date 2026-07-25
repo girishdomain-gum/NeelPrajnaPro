@@ -394,12 +394,15 @@ def _validate_trial_count_v3(payload: dict) -> None:
 _VERDICT_VALUES = frozenset({"PASS", "FAIL", "INSUFFICIENT"})
 
 
+_EXIT_RULES = frozenset({"time_stop", "calendar_day"})
+
+
 def _validate_execution(payload: dict, where: str) -> None:
     """A hypothesis's ``execution`` sub-object (mirrors ExecutionSpec.as_dict)."""
     _check_keys(
         payload,
         {"hold_bars", "size"},
-        {"strength_min", "stop_offset", "target_offset"},
+        {"strength_min", "stop_offset", "target_offset", "exit_rule"},
         where,
     )
     _require_int(payload, "hold_bars", where)
@@ -413,6 +416,12 @@ def _validate_execution(payload: dict, where: str) -> None:
             val = payload[name]
             _require_number_or_none(val, f"{where}.{name}")
             _require(val is None or val > 0, f"{where}.{name} must be > 0 or null")
+    if "exit_rule" in payload:
+        _require_str(payload, "exit_rule", where)
+        _require(
+            payload["exit_rule"] in _EXIT_RULES,
+            f"{where}.exit_rule must be one of {sorted(_EXIT_RULES)} (ARCH-009 §4)",
+        )
 
 
 def _validate_split_spec(payload: dict, where: str) -> None:
@@ -485,28 +494,20 @@ def _validate_hypothesis(payload: dict) -> None:
     _validate_hypothesis_core(payload, set())
 
 
-def _validate_hypothesis_v2(payload: dict) -> None:
-    """hypothesis v2 (DEVQ-014/015): v1 plus ``thesis``, ``outcome_interpretations``,
-    ``family`` — the pre-committed interpretation is as load-bearing as the
-    pre-committed thresholds (the difference between "FAIL = the edge isn't there"
-    and post-hoc "FAIL = wrong parameters"), and ``family`` fixes the
-    multiplicity scope (DEVQ-015).
+def _validate_hypothesis_v2_body(
+    payload: dict, extra_required: set[str], extra_optional: set[str]
+) -> None:
+    """The v2 shape check (v1 core + the epistemic pre-commitments), reusable.
 
-    v2.1 (ARCH-007 §4, DEVQ-014): an OPTIONAL ``observatory_ancestry`` — a list of
-    ``question`` record ids the hypothesis descends from. Additive and optional,
-    so every existing v2 record still validates; the registry (not the schema)
-    checks each id exists and is a question record.
-
-    v2.2 (ARCH-009 §2, DEVQ-018 ADDENDUM): an OPTIONAL ``placebo_method`` — the
-    sealed null construction a placebo run of this claim must use. Additive and
-    optional so the grandfathered Wave-1 records (H-002/H-003, which fixed their
-    method in the ARCH-008 §3 instruction, not the YAML) still validate unchanged.
-    The schema fixes SHAPE (a non-empty string); the registry enforces MEMBERSHIP
-    in the DEVQ-018 ruled set (it owns the contract), and the placebo judge refuses
-    to run a method that disagrees with this sealed field.
+    ``extra_required``/``extra_optional`` widen the closed key set so a later
+    schema version (v3 = multi-window) can add its own fields (``window_refs``)
+    without re-implementing the v2 body. The v2 validator calls this with no
+    extras; ``_validate_hypothesis_v3`` adds ``window_refs``.
     """
     _validate_hypothesis_core(
-        payload, _HYPOTHESIS_V2_FIELDS, {"observatory_ancestry", "placebo_method"}
+        payload,
+        _HYPOTHESIS_V2_FIELDS | extra_required,
+        {"observatory_ancestry", "placebo_method"} | extra_optional,
     )
     if "observatory_ancestry" in payload:
         anc = payload["observatory_ancestry"]
@@ -541,6 +542,61 @@ def _validate_hypothesis_v2(payload: dict) -> None:
         )
 
 
+def _validate_hypothesis_v2(payload: dict) -> None:
+    """hypothesis v2 (DEVQ-014/015): v1 plus ``thesis``, ``outcome_interpretations``,
+    ``family`` — the pre-committed interpretation is as load-bearing as the
+    pre-committed thresholds (the difference between "FAIL = the edge isn't there"
+    and post-hoc "FAIL = wrong parameters"), and ``family`` fixes the
+    multiplicity scope (DEVQ-015).
+
+    v2.1 (ARCH-007 §4, DEVQ-014): an OPTIONAL ``observatory_ancestry`` — a list of
+    ``question`` record ids the hypothesis descends from. Additive and optional,
+    so every existing v2 record still validates; the registry (not the schema)
+    checks each id exists and is a question record.
+
+    v2.2 (ARCH-009 §2, DEVQ-018 ADDENDUM): an OPTIONAL ``placebo_method`` — the
+    sealed null construction a placebo run of this claim must use. Additive and
+    optional so the grandfathered Wave-1 records (H-002/H-003, which fixed their
+    method in the ARCH-008 §3 instruction, not the YAML) still validate unchanged.
+    The schema fixes SHAPE (a non-empty string); the registry enforces MEMBERSHIP
+    in the DEVQ-018 ruled set (it owns the contract), and the placebo judge refuses
+    to run a method that disagrees with this sealed field.
+    """
+    _validate_hypothesis_v2_body(payload, set(), set())
+
+
+def _validate_hypothesis_v3(payload: dict) -> None:
+    """hypothesis v3 (ARCH-009 §4, DEVQ-022 Option A) — the MULTI-WINDOW schema.
+
+    The full v2 shape (thesis / outcome_interpretations / family, and the optional
+    observatory_ancestry / placebo_method) PLUS a required ``window_refs`` — a
+    non-empty ordered list of ``window`` record ids the hypothesis is judged over
+    as a UNION. The list mirrors the record's window parents (the registry asserts
+    ``parents == tuple(window_refs)``), so the multi-window binding is sealed twice
+    over: in the content-hashed payload AND in the parent set (the same both-places
+    pattern a verdict already uses for its single ``window_ref``).
+
+    A single window still uses the v1/v2 ``window`` parent (single-window path,
+    unchanged); v3 exists for the non-contiguous training span H-004 needs (2024 +
+    2025 training with the 2024 VIRGIN reserve between them, which no single
+    contiguous window may contain). The battery evaluates the union, pools folds
+    per window with the seam as a hard fold boundary, and burns EACH window once.
+    The schema fixes shape; the registry (which alone has the store) checks each id
+    exists and is a window, and that the list matches the parents.
+    """
+    _validate_hypothesis_v2_body(payload, {"window_refs"}, set())
+    wr = payload["window_refs"]
+    _require(
+        isinstance(wr, list) and wr,
+        "hypothesis.window_refs must be a non-empty list of window ids",
+    )
+    for i, ref in enumerate(wr):
+        _require(
+            isinstance(ref, str) and ref,
+            f"hypothesis.window_refs[{i}] must be a non-empty string",
+        )
+
+
 def _validate_stat_block(block: object, where: str) -> None:
     """One statistics entry: ``{stat, p, ci_low, ci_high}`` (each number or null)."""
     _require(isinstance(block, dict), f"{where} must be an object")
@@ -549,8 +605,11 @@ def _validate_stat_block(block: object, where: str) -> None:
         _require_number_or_none(block[k], f"{where}.{k}")
 
 
-def _validate_verdict_core(payload: dict, *, corrections_optional: set[str]) -> None:
-    """Shared verdict shape check; ``corrections_optional`` widens corrections (v2)."""
+def _validate_verdict_core(
+    payload: dict, *, corrections_optional: set[str], extra_optional: set[str] = frozenset()
+) -> None:
+    """Shared verdict shape check; ``corrections_optional`` widens corrections (v2);
+    ``extra_optional`` widens the top-level key set (v3 multi-window)."""
     _check_keys(
         payload,
         {
@@ -570,7 +629,7 @@ def _validate_verdict_core(payload: dict, *, corrections_optional: set[str]) -> 
             "engine_version",
             "trades_manifest",
         },
-        set(),
+        extra_optional,
         "verdict",
     )
     _require_str(payload, "hypothesis_ref", "verdict")
@@ -639,6 +698,32 @@ def _validate_verdict_v2(payload: dict) -> None:
     correction is fully reconstructable from the verdict alone.
     """
     _validate_verdict_core(payload, corrections_optional={"family"})
+
+
+def _validate_verdict_v3(payload: dict) -> None:
+    """verdict v3 (ARCH-009 §4, DEVQ-022 Option A) — a MULTI-WINDOW verdict.
+
+    The v2 verdict PLUS two required fields:
+    * ``window_refs`` — the ordered list of every window this verdict was judged
+      over (the union). ``window_ref`` (singular) is retained and set to the FIRST
+      window so v1/v2 readers keep working; ``window_refs`` is the authoritative
+      set the battery burned (one ``window_burn`` per entry).
+    * ``n_dropped_hole`` — trades dropped because a same-day calendar exit would
+      have to cross an inter-window hole (a training-span gap, e.g. the 2024 VIRGIN
+      reserve between the 2024 and 2025 training windows). Counted, never silent
+      (the seam is a hard boundary; no trade spans it).
+    """
+    _validate_verdict_core(
+        payload, corrections_optional={"family"}, extra_optional={"window_refs", "n_dropped_hole"}
+    )
+    _require("window_refs" in payload, "verdict v3 requires window_refs")
+    _require_str_list(payload, "window_refs", "verdict", non_empty=True)
+    _require(
+        payload["window_ref"] in payload["window_refs"],
+        "verdict.window_ref must be one of window_refs (the primary window)",
+    )
+    _require("n_dropped_hole" in payload, "verdict v3 requires n_dropped_hole")
+    _require_int(payload, "n_dropped_hole", "verdict", non_negative=True)
 
 
 # ===========================================================================
@@ -898,8 +983,10 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("trial_count", 3): _validate_trial_count_v3,
     ("hypothesis", 1): _validate_hypothesis,
     ("hypothesis", 2): _validate_hypothesis_v2,
+    ("hypothesis", 3): _validate_hypothesis_v3,
     ("verdict", 1): _validate_verdict,
     ("verdict", 2): _validate_verdict_v2,
+    ("verdict", 3): _validate_verdict_v3,
     ("anomaly_scan", 1): _validate_anomaly_scan,
     ("question", 1): _validate_question,
     ("belief", 1): _validate_belief,

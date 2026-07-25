@@ -134,3 +134,55 @@ def walk_forward(n_bars: int, spec: SplitSpec) -> list[Fold]:
             Fold(index=i, train=IndexRange(0, train_end), test=IndexRange(t0, t1))
         )
     return folds
+
+
+def walk_forward_multi(window_lengths: list[int], spec: SplitSpec) -> list[Fold]:
+    """Anchored walk-forward folds over a CONCATENATION of disjoint windows.
+
+    Multi-window schema v3 (ARCH-009 §4, DEVQ-022 Option A): a hypothesis judged
+    over a union of disjoint windows (e.g. the non-contiguous 2024 + 2025 training
+    span, with the 2024 VIRGIN reserve as the hole between them). Each window is
+    walk-forwarded INDEPENDENTLY — the embargo is applied within the window and the
+    train is anchored at the window's own start — and its fold index ranges are
+    offset into the concatenated ``[0, sum(window_lengths))`` index space (the same
+    space the battery's concatenated bar frame lives in). Consequences, all tested:
+
+    * the concatenation SEAM is a HARD fold boundary — no test block straddles a
+      seam, because a window's blocks are computed on its own length alone;
+    * no train range of window B reaches into window A's test, nor vice versa — a
+      window's train lies entirely within that window (``[offset, offset+k)``);
+    * splits are a pure, deterministic function of ``(window_lengths, spec)``.
+
+    Returns a flat, ordered list of :class:`Fold` in window-then-fold order, with
+    ``index`` 1-based and globally sequential (so every fold has a distinct index
+    for the verdict's per-fold record). A single-element ``window_lengths`` reduces
+    EXACTLY to :func:`walk_forward` (offset 0), so the single-window path is a
+    special case of the multi-window one.
+    """
+    if not isinstance(window_lengths, list) or not window_lengths:
+        raise SchemaViolation("window_lengths must be a non-empty list of bar counts")
+    folds: list[Fold] = []
+    offset = 0
+    idx = 0
+    for w, length in enumerate(window_lengths):
+        if not isinstance(length, int) or isinstance(length, bool) or length < 1:
+            raise SchemaViolation(
+                f"window_lengths[{w}] must be an int >= 1, got {length!r}"
+            )
+        try:
+            local = walk_forward(length, spec)
+        except SchemaViolation as e:
+            raise SchemaViolation(
+                f"window {w} (length {length}) too short for {spec.n_folds} folds: {e}"
+            ) from e
+        for f in local:
+            idx += 1
+            folds.append(
+                Fold(
+                    index=idx,
+                    train=IndexRange(offset + f.train.start, offset + f.train.end),
+                    test=IndexRange(offset + f.test.start, offset + f.test.end),
+                )
+            )
+        offset += length
+    return folds
