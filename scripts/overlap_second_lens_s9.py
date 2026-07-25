@@ -210,9 +210,12 @@ def main() -> None:
         )
 
     # (Unreached until the ordering guard is resolved — the append path lands with the
-    # Architect's DEVQ-023 ruling on the discriminator.)
+    # Architect's DEVQ-023 ruling on the discriminator. ``--dry`` will gate the append
+    # once that path exists.)
+    mode = "dry — no writes" if args.dry else "live"
     raise SystemExit(
-        "alignment clean but the append path awaits the DEVQ-023 discriminator ruling."
+        f"alignment clean ({mode}) but the append path awaits the DEVQ-023 "
+        "discriminator ruling."
     )
 
 
