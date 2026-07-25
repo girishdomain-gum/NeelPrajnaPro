@@ -220,8 +220,17 @@ class EvidenceBattery:
             "ci_high": ci_high,
         }
 
-    def _trades_manifest(self, hyp: Record, outcomes: list[_FoldOutcome]) -> str:
-        """Step 8a: persist the pooled fold trades; return the manifest ref (or '')."""
+    @staticmethod
+    def trades_table(outcomes: list[_FoldOutcome]) -> pa.Table | None:
+        """The pooled-fold trades as a pyarrow Table (``ts`` = signal_ts, int64).
+
+        Returns ``None`` when there are no trades to anchor. This is the SINGLE
+        construction of the ``verdict_trades.*`` table: both :meth:`_trades_manifest`
+        (the write path, ARCH-006 §4 step 8a) and ``scripts/rebuild_bulk.py`` (the
+        ARCH-009 §1 rebuild path) call it, so a rebuild is byte-identical to the
+        original write BY CONSTRUCTION, never via a re-implementation that could
+        drift. Pure: no writes, no store access.
+        """
         rows: list[dict] = []
         for oc in outcomes:
             for r in oc.trade_rows:
@@ -229,10 +238,16 @@ class EvidenceBattery:
                 d["ts"] = int(d["signal_ts"])
                 rows.append(d)
         if not rows:
-            return ""  # no trades to anchor (a FAIL/INSUFFICIENT on an empty run)
+            return None
         table = pa.Table.from_pylist(rows)
         ts_i64 = table.column("ts").cast(pa.int64())
-        table = table.set_column(table.schema.get_field_index("ts"), "ts", ts_i64)
+        return table.set_column(table.schema.get_field_index("ts"), "ts", ts_i64)
+
+    def _trades_manifest(self, hyp: Record, outcomes: list[_FoldOutcome]) -> str:
+        """Step 8a: persist the pooled fold trades; return the manifest ref (or '')."""
+        table = self.trades_table(outcomes)
+        if table is None:
+            return ""  # no trades to anchor (a FAIL/INSUFFICIENT on an empty run)
         manifest = self._bulk.write(
             f"verdict_trades.{hyp.payload['lineage']}",
             table,
