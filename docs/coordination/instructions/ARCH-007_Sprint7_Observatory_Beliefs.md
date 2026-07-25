@@ -84,3 +84,55 @@ question + planted belief ignoring a FAIL — both must be caught; DRILL
 FIRST) + HC caption-layout fix + visual HC (the two questions' data
 slices on the chart). Owner: HC + Go/No-Go → GO-S7 (+Retrospective) →
 Blueprint consolidation pass → ARCH-008.
+
+## COMPLETION REPORT (developer)
+S7-1 · 2026-07-25 · claude-code · branch claude/arch-007-t0-execution-19e5d2,
+merged to main (3dc9ce4→c67d68b). All scope delivered; DoD met.
+
+**T0** — GO-S6 note 01KYCEKQF2SPZ9T9XX705F8QE1, parent GO-S5
+01KYC5RRRZHM60CTGJRVH1HVK8 (commit "S7 T0").
+
+**Scope 1 — Observatory** (qrf/kernel/observatory/): `Observatory.scan` guards
+VIRGIN first (ContaminationError before any write; guard-tested), bumps the
+family trial ledger on every scan (looking is a burden — DEVQ-015), appends
+`anomaly_scan`; `pose_question` appends a `question` parented to its scan. Kernel
+stays domain-blind (findings injected, battery pattern); firewall GREEN.
+
+**Scope 2 — First real questions**: over the TRAINING window (never VIRGIN),
+smc.fvg detected 825 events. (a) weekend-spanning FVGs 01KYCFNE46BB7H2V300D1WZG1P
+(scan 01KYCFNE2XJ95R4CNM54XWQ1XF) — weekend n=18 mean −1.56 vs intra-week n=807
+mean −0.13. (b) net drift / fold-4 01KYCFNE69PEGMQHH85W8MT528 (scan
+01KYCFNE4W0C1RT7K3NX3RV237) — descriptive quarterly follow-through is NON-monotone
+where the cost-laden fold means were monotone-worsening. Both cite verdict
+01KYC7Y2KWYGXH73V1R9P57MYA + trades manifest 01KYC7Y2JQY15BVJP146FX1QGF; data
+slice 01KYCFNE17Z84AT3P47DJDG104. Descriptive only (no thresholds/verdict words).
+
+**Scope 3 — Beliefs** (qrf/kernel/belief/): `BeliefLayer.update` refuses any
+non-verdict evidence (arrow-8 audit), derives stance+strength from the verdicts
+alone, append-only chain. Seeded from the real ledger: exactly one REJECTED belief
+01KYCFNKCGSYFKWTRYKW54E9C8 for the naive FVG follow-through claim, strength 0.9435
+(the verdict's own p), citing 01KYC7Y2KWYGXH73V1R9P57MYA.
+
+**Scope 4 — Ancestry** (protocol/hypotheses.py): hypothesis v2.1 optional
+`observatory_ancestry`; registry refuses an id that is absent or not a question,
+and refuses ancestry on a non-v2 hypothesis; judge_h001 prints ancestry.
+
+**Acceptance criteria**: all met — VIRGIN scan refused (guard test); family trials
+502; the two questions real, scan-parented, citing real evidence; exactly one
+REJECTED belief citing the verdict; type-audits (question no judgement fields;
+belief verdict-only); determinism (same seed → identical findings).
+
+**DEVQ-016** (OPEN, non-blocking, DEVQ-014 pattern): reconciles anomaly_scan /
+question / belief vs Blueprint §2 (observatory_finding / belief_update) and
+ancestry→questions vs §4.5; the one genuinely open decision surfaced is the belief
+`strength` semantics (p-as-strength as implemented) — a ruling is wanted, not a
+block.
+
+**Metrics**: 748 tests passed (700→+48) · ruff clean · firewall GREEN · journal 40
+records (32→40; chain GREEN) · VIRGIN 01KYB4SSD9VVKB577KRGB1W1P0 untouched. Real
+appends deterministic + idempotent (every script re-runs to a no-op). No writes
+outside permitted paths.
+
+**Carried**: (F-1 family) the observatory data-slice parquet is gitignored and
+observe_s7 skips writing when its manifest exists — extend --rebuild-bulk to the
+scan slice so a fresh checkout regenerates it for the visual HC.
