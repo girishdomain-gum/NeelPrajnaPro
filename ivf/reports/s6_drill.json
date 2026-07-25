@@ -1,0 +1,14 @@
+{
+  "drill": "s6_verdict_frauds",
+  "rev": 1,
+  "run_utc": 1784974589,
+  "results": {
+    "control_nonred": true,
+    "fraud1_threshold_swap": "CAUGHT",
+    "fraud2_double_burn": "CAUGHT",
+    "check_exit_control": 0,
+    "check_exit_f1": 1,
+    "check_exit_f2": 1
+  },
+  "verdict": "CAUGHT"
+}
