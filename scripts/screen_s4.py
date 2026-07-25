@@ -15,23 +15,39 @@ Prerequisites (real data + instruments): the sample bulk parquet rebuilt
 (scripts/bootstrap_smc_s4.py). Idempotent: if the real shortlist for this lineage
 already exists it is reported and not re-run.
 
+``--rebuild-bulk`` (REV-S4 F-5): re-create the gitignored Sprint-4 detector and
+screener parquet — the ``xauusd_h1_sample_smc_fvg_events`` (SMC FVG detect) and
+``screener_shortlist`` (screener ranking) datasets — from the journal manifests
+via the SAME deterministic computation, hash-verified against each existing
+manifest, appending NOTHING to the journal. This is the F-1 remedy extended to
+detector/screener datasets, so the Owner never hand-copies parquet between
+worktrees again. The sample BARS parquet must exist first (rebuild it with
+scripts/ingest_xauusd_s3.py --rebuild-bulk).
+
 Run:  uv run python scripts/screen_s4.py
+      uv run python scripts/screen_s4.py --rebuild-bulk
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import time
+from pathlib import Path
 
 import numpy as np
 import pyarrow as pa
+import pyarrow.parquet as pq
 
+from qrf.kernel.errors import BulkIntegrityError
 from qrf.kernel.instruments.base import build_event_frame
 from qrf.kernel.protocol.windows import WindowLedger
 from qrf.kernel.records.bulk import BulkStore
 from qrf.kernel.records.store import RecordStore
 from qrf.trading.concepts.smc.detector import SMCFVGDetector
 from qrf.trading.simulator.screener_vbt import Screener, ScreenThresholds
+
+SHORTLIST_DATASET = "screener_shortlist"
 
 JOURNAL = "datastore/journal/journal.jsonl"
 BULK_ROOT = "datastore/bulk"
@@ -185,7 +201,78 @@ def _random_screen_scratch() -> None:
     )
 
 
+def _manifest_by_dataset(store: RecordStore, dataset: str):
+    for m in store.query(record_type="bulk_manifest"):
+        if m.payload["dataset"] == dataset:
+            return m
+    return None
+
+
+def _rebuild_bulk() -> None:
+    """Re-create the events + shortlist parquet and hash-verify; no journal writes."""
+    store = RecordStore(JOURNAL)
+    bulk = BulkStore(store, BULK_ROOT)
+    n_before = len(store)
+
+    ev_manifest = _manifest_by_dataset(store, EVENTS_DATASET)
+    sl_manifest = _manifest_by_dataset(store, SHORTLIST_DATASET)
+    if ev_manifest is None and sl_manifest is None:
+        print(f"nothing to rebuild: no manifest for {EVENTS_DATASET!r} or "
+              f"{SHORTLIST_DATASET!r} (run scripts/screen_s4.py first)")
+        return
+
+    try:
+        # 1. Detector dataset: re-run smc.fvg over the sample bars.
+        if ev_manifest is not None:
+            bars = bulk.read(SAMPLE_MANIFEST)  # verifies the bars parquet too
+            ef = SMCFVGDetector().detect(bars)
+            path = Path(BULK_ROOT) / ev_manifest.payload["path"]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            pq.write_table(ef, path)
+            bulk.read(ev_manifest.record_id)  # hash-verify vs the manifest, or raise
+            print(f"rebuilt + hash-verified {ev_manifest.record_id} "
+                  f"({EVENTS_DATASET}, {ef.num_rows} events)")
+
+        # 2. Screener dataset: re-run the ranking sweep (reads the events parquet
+        #    just rebuilt). compute_ranking writes NOTHING to the journal.
+        if sl_manifest is not None:
+            if ev_manifest is None:
+                raise SystemExit("cannot rebuild the shortlist without its events manifest")
+            result = Screener(store, bulk).compute_ranking(
+                dataset_manifest_refs=[SAMPLE_MANIFEST],
+                eventframe_manifest_ref=ev_manifest.record_id,
+                grid=GRID,
+                cost_model_name=COST_MODEL,
+                window_ref=SAMPLE_WINDOW,
+                thresholds=ScreenThresholds(min_trades=30, min_sharpe=0.10),
+            )
+            path = Path(BULK_ROOT) / sl_manifest.payload["path"]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            pq.write_table(result.table, path)
+            bulk.read(sl_manifest.record_id)  # hash-verify vs the manifest, or raise
+            print(f"rebuilt + hash-verified {sl_manifest.record_id} "
+                  f"({SHORTLIST_DATASET}, {result.table.num_rows} rows)")
+    except BulkIntegrityError as e:
+        raise SystemExit(
+            f"rebuild hash mismatch or missing input: {e}\n"
+            "If the sample BARS parquet is missing, rebuild it first with:\n"
+            "  uv run python scripts/ingest_xauusd_s3.py --rebuild-bulk"
+        ) from e
+
+    assert len(store) == n_before, "rebuild must not append records"
+    print(f"journal unchanged: n_records={len(store)} (rebuild writes no records)")
+
+
 def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument(
+        "--rebuild-bulk", action="store_true",
+        help="rebuild gitignored detector/screener parquet + hash-verify; no journal writes",
+    )
+    a = ap.parse_args()
+    if a.rebuild_bulk:
+        _rebuild_bulk()
+        return
     _real_screen()
     _random_screen_scratch()
 

@@ -166,6 +166,59 @@ def test_exploration_window_allowed(env):
     assert json.loads(note.payload["text"])["window_designation"] == "EXPLORATION"
 
 
+# --- seed recording (REV-S4 F-4) ---------------------------------------------
+def test_shortlist_records_derived_seed(env):
+    store, bulk = env
+    bm, em, w, _ = _uptrend_setup(store, bulk)
+    note = Screener(store, bulk).run(
+        dataset_manifest_refs=[bm.record_id],
+        eventframe_manifest_ref=em.record_id,
+        grid=_grid_500(),
+        cost_model_name="xauusd_retail_median",
+        window_ref=w.record_id,
+        lineage="fam.test",
+    )
+    decl = json.loads(note.payload["text"])
+    assert isinstance(decl["seed"], int)  # never null (F-4)
+    assert decl["seed"] >= 0
+    assert decl["seed_source"] == "derived"
+
+
+def test_explicit_seed_is_recorded_verbatim(env):
+    store, bulk = env
+    bm, em, w, _ = _uptrend_setup(store, bulk)
+    note = Screener(store, bulk).run(
+        dataset_manifest_refs=[bm.record_id],
+        eventframe_manifest_ref=em.record_id,
+        grid=_grid_500(),
+        cost_model_name="xauusd_retail_median",
+        window_ref=w.record_id,
+        lineage="fam.test",
+        seed=4242,
+    )
+    decl = json.loads(note.payload["text"])
+    assert decl["seed"] == 4242
+    assert decl["seed_source"] == "explicit"
+
+
+def test_derived_seed_is_deterministic_and_input_sensitive(env, tmp_path):
+    store, bulk = env
+    bm, em, w, _ = _uptrend_setup(store, bulk)
+    sc = Screener(store, bulk)
+    kw = dict(
+        dataset_manifest_refs=[bm.record_id],
+        eventframe_manifest_ref=em.record_id,
+        grid=_grid_500(),
+        cost_model_name="xauusd_retail_median",
+        window_ref=w.record_id,
+    )
+    s1 = json.loads(sc.run(lineage="fam.a", **kw).payload["text"])["seed"]
+    s2 = json.loads(sc.run(lineage="fam.a", **kw).payload["text"])["seed"]
+    s3 = json.loads(sc.run(lineage="fam.b", **kw).payload["text"])["seed"]
+    assert s1 == s2          # identical identity -> identical derived seed
+    assert s1 != s3          # a different lineage is a different run identity
+
+
 # --- seeded determinism ------------------------------------------------------
 def test_determinism_same_inputs_same_ranking(env, tmp_path):
     store, bulk = env

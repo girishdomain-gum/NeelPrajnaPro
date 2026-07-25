@@ -33,6 +33,7 @@ fixed before ranking (no post-hoc metric picking).
 
 from __future__ import annotations
 
+import hashlib
 import itertools
 import json
 import math
@@ -84,6 +85,54 @@ class ScreenThresholds:
             "min_sharpe": self.min_sharpe,
             "require_positive_net_total": self.require_positive_net_total,
         }
+
+
+@dataclass(frozen=True)
+class ScreenResult:
+    """The pure product of a sweep — the ranked table and its summary.
+
+    Holds no journal records: ``compute_ranking`` returns this without writing,
+    so the same computation drives both a real ``run`` (which persists) and a
+    ``--rebuild-bulk`` (which re-derives the parquet and hash-verifies it).
+    """
+
+    table: pa.Table
+    rows: list[dict[str, Any]]
+    grid_size: int
+    n_admitted: int
+    designation: str
+    thresholds: ScreenThresholds
+
+
+def _derive_seed(
+    dataset_manifest_refs: list[str],
+    eventframe_manifest_ref: str,
+    grid: dict[str, list],
+    cost_model_name: str,
+    window_ref: str,
+    lineage: str,
+    thresholds: ScreenThresholds,
+) -> int:
+    """A deterministic 63-bit seed derived from the run's full identity.
+
+    The screener itself is deterministic (no RNG), so this seed is a
+    reproducibility/provenance stamp: identical inputs → identical seed, and the
+    shortlist note records a concrete integer rather than ``null`` (REV-S4 F-4).
+    """
+    identity = json.dumps(
+        {
+            "datasets": sorted(dataset_manifest_refs),
+            "events": eventframe_manifest_ref,
+            "grid": {k: sorted(map(str, grid[k])) for k in sorted(grid)},
+            "cost_model": cost_model_name,
+            "window": window_ref,
+            "lineage": lineage,
+            "thresholds": thresholds.as_dict(),
+        },
+        sort_keys=True,
+    )
+    digest = hashlib.sha256(identity.encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], "big") & 0x7FFF_FFFF_FFFF_FFFF
 
 
 def grid_variants(grid: dict[str, list]) -> list[dict[str, Any]]:
@@ -205,8 +254,8 @@ class Screener:
         result["net_sharpe"] = _sharpe(net_pnl)
         return result
 
-    # -- the single code path -------------------------------------------------
-    def run(
+    # -- pure sweep (no journal writes) ---------------------------------------
+    def compute_ranking(
         self,
         *,
         dataset_manifest_refs: list[str],
@@ -214,19 +263,14 @@ class Screener:
         grid: dict[str, list],
         cost_model_name: str,
         window_ref: str,
-        lineage: str,
         thresholds: ScreenThresholds | None = None,
-        shortlist_dataset: str = "screener_shortlist",
-        seed: int | None = None,
-        producer: str = "screener",
         venues_path: str = "configs/venues.yaml",
-    ) -> Record:
-        """Screen ``grid`` over the events, write the shortlist, bump trial_count.
+    ) -> ScreenResult:
+        """Run the sweep and build the ranked shortlist table — writing nothing.
 
-        Returns the shortlist ``note`` record. Appends, in order: the shortlist
-        ``bulk_manifest`` (the ranked parquet), one ``trial_count`` of exactly the
-        grid size, and the ``note`` that references both and declares the metric.
-        Raises :class:`ContaminationError` if ``window_ref`` is VIRGIN.
+        The single deterministic computation behind both :meth:`run` (which then
+        persists) and ``--rebuild-bulk`` (which re-derives the parquet and
+        hash-verifies it). Guards VIRGIN via :meth:`WindowLedger.check_screenable`.
         """
         from qrf.trading.utility.cost_models import load_cost_model
 
@@ -257,13 +301,71 @@ class Screener:
             r["rank"] = rank
         n_admitted = sum(r["admitted"] for r in rows)
 
-        # --- write the shortlist parquet via BulkStore (needs an int64 ts). ---
-        window = self._store.get(window_ref)
-        scope_ts = int(window.payload["ts_start"])
+        scope_ts = int(self._store.get(window_ref).payload["ts_start"])
         table = _rank_table(rows, scope_ts)
+        return ScreenResult(
+            table=table,
+            rows=rows,
+            grid_size=grid_size,
+            n_admitted=int(n_admitted),
+            designation=designation,
+            thresholds=thresholds,
+        )
+
+    # -- the single code path -------------------------------------------------
+    def run(
+        self,
+        *,
+        dataset_manifest_refs: list[str],
+        eventframe_manifest_ref: str,
+        grid: dict[str, list],
+        cost_model_name: str,
+        window_ref: str,
+        lineage: str,
+        thresholds: ScreenThresholds | None = None,
+        shortlist_dataset: str = "screener_shortlist",
+        seed: int | None = None,
+        producer: str = "screener",
+        venues_path: str = "configs/venues.yaml",
+    ) -> Record:
+        """Screen ``grid`` over the events, write the shortlist, bump trial_count.
+
+        Returns the shortlist ``note`` record. Appends, in order: the shortlist
+        ``bulk_manifest`` (the ranked parquet), one ``trial_count`` of exactly the
+        grid size, and the ``note`` that references both and declares the metric.
+        Raises :class:`ContaminationError` if ``window_ref`` is VIRGIN.
+
+        ``seed`` is a provenance stamp recorded in the note: if omitted it is
+        DERIVED deterministically from the run's identity, so the note never
+        records ``null`` (REV-S4 F-4). The seed lives only in the note; the
+        shortlist parquet does not depend on it.
+        """
+        result = self.compute_ranking(
+            dataset_manifest_refs=dataset_manifest_refs,
+            eventframe_manifest_ref=eventframe_manifest_ref,
+            grid=grid,
+            cost_model_name=cost_model_name,
+            window_ref=window_ref,
+            thresholds=thresholds,
+            venues_path=venues_path,
+        )
+        thresholds = result.thresholds
+
+        seed_source = "explicit" if seed is not None else "derived"
+        effective_seed = seed if seed is not None else _derive_seed(
+            dataset_manifest_refs,
+            eventframe_manifest_ref,
+            grid,
+            cost_model_name,
+            window_ref,
+            lineage,
+            thresholds,
+        )
+
+        # --- write the shortlist parquet via BulkStore (needs an int64 ts). ---
         manifest = self._bulk.write(
             shortlist_dataset,
-            table,
+            result.table,
             producer=producer,
             parents=[window_ref, eventframe_manifest_ref, *dataset_manifest_refs],
         )
@@ -272,7 +374,7 @@ class Screener:
         trial = self._trials.bump(
             window_ref,
             lineage,
-            grid_size,
+            result.grid_size,
             "screener",
             parents=[window_ref],
             producer=producer,
@@ -285,18 +387,19 @@ class Screener:
             "thresholds": thresholds.as_dict(),
             "cost_model": cost_model_name,
             "window_ref": window_ref,
-            "window_designation": designation,
+            "window_designation": result.designation,
             "lineage": lineage,
             "grid_keys": list(_GRID_KEYS),
-            "grid_size": grid_size,
+            "grid_size": result.grid_size,
             "trial_count_ref": trial.record_id,
-            "trial_count_n": grid_size,
+            "trial_count_n": result.grid_size,
             "shortlist_manifest_ref": manifest.record_id,
-            "n_admitted": int(n_admitted),
-            "seed": seed,
+            "n_admitted": result.n_admitted,
+            "seed": effective_seed,
+            "seed_source": seed_source,
             "top": [
                 {k: r[k] for k in _TOP_KEYS}
-                for r in rows[: min(10, len(rows))]
+                for r in result.rows[: min(10, len(result.rows))]
             ],
         }
         note = self._store.append(
