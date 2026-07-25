@@ -22,9 +22,16 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 KERNEL_DIR = REPO_ROOT / "qrf" / "kernel"
+QRF_DIR = REPO_ROOT / "qrf"
 
 FORBIDDEN_IMPORT_ROOT = "qrf.trading"
 FORBIDDEN_TOKENS = frozenset({"price", "bid", "ask", "spread", "pip", "lot", "venue"})
+
+# DEVQ-021 independence boundary: the vendored second FVG implementation
+# (tests/third_party/smc_toolkit_vendored) is an UNPROVEN test fixture (A1.3). It may
+# be imported ONLY from tests/; never from qrf/** (production). Any dotted import whose
+# path contains this token, anywhere under qrf/**, is a firewall violation.
+FORBIDDEN_VENDORED_TOKEN = "smc_toolkit_vendored"
 
 _WORD_RE = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 
@@ -90,6 +97,29 @@ def _scan_kernel() -> list[str]:
     return violations
 
 
+def scan_source_for_vendored(source: str, filename: str) -> list[str]:
+    """Return violations for any import that reaches the vendored test fixture."""
+    violations: list[str] = []
+    tree = ast.parse(source, filename=filename)
+    for node in ast.walk(tree):
+        for target in _import_targets(node):
+            if FORBIDDEN_VENDORED_TOKEN in target:
+                violations.append(
+                    f"{filename}:{getattr(node, 'lineno', '?')}: qrf imports vendored "
+                    f"test fixture {target!r} (DEVQ-021 independence boundary)"
+                )
+    return violations
+
+
+def _scan_qrf_for_vendored_imports() -> list[str]:
+    violations: list[str] = []
+    for path in sorted(QRF_DIR.rglob("*.py")):
+        violations.extend(
+            scan_source_for_vendored(path.read_text(encoding="utf-8"), str(path))
+        )
+    return violations
+
+
 # --- the gate ----------------------------------------------------------------
 def test_kernel_has_python_files():
     # Guard against the scan silently passing because it found nothing.
@@ -127,3 +157,25 @@ def test_scanner_allows_lookalike_words():
     # 'pipeline', 'task', 'slot', 'allotment' must NOT trip the token scan.
     src = "def pipeline(task):\n    slot = task\n    return slot\n"
     assert scan_source(src, "<ok>") == []
+
+
+# --- DEVQ-021 independence boundary: vendored fixture never imported from qrf/** -----
+def test_qrf_never_imports_vendored_smc_toolkit():
+    violations = _scan_qrf_for_vendored_imports()
+    assert not violations, (
+        "vendored second-implementation independence boundary breached "
+        "(DEVQ-021):\n" + "\n".join(violations)
+    )
+
+
+def test_scanner_detects_vendored_import(tmp_path):
+    for stmt in (
+        "from tests.third_party.smc_toolkit_vendored import core\n",
+        "import tests.third_party.smc_toolkit_vendored.core\n",
+    ):
+        planted = tmp_path / "planted_vendored.py"
+        planted.write_text(stmt, encoding="utf-8")
+        violations = scan_source_for_vendored(
+            planted.read_text(encoding="utf-8"), str(planted)
+        )
+        assert any(FORBIDDEN_VENDORED_TOKEN in v for v in violations), stmt

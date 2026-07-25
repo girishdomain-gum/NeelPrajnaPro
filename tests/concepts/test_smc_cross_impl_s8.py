@@ -5,75 +5,105 @@ disagrees with our calibrated ``smc.fvg`` detector, with a WRITTEN mapping of th
 definitional differences. No registry entry; the second implementation is UNPROVEN
 (A1.3) and never touches the belief layer.
 
-STATUS (DEVQ-021): the external library ARCH-008 §4 named (``smc-toolkit``) is a
-dev-dependency that is NOT installable in this offline session, and it must be a
-DIFFERENT package from ``smartmoneyconcepts`` (which OUR detector already wraps —
-using it again would prove nothing independent, A1.3). So this file ships:
+STATUS (DEVQ-021 CLOSED — vendored, was offline-blocked):
+The library ARCH-008 §4 named (``smc-toolkit``) ships NO importable code on PyPI
+(``smc-toolkit==0.1.0`` is an empty publish — FINDING F-021-1). The real, genuinely
+independent implementation (deps: numpy/pandas/matplotlib only — NOT
+``smartmoneyconcepts``, which OUR detector wraps) lives only in the GitHub repo. Per
+the Architect ruling it is **vendored** at a pinned commit into
+``tests/third_party/smc_toolkit_vendored/`` (MIT LICENSE + per-file provenance
+headers; sha256-verified by ``tests/third_party/test_smc_toolkit_vendored_provenance``).
+So this file:
 
-  1. :data:`DIFFERENCE_MAP` — the written definitional-difference map (below).
-  2. :func:`reconcile` — the reconciliation harness (tested here), which matches two
-     FVG event sets by (knowability ts, direction) and compares their zones.
-  3. :func:`plain_fvg` — a clean-room, INDEPENDENT re-implementation of the ICT
-     3-candle FVG rule (NOT via smartmoneyconcepts), used as the offline stand-in so
-     the harness is exercised and a genuinely independent definition is reconciled
-     against ours NOW.
-  4. :func:`test_cross_impl_external_library_over_sample` — the REAL second-library
-     leg, gated by ``pytest.importorskip`` so it runs automatically once the Owner
-     installs the dependency (network up). Skipped, not silently dropped.
+  1. :data:`DIFFERENCE_MAP` — the written definitional-difference map (below),
+     describing OUR ``smc.fvg`` vs the VENDORED ``extract_fvg``, verified against the
+     vendored source by :func:`test_difference_map_matches_vendored_source`.
+  2. :func:`reconcile` — the reconciliation harness (tested here), matching two FVG
+     event sets by (knowability ts, direction) and comparing their zones.
+  3. :func:`plain_fvg` — a clean-room, INDEPENDENT ICT 3-candle FVG rule used to show
+     our detector equals the plain gap definition, so the ONLY divergence against the
+     vendored lib is its two extra filter conditions.
+  4. :func:`test_cross_impl_vendored_library_over_sample` — the REAL second-library
+     leg: runs the vendored ``extract_fvg`` over a sample dataset and reconciles it
+     against our calibrated ``smc.fvg`` events (deterministic, offline-proof).
 
 Our FVG contract (A1.3, detector source): a 3-bar pattern with the gap centred on
 bar ``i`` (forming bars ``i-1, i, i+1``); the event's knowability ts is bar ``i+1``
 (the gap is only confirmed once the third bar exists); zone = [Bottom, Top] of the
 gap band (``zone_hi >= zone_lo``); ``smartmoneyconcepts==0.0.27`` behind a
 knowability wrapper.
+
+The vendored ``extract_fvg`` uses the SAME 3-bar gap (its window is ``i-2, i-1, i``,
+stamping the third bar ``i`` via ``shift(2)`` masks — the same knowability moment as
+ours), then adds TWO extra conditions (mid-bar close beyond bar-1's extreme + a
+displacement filter). It is therefore a strict SUBSET of the plain gaps, with
+IDENTICAL zone bounds on the intersection. Its ``mitigated`` column scans the entire
+future of each event (lookahead by construction) and is NEVER consumed here.
 """
 
 from __future__ import annotations
 
+import inspect
 import json
 
+import pandas as pd
 import pyarrow as pa
-import pytest
 
 from qrf.trading.concepts.smc.detector import SMCFVGDetector
 
+# The vendored, genuinely-independent second implementation (DEVQ-021 ruling).
+from tests.third_party.smc_toolkit_vendored import core as smc_toolkit_core
+
 # --- the WRITTEN definitional-difference map (ARCH-008 §4 deliverable) --------
-# Each axis: how OUR smc.fvg defines it vs how a generic external 3-candle FVG
-# library (ICT-standard, e.g. the intended smc-toolkit) typically does. Where the
-# reconciliation shows a disagreement, it should trace to exactly one of these.
+# Each axis: how OUR smc.fvg defines it vs how the VENDORED smc_toolkit extract_fvg
+# does. Every reconciliation disagreement must trace to exactly one of these axes.
+# The `verify` field names the vendored-source token that proves the claim; it is
+# checked mechanically by test_difference_map_matches_vendored_source (GO-S7 hygiene:
+# verify against the vendored copy, not this prose).
 DIFFERENCE_MAP = {
-    "pattern": {
-        "ours": "3-bar gap: bullish iff high[i-1] < low[i+1]; bearish iff low[i-1] > high[i+1]",
-        "external_typical": "same ICT 3-candle imbalance rule",
-        "expected_effect": "agreement on which triples are FVGs (same core rule)",
-    },
-    "timestamp_knowability": {
-        "ours": "event ts = bar i+1 (the THIRD bar; gap unconfirmed until it exists)",
-        "external_typical": "often the MIDDLE bar i, or the first bar i-1",
-        "expected_effect": "a whole-event ts OFFSET of 1-2 bars if the lib differs — "
-                           "reconciliation aligns on ts, so a convention gap shows as "
-                           "ALL events unmatched (a loud, unambiguous signal)",
+    "pattern_and_knowability": {
+        "ours": "3-bar gap centred on bar i (bars i-1,i,i+1); bullish iff "
+                "high[i-1] < low[i+1]; event ts = bar i+1 (the THIRD/confirming bar)",
+        "vendored": "same gap, window i-2,i-1,i via shift(2); bullish iff "
+                    "low[i] > high[i-2]; event end_time = bar i (also the THIRD bar)",
+        "expected_effect": "SAME core rule and SAME knowability bar (third bar) — the "
+                           "two impls align on ts, so any residual gap is definitional, "
+                           "never a timestamp-convention artifact",
+        "verify": ".shift(2)",
     },
     "zone_bounds": {
         "ours": "zone_hi/zone_lo = Top/Bottom of the gap band (smartmoneyconcepts)",
-        "external_typical": "[high[i-1], low[i+1]] bull / [high[i+1], low[i-1]] bear",
-        "expected_effect": "identical bounds for the plain gap; may differ if the lib "
-                           "extends the zone to candle bodies vs wicks",
+        "vendored": "bull: fvg_top=low[i], fvg_bottom=high[i-2]; bear mirrored — "
+                    "the SAME band as ours on any shared triple",
+        "expected_effect": "IDENTICAL bounds on every matched event (zone_mismatch == 0)",
+        "verify": "fvg_top",
+    },
+    "mid_close_condition": {
+        "ours": "NONE — a bare gap qualifies",
+        "vendored": "requires the middle bar to CLOSE beyond bar-1's extreme "
+                    "(close.shift(1) > high.shift(2) bull / < low.shift(2) bear)",
+        "expected_effect": "removes gaps whose middle bar did not close through — a "
+                           "source of only-ours events",
+        "verify": "df['close'].shift(1) > df['high'].shift(2)",
     },
     "displacement_filter": {
         "ours": "NONE — every gap qualifies; strength records gap/span but never filters",
-        "external_typical": "some libs require a 'displacement'/imbalance size threshold",
-        "expected_effect": "a filtering lib emits a SUBSET of ours (only-ours entries)",
+        "vendored": "requires a displacement: middle-bar body move > 2x the EXPANDING "
+                    "mean of absolute body moves (bar_delta_percent > threshold). Note "
+                    "the spurious /100 in bar_delta_percent CANCELS — threshold is built "
+                    "from the same series, so it is internally consistent",
+        "expected_effect": "the vendored lib emits a strict SUBSET of the plain gaps "
+                           "(only-ours entries; never only-theirs)",
+        "verify": "expanding().mean() * 2",
     },
-    "join_consecutive": {
-        "ours": "default False — back-to-back gaps stay separate events",
-        "external_typical": "some libs merge consecutive gaps into one",
-        "expected_effect": "a merging lib emits FEWER, wider events",
-    },
-    "edge_bars": {
-        "ours": "first bar and last-centre bar never fire (need i-1 and i+1)",
-        "external_typical": "varies; some emit at the boundary",
-        "expected_effect": "at most 1-2 boundary events differ",
+    "mitigation_lookahead": {
+        "ours": "detection carries no mitigation flag; knowability is bar i+1 only",
+        "vendored": "a 'mitigated' column scans the ENTIRE FUTURE of each event "
+                    "(future_df = bars strictly after end_time) — LOOKAHEAD by "
+                    "construction",
+        "expected_effect": "the reconciliation consumes the DETECTION MASK ONLY and "
+                           "MUST NEVER read 'mitigated' (it would import hindsight)",
+        "verify": "future_df",
     },
 }
 
@@ -121,6 +151,39 @@ def _ours(bars: pa.Table) -> list[dict]:
     ]
 
 
+def _theirs(bars: pa.Table) -> list[dict]:
+    """The VENDORED smc_toolkit.extract_fvg events as {ts, direction, zone_hi, zone_lo}.
+
+    Adapts the vendored library's MultiIndex (code, date) DataFrame API to our event
+    shape, stamping ts at the library's ``end_time`` (bar i, the third/confirming bar —
+    the same knowability moment as ours). The library's ``mitigated`` column is
+    LOOKAHEAD by construction and is DELIBERATELY NOT READ here (see DIFFERENCE_MAP
+    ``mitigation_lookahead``).
+    """
+    ts = bars.column("ts").to_pylist()
+    index = pd.MultiIndex.from_arrays(
+        [["XAUUSD"] * len(ts), ts], names=["code", "date"]
+    )
+    df = pd.DataFrame(
+        {
+            "open": bars.column("open").to_pylist(),
+            "high": bars.column("high").to_pylist(),
+            "low": bars.column("low").to_pylist(),
+            "close": bars.column("close").to_pylist(),
+        },
+        index=index,
+    )
+    fvg = smc_toolkit_core.extract_fvg(df)
+    out: list[dict] = []
+    for _, r in fvg.iterrows():
+        direction = 1 if r["fvg_type"] == "bullish" else -1
+        out.append({
+            "ts": int(r["end_time"]), "direction": direction,
+            "zone_hi": float(r["fvg_top"]), "zone_lo": float(r["fvg_bottom"]),
+        })
+    return out
+
+
 def reconcile(ours: list[dict], theirs: list[dict], *, price_tol: float = 1e-6) -> dict:
     """Match two FVG event sets by (ts, direction); compare zones within tol.
 
@@ -161,12 +224,61 @@ _FVG_BARS = _bars([
 ])
 
 
+# The SAMPLE dataset for the vendored cross-impl leg (ARCH-008 §4): six genuine plain
+# gaps of VARYING displacement, so the vendored lib's two extra conditions (mid-close +
+# displacement) produce a proper, illustrative SUBSET. Two strong-displacement gaps
+# (bull ts=4, bear ts=12) pass the vendored filter; four weaker gaps are only-ours.
+_SAMPLE_BARS = _bars([
+    (1,  100.0, 101.0,  99.0, 100.0),   # 0  filler
+    (2,  100.0, 101.0,  99.0, 100.0),   # 1  filler
+    (3,  100.0, 140.0, 100.0, 138.0),   # 2  strong up body (displacement)
+    (4,  138.0, 150.0, 120.0, 145.0),   # 3  low=120 > high[1]=101 -> BULL gap, strong (matched)
+    (5,  145.0, 146.0, 144.0, 145.0),   # 4  filler; forms a weak bull gap high[2]<low[4]
+    (6,  145.0, 146.0, 144.0, 145.0),   # 5  filler
+    (7,  145.0, 147.0, 144.0, 146.0),   # 6  tiny up body (weak displacement)
+    (8,  146.0, 160.0, 148.0, 158.0),   # 7  low=148 > high[5]=146 -> BULL gap, weak (only-ours)
+    (9,  158.0, 159.0, 157.0, 158.0),   # 8  filler; forms a weak bull gap high[6]<low[8]
+    (10, 158.0, 159.0, 157.0, 158.0),   # 9  filler
+    (11, 158.0, 158.0, 120.0, 122.0),   # 10 strong down body (displacement)
+    (12, 122.0, 140.0, 110.0, 112.0),   # 11 high=140 < low[9]=157 -> BEAR gap, strong (matched)
+    (13, 112.0, 113.0, 111.0, 112.0),   # 12 filler; forms a weak bear gap low[10]>high[12]
+])
+
+# The reconciliation the vendored leg must reproduce (deterministic, offline-proof).
+# ours == plain gaps (6); vendored is a strict subset (2), zones identical on the
+# intersection, nothing only-theirs.
+_EXPECTED_SAMPLE_RECON = {
+    "n_ours": 6, "n_theirs": 2, "n_matched": 2,
+    "only_ours": [(5, 1), (8, 1), (9, 1), (13, -1)],
+    "only_theirs": [],
+    "zone_mismatch": [],
+}
+
+
 def test_difference_map_is_documented():
     """The written map covers the axes the reconciliation can surface."""
-    for axis in ("pattern", "timestamp_knowability", "zone_bounds",
-                 "displacement_filter", "join_consecutive", "edge_bars"):
+    for axis in ("pattern_and_knowability", "zone_bounds", "mid_close_condition",
+                 "displacement_filter", "mitigation_lookahead"):
         assert axis in DIFFERENCE_MAP
-        assert set(DIFFERENCE_MAP[axis]) == {"ours", "external_typical", "expected_effect"}
+        assert set(DIFFERENCE_MAP[axis]) == {"ours", "vendored", "expected_effect", "verify"}
+
+
+def test_difference_map_matches_vendored_source():
+    """Verify each difference-map claim against the VENDORED source, not this prose.
+
+    GO-S7 hygiene (ruling item 4): the facts must be checked against the vendored
+    ``extract_fvg`` copy. Each axis names a token that must appear in the source.
+    """
+    src = inspect.getsource(smc_toolkit_core.extract_fvg)
+    for axis, spec in DIFFERENCE_MAP.items():
+        assert spec["verify"] in src, (
+            f"difference-map axis {axis!r} claims {spec['verify']!r} but it is not in "
+            "the vendored extract_fvg source"
+        )
+    # The spurious /100 the map calls out (cancels, but must genuinely be present).
+    assert "/ 100" in src or "/100" in src
+    # mitigation is future-scanning lookahead: it reads bars strictly after end_time.
+    assert "index.get_level_values(1) > end_time" in src
 
 
 def test_reconcile_harness_counts_agreements_and_disagreements():
@@ -201,21 +313,57 @@ def test_our_detector_agrees_with_independent_clean_room_impl():
     assert not r["zone_mismatch"]
 
 
-def test_cross_impl_external_library_over_sample():
-    """The REAL second-library leg (ARCH-008 §4) — DEFERRED offline (DEVQ-021).
+def test_our_detector_equals_plain_gaps_on_sample():
+    """On the sample, our calibrated detector == the clean-room plain-gap rule.
 
-    Runs the external FVG library over the same bars and reconciles against ours.
-    Skipped until the dependency is installed (it must be a package DISTINCT from
-    smartmoneyconcepts — see DEVQ-021 for the pin/name the Architect must confirm).
+    This isolates the vendored comparison: since ours == plain gaps, the ONLY
+    divergence in the next test is attributable to the vendored lib's two extra
+    filter conditions (mid-close + displacement), not to any ours-vs-plain quirk.
     """
-    smc_toolkit = pytest.importorskip(
-        "smc_toolkit",
-        reason="ARCH-008 §4 external FVG library not installed (DEVQ-021, offline)",
+    r = reconcile(_ours(_SAMPLE_BARS), plain_fvg(_SAMPLE_BARS))
+    assert r["n_matched"] == r["n_ours"] == r["n_theirs"] == 6
+    assert not r["only_ours"] and not r["only_theirs"] and not r["zone_mismatch"]
+
+
+def test_cross_impl_vendored_library_over_sample():
+    """ARCH-008 §4 — the REAL second-library leg, now vendored (DEVQ-021 CLOSED).
+
+    Runs the vendored ``smc_toolkit.extract_fvg`` over the sample dataset and
+    reconciles against our calibrated ``smc.fvg`` events. Deterministic and
+    offline-proof (no importorskip, no PyPI, no supply-chain drift).
+
+    The library-level IVF result, traced to DIFFERENCE_MAP:
+      * The vendored lib is a strict SUBSET of the plain gaps — nothing only-theirs
+        (``mid_close_condition`` + ``displacement_filter`` only ever REMOVE).
+      * Zone bounds are IDENTICAL on every matched event (``zone_bounds``).
+      * Matched events share our knowability ts (``pattern_and_knowability``).
+    """
+    ours = _ours(_SAMPLE_BARS)
+    theirs = _theirs(_SAMPLE_BARS)
+    r = reconcile(ours, theirs)
+
+    # Structural invariants (the load-bearing difference-map claims):
+    assert r["only_theirs"] == [], (
+        "vendored emitted an event we did not — its extra conditions should only "
+        f"REMOVE gaps: {json.dumps(r, default=list)}"
     )
-    # Once available, adapt this call to the library's real API (DEVQ-021 open item),
-    # produce {ts, direction, zone_hi, zone_lo} rows on our knowability convention,
-    # then: r = reconcile(_ours(_FVG_BARS), their_events); assert on r vs DIFFERENCE_MAP.
-    raise AssertionError(
-        f"smc_toolkit is installed ({smc_toolkit}) — wire its FVG API per DEVQ-021 "
-        "and reconcile against _ours(); this placeholder must then be implemented."
+    assert r["zone_mismatch"] == [], (
+        f"zone bounds must be identical on the intersection: {json.dumps(r, default=list)}"
     )
+    assert r["n_matched"] >= 1 and r["only_ours"], (
+        "sample must exercise BOTH agreement and the displacement/mid-close filter"
+    )
+
+    # The exact, deterministic reconciliation (regression guard + the addendum's counts).
+    r_sorted = {**r, "only_ours": sorted(r["only_ours"])}
+    assert r_sorted == _EXPECTED_SAMPLE_RECON, json.dumps(r_sorted, default=list)
+
+
+def test_vendored_reconciliation_never_consumes_mitigation():
+    """The reconciliation is invariant to the vendored 'mitigated' lookahead column.
+
+    Guards DIFFERENCE_MAP ``mitigation_lookahead``: our event shape carries only
+    {ts, direction, zone_hi, zone_lo}, none of which is derived from 'mitigated'.
+    """
+    for e in _theirs(_SAMPLE_BARS):
+        assert set(e) == {"ts", "direction", "zone_hi", "zone_lo"}
