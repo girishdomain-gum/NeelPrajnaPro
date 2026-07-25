@@ -29,6 +29,10 @@ ivf/reports/drill_s3_tmp/
 ivf/reports/*_tmp/
 *.json+
 
+# --- MT5 compiled artifacts (source .mq5 is tracked; binaries are not) ---
+*.ex5
+*.ex4
+
 # --- Exploration artifacts (notebooks etc.) ---
 experiments/
 *.ipynb_checkpoints/

@@ -52,3 +52,22 @@ additions), ivf/reports/s5_verify.json, s5_drill.json, sessions S5-1/S5-2
 
 Architect verdict on the development scope: **PASS — recommend GO** once
 the visual HC completes.
+
+---
+## ADDENDUM · HC-S5 result · 2026-07-25
+Owner sign-off, verbatim: **"HC-S5 PASS"** · Experts log confirmed 5/5 MATCH.
+
+Evidence (ADR-009 generation 3 — engine trades with chart-side
+no-look-ahead verification): tool IVF_S5_HC_Trades.mq5 rev 1, sampler
+seed=5, hold=4, engine over the real FVG events (105 closed trades,
+n_dropped_tail=0). PNGs: ivf/reports/hc_s5/HC_S5_1704891600 /
+1705093200 / 1706097600 / 1706580000 / 1706684400 .png. All five
+entry AND exit prices confirmed equal to the bars' opens in MT5's OWN
+series — the fill rule verified by an independent lens. Architect
+countersigned; notable frames: the weekend-spanning short (row-adjacency
+convention visible) and the sole winner exiting at its time stop BEFORE
+a crash it could not have known about. 4/5 sampled trades lose after
+costs — recorded as the honest reminder of why the battery exists.
+
+Cosmetic nit carried (caption line 1 vs chart title) — queued with the
+S4 caption fix; verdicts unaffected.
