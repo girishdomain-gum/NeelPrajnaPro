@@ -49,6 +49,7 @@ class TrialCountLedger:
         n: int,
         source: str,
         *,
+        family: str | None = None,
         generator_ref: str | None = None,
         parents: list[str] | tuple[str, ...] = (),
         producer: str | None = None,
@@ -59,7 +60,10 @@ class TrialCountLedger:
         ``scope`` is a window_ref or a dataset name (``data_scope`` in the
         schema). ``source`` must be one of ``human`` / ``screener`` /
         ``generator``; when ``source == "generator"`` a ``generator_ref`` should
-        be supplied so the count inherits the generator's identity. ``parents``
+        be supplied so the count inherits the generator's identity. ``family`` is
+        the ``{market}/{instrument_family}`` this search's multiplicity burden
+        accrues to (DEVQ-015); when supplied the record is written at schema
+        version 2 so the deflation can total a family's trials directly. ``parents``
         typically names the window (Blueprint §2 typical parent). Returns the
         appended record.
         """
@@ -79,12 +83,19 @@ class TrialCountLedger:
         }
         if generator_ref is not None:
             payload["generator_ref"] = generator_ref
+        schema_version = 1
+        if family is not None:
+            if not isinstance(family, str) or not family.strip():
+                raise SchemaViolation("trial_count family must be a non-empty string")
+            payload["family"] = family
+            schema_version = 2
         return self._store.append(
             "trial_count",
             payload,
             producer=producer or source,
             event_ts=event_ts if event_ts is not None else now_ns(),
             parents=list(parents),
+            schema_version=schema_version,
         )
 
     # -- read -----------------------------------------------------------------

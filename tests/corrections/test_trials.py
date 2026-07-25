@@ -84,6 +84,22 @@ def test_totals_are_isolated_by_scope_and_lineage(tl):
     assert tl.total("nope", "lin1") == 0
 
 
+# --- family key (DEVQ-015) ---------------------------------------------------
+def test_family_written_as_v2_record(tl):
+    rec = tl.bump(SCOPE, LINEAGE, 5, "screener", family="xauusd_h1/smc.fvg")
+    assert rec.schema_version == 2
+    assert rec.payload["family"] == "xauusd_h1/smc.fvg"
+    # Without a family the record stays v1 (append-only back-compat).
+    rec2 = tl.bump(SCOPE, LINEAGE, 1, "screener")
+    assert rec2.schema_version == 1
+    assert "family" not in rec2.payload
+
+
+def test_empty_family_refused(tl):
+    with pytest.raises(SchemaViolation):
+        tl.bump(SCOPE, LINEAGE, 5, "screener", family="   ")
+
+
 # --- parents flow through ----------------------------------------------------
 def test_parents_are_recorded(tl):
     w = tl._store.append("window", {

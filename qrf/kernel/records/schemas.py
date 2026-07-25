@@ -318,18 +318,12 @@ def _validate_window_burn(payload: dict) -> None:
     _require_str(payload, "consumed_by", "window_burn")
 
 
-def _validate_trial_count(payload: dict) -> None:
-    """trial_count (Blueprint §2, §4.8) — a multiple-testing burden record.
-
-    ``data_scope`` is a window_ref or a dataset name; ``n_attempts`` is the exact
-    number of variants evaluated (>= 1 — a bump of nothing is meaningless);
-    ``source`` is human/screener/generator; ``generator_ref`` is optional and
-    carries the id of a generator instrument when ``source == generator``.
-    """
+def _validate_trial_count_common(payload: dict, optional: set[str]) -> None:
+    """The v1 field checks shared by every trial_count schema version."""
     _check_keys(
         payload,
         {"data_scope", "lineage", "n_attempts", "source"},
-        {"generator_ref"},
+        optional,
         "trial_count",
     )
     _require_str(payload, "data_scope", "trial_count")
@@ -342,6 +336,30 @@ def _validate_trial_count(payload: dict) -> None:
     )
     if "generator_ref" in payload:
         _require_str(payload, "generator_ref", "trial_count")
+
+
+def _validate_trial_count(payload: dict) -> None:
+    """trial_count v1 (Blueprint §2, §4.8) — a multiple-testing burden record.
+
+    ``data_scope`` is a window_ref or a dataset name; ``n_attempts`` is the exact
+    number of variants evaluated (>= 1 — a bump of nothing is meaningless);
+    ``source`` is human/screener/generator; ``generator_ref`` is optional and
+    carries the id of a generator instrument when ``source == generator``.
+    """
+    _validate_trial_count_common(payload, {"generator_ref"})
+
+
+def _validate_trial_count_v2(payload: dict) -> None:
+    """trial_count v2 (DEVQ-015 ruling): v1 plus a required ``family`` key.
+
+    Additive (Blueprint §2): v1 records are never touched. ``family`` is the
+    ``{market}/{instrument_family}`` a search's multiplicity burden accrues to
+    (DEVQ-015: corrections follow CLAIMS, not the data slice searched), so the
+    deflation can total a family's trials directly rather than by lineage prefix.
+    """
+    _validate_trial_count_common(payload, {"generator_ref", "family"})
+    _require("family" in payload, "trial_count v2 requires a family")
+    _require_str(payload, "family", "trial_count")
 
 
 # Enum from Blueprint §2 / ARCH-006 §3, verdict.verdict (tri-state).
@@ -387,8 +405,24 @@ def _validate_thresholds(payload: dict, where: str) -> None:
     _require_str(payload["correction"], "method", f"{where}.correction")
 
 
-def _validate_hypothesis(payload: dict) -> None:
-    """hypothesis (ARCH-006 §1) — the pre-registered, frozen-by-hash question.
+_HYPOTHESIS_V1_FIELDS = {
+    "lineage",
+    "scope",
+    "instrument_refs",
+    "setup_dsl",
+    "execution",
+    "cost_model_ref",
+    "split_spec",
+    "thresholds",
+}
+# v2 (DEVQ-014/015): the epistemic pre-commitments — plain-words claim, the
+# conclusion to draw for each outcome (fixed BEFORE running), and the family the
+# multiplicity burden accrues to.
+_HYPOTHESIS_V2_FIELDS = {"thesis", "outcome_interpretations", "family"}
+
+
+def _validate_hypothesis_core(payload: dict, extra_required: set[str]) -> None:
+    """Shared hypothesis shape check (ARCH-006 §1) over v1 + any v2 fields.
 
     The record's own ``content_hash`` is the pre-registration seal: a changed
     YAML yields a different canonical payload, hence a new hypothesis id
@@ -397,21 +431,7 @@ def _validate_hypothesis(payload: dict) -> None:
     order_block) are enforced by :class:`HypothesisRegistry` at registration,
     which alone has the store + allowlist to judge them; the schema fixes shape.
     """
-    _check_keys(
-        payload,
-        {
-            "lineage",
-            "scope",
-            "instrument_refs",
-            "setup_dsl",
-            "execution",
-            "cost_model_ref",
-            "split_spec",
-            "thresholds",
-        },
-        set(),
-        "hypothesis",
-    )
+    _check_keys(payload, _HYPOTHESIS_V1_FIELDS | extra_required, set(), "hypothesis")
     _require_str(payload, "lineage", "hypothesis")
     _require_str(payload, "scope", "hypothesis")
     _require_str(payload, "cost_model_ref", "hypothesis")
@@ -430,6 +450,39 @@ def _validate_hypothesis(payload: dict) -> None:
     _validate_thresholds(payload["thresholds"], "hypothesis.thresholds")
 
 
+def _validate_hypothesis(payload: dict) -> None:
+    """hypothesis v1 — the ARCH-006 §1 field set (H-001 stands on this schema)."""
+    _validate_hypothesis_core(payload, set())
+
+
+def _validate_hypothesis_v2(payload: dict) -> None:
+    """hypothesis v2 (DEVQ-014/015): v1 plus ``thesis``, ``outcome_interpretations``,
+    ``family`` — the pre-committed interpretation is as load-bearing as the
+    pre-committed thresholds (the difference between "FAIL = the edge isn't there"
+    and post-hoc "FAIL = wrong parameters"), and ``family`` fixes the
+    multiplicity scope (DEVQ-015).
+    """
+    _validate_hypothesis_core(payload, _HYPOTHESIS_V2_FIELDS)
+    _require(
+        isinstance(payload["thesis"], str) and payload["thesis"].strip(),
+        "hypothesis.thesis must be a non-empty string",
+    )
+    _require_str(payload, "family", "hypothesis")
+    _require(payload["family"].strip(), "hypothesis.family must be non-empty")
+    interp = payload["outcome_interpretations"]
+    _require(
+        isinstance(interp, dict),
+        "hypothesis.outcome_interpretations must be an object",
+    )
+    where_i = "hypothesis.outcome_interpretations"
+    _check_keys(interp, {"PASS", "FAIL", "INSUFFICIENT"}, set(), where_i)
+    for k in ("PASS", "FAIL", "INSUFFICIENT"):
+        _require(
+            isinstance(interp[k], str) and interp[k].strip(),
+            f"hypothesis.outcome_interpretations.{k} must be a non-empty string",
+        )
+
+
 def _validate_stat_block(block: object, where: str) -> None:
     """One statistics entry: ``{stat, p, ci_low, ci_high}`` (each number or null)."""
     _require(isinstance(block, dict), f"{where} must be an object")
@@ -438,15 +491,8 @@ def _validate_stat_block(block: object, where: str) -> None:
         _require_number_or_none(block[k], f"{where}.{k}")
 
 
-def _validate_verdict(payload: dict) -> None:
-    """verdict (Blueprint §2 + ARCH-006 §3.8) — the battery's sole judgement record.
-
-    A superset of the §2 fields (``verdict, n_trades, gross, net, statistics,
-    corrections, seed, engine_version, trades_manifest``) plus the ARCH-006
-    additions the corrections machinery requires: ``thresholds`` AS REGISTERED
-    (byte-equal), ``selftest_seed``, per-fold means, ``n_dropped_tail``, and the
-    ``base_alpha``/``family_m``(=N_trials)/``effective_alpha`` correction fields.
-    """
+def _validate_verdict_core(payload: dict, *, corrections_optional: set[str]) -> None:
+    """Shared verdict shape check; ``corrections_optional`` widens corrections (v2)."""
     _check_keys(
         payload,
         {
@@ -504,15 +550,37 @@ def _validate_verdict(payload: dict) -> None:
     _check_keys(
         payload["corrections"],
         {"family_m", "method", "base_alpha", "effective_alpha"},
-        set(),
+        corrections_optional,
         "verdict.corrections",
     )
     _require_int(payload["corrections"], "family_m", "verdict.corrections", non_negative=True)
     _require_str(payload["corrections"], "method", "verdict.corrections")
     _require_number(payload["corrections"], "base_alpha", "verdict.corrections")
     _require_number(payload["corrections"], "effective_alpha", "verdict.corrections")
+    if "family" in payload["corrections"]:
+        _require_str(payload["corrections"], "family", "verdict.corrections")
     _require(isinstance(payload["thresholds"], dict), "verdict.thresholds must be an object")
     _validate_thresholds(payload["thresholds"], "verdict.thresholds")
+
+
+def _validate_verdict(payload: dict) -> None:
+    """verdict v1 (Blueprint §2 + ARCH-006 §3.8) — the battery's sole judgement record.
+
+    A superset of the §2 fields (``verdict, n_trades, gross, net, statistics,
+    corrections, seed, engine_version, trades_manifest``) plus the ARCH-006
+    additions the corrections machinery requires: ``thresholds`` AS REGISTERED
+    (byte-equal), ``selftest_seed``, per-fold means, ``n_dropped_tail``, and the
+    ``base_alpha``/``family_m``(=N_trials)/``effective_alpha`` correction fields.
+    """
+    _validate_verdict_core(payload, corrections_optional=set())
+
+
+def _validate_verdict_v2(payload: dict) -> None:
+    """verdict v2 (DEVQ-015): v1 plus an optional ``corrections.family`` — the
+    ``{market}/{instrument_family}`` the deflation totalled trials over, so the
+    correction is fully reconstructable from the verdict alone.
+    """
+    _validate_verdict_core(payload, corrections_optional={"family"})
 
 
 # Registry keyed by (record_type, schema_version). Additive schema evolution
@@ -528,8 +596,11 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("window", 1): _validate_window,
     ("window_burn", 1): _validate_window_burn,
     ("trial_count", 1): _validate_trial_count,
+    ("trial_count", 2): _validate_trial_count_v2,
     ("hypothesis", 1): _validate_hypothesis,
+    ("hypothesis", 2): _validate_hypothesis_v2,
     ("verdict", 1): _validate_verdict,
+    ("verdict", 2): _validate_verdict_v2,
 }
 
 

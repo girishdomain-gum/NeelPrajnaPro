@@ -55,6 +55,12 @@ _RESTATEMENT_GATED_PREFIX = "smc.order_block"
 # The execution keys the record carries, in ExecutionSpec.as_dict() shape.
 _EXECUTION_KEYS = ("hold_bars", "strength_min", "stop_offset", "target_offset", "size")
 
+# The v2 pre-commitments (DEVQ-014/015): the plain-words claim, the conclusion to
+# draw for each outcome (fixed BEFORE running), and the family the multiplicity
+# burden accrues to. All three or none.
+_V2_KEYS = ("thesis", "outcome_interpretations", "family")
+_OUTCOMES = ("PASS", "FAIL", "INSUFFICIENT")
+
 
 class HypothesisRegistry:
     """Pre-register hypotheses from YAML into the ledger (Blueprint §4.5)."""
@@ -198,6 +204,44 @@ class HypothesisRegistry:
             )
         return window_ref
 
+    def _v2_extra(self, config: dict[str, Any]) -> dict | None:
+        """Assemble the v2 pre-commitments from ``config``, or None if absent.
+
+        v2 (DEVQ-014/015) adds ``thesis``, ``outcome_interpretations`` and
+        ``family`` — all three, or none (a partial set is refused). Shape is fully
+        validated by the schema at append; this fixes the canonical payload.
+        """
+        present = [k for k in _V2_KEYS if k in config]
+        if not present:
+            return None
+        if len(present) != len(_V2_KEYS):
+            missing = [k for k in _V2_KEYS if k not in config]
+            raise SchemaViolation(
+                f"hypothesis v2 requires all of {list(_V2_KEYS)}; missing {missing} "
+                "(thesis, outcome_interpretations and family go together)"
+            )
+        interp = config["outcome_interpretations"]
+        if not isinstance(interp, dict) or set(interp) != set(_OUTCOMES):
+            raise SchemaViolation(
+                f"outcome_interpretations must have exactly the keys {list(_OUTCOMES)}"
+            )
+        return {
+            "thesis": config["thesis"],
+            "outcome_interpretations": {k: interp[k] for k in _OUTCOMES},
+            "family": config["family"],
+        }
+
+    def _resolved_payload(
+        self, config: dict[str, Any], cost_model_refs: Collection[str]
+    ) -> tuple[dict, int]:
+        """The canonical hypothesis payload + its schema version (v1 or v2)."""
+        payload = self._build_payload(config, cost_model_refs)
+        v2 = self._v2_extra(config)
+        if v2 is not None:
+            payload = {**payload, **v2}
+            return payload, 2
+        return payload, 1
+
     # -- registration ---------------------------------------------------------
     def register(
         self,
@@ -213,23 +257,35 @@ class HypothesisRegistry:
         is the allowlist of known cost model names (injected so the kernel never
         reads the venue config). Idempotent: an identical resolved payload +
         window already in the ledger is returned unchanged.
+
+        A NEW hypothesis MUST carry the v2 pre-commitments (thesis,
+        outcome_interpretations, family — DEVQ-014/015); only a record already in
+        the ledger under the v1 schema (H-001) is exempt, and it is returned by
+        the idempotency match rather than re-registered.
         """
         if isinstance(config, (str, Path)):
             config = self.load_config(config)
         window_ref = self._window_ref(config)
-        payload = self._build_payload(config, cost_model_refs)
+        payload, schema_version = self._resolved_payload(config, cost_model_refs)
 
         # Idempotency: same resolved payload + same window parent => same hypothesis.
         for rec in self._store.query(record_type="hypothesis"):
             if rec.payload == payload and rec.parents == (window_ref,):
                 return rec
 
+        if schema_version < 2:
+            raise SchemaViolation(
+                "a new hypothesis must declare thesis, outcome_interpretations and "
+                "family (schema v2, DEVQ-014/015); the pre-committed interpretation is "
+                "as load-bearing as the pre-committed thresholds"
+            )
         return self._store.append(
             "hypothesis",
             payload,
             producer=producer,
             event_ts=event_ts if event_ts is not None else now_ns(),
             parents=[window_ref],
+            schema_version=schema_version,
         )
 
     # -- freeze verification --------------------------------------------------
@@ -260,7 +316,7 @@ class HypothesisRegistry:
         if isinstance(config, (str, Path)):
             config = self.load_config(config)
         window_ref = self._window_ref(config)
-        payload = self._build_payload(config, cost_model_refs)
+        payload, _ = self._resolved_payload(config, cost_model_refs)
         if rec.payload != payload or rec.parents != (window_ref,):
             raise TamperedHypothesisError(
                 f"hypothesis {hypothesis_ref} no longer matches its config: the YAML "

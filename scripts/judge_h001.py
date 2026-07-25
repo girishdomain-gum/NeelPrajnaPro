@@ -149,6 +149,8 @@ def _print_verdict(store: RecordStore, verdict: Record) -> None:
     print(f"  one-sided t  : stat={stat['stat']} p={stat['p']} "
           f"ci=[{stat['ci_low']}, {stat['ci_high']}]")
     c = p["corrections"]
+    fam = c.get("family", "(none — v1, pre-family rule)")
+    print(f"  family       : {fam}")
     print(f"  correction   : {c['method']} base_alpha={c['base_alpha']} "
           f"N_trials={c['family_m']} -> effective_alpha={c['effective_alpha']}")
     print(f"  thresholds   : min_n={p['thresholds']['min_n']} "

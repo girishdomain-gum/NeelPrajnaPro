@@ -12,8 +12,8 @@ from qrf.kernel.errors import SchemaViolation
 from qrf.kernel.records import schemas
 
 
-def _ok(rt, payload):
-    schemas.validate(rt, payload, 1)
+def _ok(rt, payload, version=1):
+    schemas.validate(rt, payload, version)
 
 
 _HYP = {
@@ -87,3 +87,49 @@ def test_verdict_valid_and_rejections():
         _ok("verdict", {**_VERDICT, "n_trades": -1})
     with pytest.raises(SchemaViolation):  # thresholds not as-registered shape
         _ok("verdict", {**_VERDICT, "thresholds": {"min_n": 100}})
+
+
+# --- v2 schemas (DEVQ-014/015) ----------------------------------------------
+
+_HYP_V2 = {
+    **_HYP,
+    "thesis": "After an FVG forms, price follows through.",
+    "outcome_interpretations": {
+        "PASS": "edge survives costs", "FAIL": "no net edge", "INSUFFICIENT": "too few",
+    },
+    "family": "xauusd_h1/smc.fvg",
+}
+
+
+def test_hypothesis_v2_valid_and_rejections():
+    _ok("hypothesis", _HYP_V2, 2)
+    with pytest.raises(SchemaViolation):  # v1 rejects the v2-only fields
+        _ok("hypothesis", _HYP_V2, 1)
+    with pytest.raises(SchemaViolation):  # missing thesis
+        _ok("hypothesis", {k: v for k, v in _HYP_V2.items() if k != "thesis"}, 2)
+    with pytest.raises(SchemaViolation):  # empty thesis
+        _ok("hypothesis", {**_HYP_V2, "thesis": "  "}, 2)
+    with pytest.raises(SchemaViolation):  # missing family
+        _ok("hypothesis", {k: v for k, v in _HYP_V2.items() if k != "family"}, 2)
+    with pytest.raises(SchemaViolation):  # outcome_interpretations missing a key
+        _ok("hypothesis", {**_HYP_V2, "outcome_interpretations": {"PASS": "a", "FAIL": "b"}}, 2)
+    with pytest.raises(SchemaViolation):  # outcome_interpretations empty value
+        bad = {"PASS": "a", "FAIL": "b", "INSUFFICIENT": " "}
+        _ok("hypothesis", {**_HYP_V2, "outcome_interpretations": bad}, 2)
+
+
+def test_trial_count_v2_valid_and_rejections():
+    good = {"data_scope": "w", "lineage": "smc.fvg.s5", "n_attempts": 500,
+            "source": "screener", "family": "xauusd_h1/smc.fvg"}
+    _ok("trial_count", good, 2)
+    with pytest.raises(SchemaViolation):  # v1 rejects the family field
+        _ok("trial_count", good, 1)
+    with pytest.raises(SchemaViolation):  # v2 requires family
+        _ok("trial_count", {k: v for k, v in good.items() if k != "family"}, 2)
+
+
+def test_verdict_v2_allows_corrections_family():
+    v2 = {**_VERDICT, "corrections": {**_VERDICT["corrections"], "family": "xauusd_h1/smc.fvg"}}
+    _ok("verdict", v2, 2)
+    with pytest.raises(SchemaViolation):  # v1 rejects corrections.family
+        _ok("verdict", v2, 1)

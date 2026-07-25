@@ -55,6 +55,9 @@ SAMPLE_MANIFEST = "01KYAWHZ6A9X3YZQ2W0BDRFDS1"
 SAMPLE_WINDOW = "01KYAWHZ86ZNDGY4NZNCF4XFY0"
 EVENTS_DATASET = "xauusd_h1_sample_smc_fvg_events"
 LINEAGE = "smc.fvg.screen.s4"
+# DEVQ-015: the {market}/{instrument_family} this search's multiplicity burden
+# accrues to, so a later FVG hypothesis on this market is deflated by it.
+FAMILY = "xauusd_h1/smc.fvg"
 COST_MODEL = "xauusd_retail_median"
 
 GRID = {
@@ -130,6 +133,7 @@ def _real_screen() -> None:
         cost_model_name=COST_MODEL,
         window_ref=SAMPLE_WINDOW,
         lineage=LINEAGE,
+        family=FAMILY,
         thresholds=ScreenThresholds(min_trades=30, min_sharpe=0.10),
         producer="human:girish",
     )
@@ -191,6 +195,7 @@ def _random_screen_scratch() -> None:
         cost_model_name=COST_MODEL,
         window_ref=w.record_id,
         lineage="random.noedge.s4",
+        family="rand_bars/rand.sig",
         thresholds=ScreenThresholds(min_trades=30, min_sharpe=0.10),
     )
     decl = json.loads(note.payload["text"])

@@ -76,7 +76,8 @@ def _designate(store, bars, designation="TRAINING"):
 
 
 def _hypothesis(
-    store, window_ref, *, lineage="planted", min_n=100, hold=1, embargo=2, base_alpha=0.05
+    store, window_ref, *, lineage="planted", min_n=100, hold=1, embargo=2, base_alpha=0.05,
+    family=None,
 ):
     payload = {
         "lineage": lineage,
@@ -93,8 +94,17 @@ def _hypothesis(
             "min_n": min_n, "base_alpha": base_alpha, "correction": {"method": "bonferroni"},
         },
     }
+    schema_version = 1
+    if family is not None:
+        payload["thesis"] = "A planted synthetic edge."
+        payload["outcome_interpretations"] = {
+            "PASS": "edge present", "FAIL": "no edge", "INSUFFICIENT": "too few",
+        }
+        payload["family"] = family
+        schema_version = 2
     return store.append(
-        "hypothesis", payload, producer="human:composer", event_ts=now_ns(), parents=[window_ref]
+        "hypothesis", payload, producer="human:composer", event_ts=now_ns(),
+        parents=[window_ref], schema_version=schema_version,
     ).record_id
 
 
@@ -246,6 +256,30 @@ def test_deflated_alpha_can_flip_pass_to_fail(tmp_path):
     )
     assert verdict.payload["corrections"]["family_m"] == 100000
     assert verdict.payload["verdict"] == "FAIL"
+
+
+def test_v2_hypothesis_deflates_by_family(tmp_path):
+    """A v2 hypothesis deflates by its CLAIM family (DEVQ-015), capturing legacy
+    lineage-keyed trials by prefix; the verdict records the family (schema v2)."""
+    store, bulk = _scratch(tmp_path)
+    bars, events = _planted_bars_events(n_events=240, drift=0.15, noise_sd=1.0)
+    window = _designate(store, bars)
+    from qrf.kernel.corrections.trials import TrialCountLedger
+    # A LEGACY lineage-keyed record (no family field) on the same instrument family.
+    TrialCountLedger(store).bump("some_window", "smc.fvg.screen.s4", 100000, "screener")
+    hyp_ref = _hypothesis(
+        store, window, lineage="h_fvg", min_n=100, base_alpha=0.05, family="synthetic/smc.fvg"
+    )
+    verdict = EvidenceBattery(store, bulk).run(
+        hyp_ref, simulator=EventEngine(), cost_model=ZERO_COST, bars=bars, events=events
+    )
+    c = verdict.payload["corrections"]
+    # The legacy record was captured by instrument-family prefix WITHOUT re-keying.
+    assert c["family_m"] == 100000
+    assert c["family"] == "synthetic/smc.fvg"
+    assert c["effective_alpha"] == pytest.approx(0.05 / 100000)
+    assert verdict.schema_version == 2
+    assert verdict.payload["verdict"] == "FAIL"  # deflation bites
 
 
 def test_verdict_recomputes_from_persisted_trades(tmp_path):

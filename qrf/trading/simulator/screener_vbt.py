@@ -322,6 +322,7 @@ class Screener:
         cost_model_name: str,
         window_ref: str,
         lineage: str,
+        family: str | None = None,
         thresholds: ScreenThresholds | None = None,
         shortlist_dataset: str = "screener_shortlist",
         seed: int | None = None,
@@ -371,11 +372,15 @@ class Screener:
         )
 
         # --- auto-bump trial_count by the EXACT grid size (same run). ---------
+        # ``family`` (DEVQ-015) makes this search's multiplicity burden accrue to
+        # its {market}/{instrument_family}, so a later hypothesis in the same
+        # family is deflated by it directly (not by a lineage prefix guess).
         trial = self._trials.bump(
             window_ref,
             lineage,
             result.grid_size,
             "screener",
+            family=family,
             parents=[window_ref],
             producer=producer,
         )
@@ -389,6 +394,7 @@ class Screener:
             "window_ref": window_ref,
             "window_designation": result.designation,
             "lineage": lineage,
+            "family": family,
             "grid_keys": list(_GRID_KEYS),
             "grid_size": result.grid_size,
             "trial_count_ref": trial.record_id,

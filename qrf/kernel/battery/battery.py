@@ -49,7 +49,7 @@ from scipy import stats
 
 from qrf.kernel.battery.selftest import run_selftest
 from qrf.kernel.battery.simulator import require_audited_simulator
-from qrf.kernel.corrections.deflation import deflate
+from qrf.kernel.corrections.deflation import deflate, deflate_family
 from qrf.kernel.errors import ContaminationError, JudgeNotCalibratedError, SchemaViolation
 from qrf.kernel.protocol import seeds
 from qrf.kernel.protocol.splits import SplitSpec, walk_forward
@@ -292,8 +292,14 @@ class EvidenceBattery:
         # 6. statistics.
         st = self._pooled_statistics(pooled_net, seed=engine_seed)
 
-        # 7. tri-state at the DEFLATED alpha.
-        defl = deflate(thresholds["base_alpha"], scope, lineage, self._store)
+        # 7. tri-state at the DEFLATED alpha. A v2 hypothesis deflates by its
+        # CLAIM family (DEVQ-015 — the governing rule); a legacy v1 hypothesis by
+        # the (scope, lineage) rule it was sealed under.
+        family = hyp.payload.get("family")
+        if family is not None:
+            defl = deflate_family(thresholds["base_alpha"], family, self._store)
+        else:
+            defl = deflate(thresholds["base_alpha"], scope, lineage, self._store)
         mean_positive = st["mean"] is not None and st["mean"] > 0
         significant = st["p"] is not None and st["p"] < defl.effective_alpha
         if n_total < thresholds["min_n"]:
@@ -349,12 +355,18 @@ class EvidenceBattery:
             "engine_version": getattr(simulator, "engine_version", type(simulator).__name__),
             "trades_manifest": trades_manifest,
         }
+        # v2 verdict records the family the deflation totalled over (audit trail).
+        verdict_schema_version = 1
+        if family is not None:
+            payload["corrections"]["family"] = family
+            verdict_schema_version = 2
         verdict_rec = self._store.append(
             "verdict",
             payload,
             producer=producer,
             event_ts=now_ns(),
             parents=[hypothesis_ref, window_ref],
+            schema_version=verdict_schema_version,
         )
         # A verdict without its burn is impossible: the burn follows unconditionally.
         self._windows.burn(window_ref, lineage, verdict_rec.record_id)

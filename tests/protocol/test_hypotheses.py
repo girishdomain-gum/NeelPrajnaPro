@@ -70,7 +70,7 @@ def _window(store):
     ).record_id
 
 
-def _config(window_ref, **overrides):
+def _config(window_ref, *, v2=True, **overrides):
     cfg = {
         "lineage": "h001_fvg_follow_through",
         "scope": "xauusd_h1",
@@ -85,6 +85,16 @@ def _config(window_ref, **overrides):
         "split_spec": {"n_folds": 4, "embargo_bars": 8},
         "thresholds": {"min_n": 100, "base_alpha": 0.05, "correction": {"method": "bonferroni"}},
     }
+    if v2:
+        cfg.update(
+            thesis="After an FVG forms, price follows through in its direction.",
+            outcome_interpretations={
+                "PASS": "The follow-through edge survives real costs.",
+                "FAIL": "No net edge after costs — the pattern does not pay.",
+                "INSUFFICIENT": "Too few trades to decide.",
+            },
+            family="xauusd_h1/smc.fvg",
+        )
     cfg.update(overrides)
     return cfg
 
@@ -101,15 +111,36 @@ def test_register_happy_path_and_idempotent(store):
     w = _window(store)
     rec = reg.register(_config(w), cost_model_refs=COST_MODELS)
     assert rec.record_type == "hypothesis"
+    assert rec.schema_version == 2
     assert rec.parents == (w,)
     # instrument spec resolved to the registration record id.
     fvg_ref = next(r.record_id for r in store.query(record_type="instrument_registered"))
     assert rec.payload["instrument_refs"] == [fvg_ref]
+    # v2 pre-commitments are on the record.
+    assert rec.payload["family"] == "xauusd_h1/smc.fvg"
+    assert set(rec.payload["outcome_interpretations"]) == {"PASS", "FAIL", "INSUFFICIENT"}
+    assert rec.payload["thesis"].strip()
     # Idempotent: same config -> same record, no second append.
     n = len(store)
     again = reg.register(_config(w), cost_model_refs=COST_MODELS)
     assert again.record_id == rec.record_id
     assert len(store) == n
+
+
+def test_new_hypothesis_without_v2_fields_refused(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    with pytest.raises(SchemaViolation, match="thesis"):
+        reg.register(_config(w, v2=False), cost_model_refs=COST_MODELS)
+
+
+def test_partial_v2_fields_refused(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    # Only thesis, no outcome_interpretations/family -> refused (all or none).
+    cfg = _config(w, v2=False, thesis="a claim")
+    with pytest.raises(SchemaViolation):
+        reg.register(cfg, cost_model_refs=COST_MODELS)
 
 
 def test_order_block_refused_devq010(store):
@@ -175,3 +206,20 @@ def test_verify_frozen_detects_tamper(store):
     tampered["execution"]["hold_bars"] = 2
     with pytest.raises(TamperedHypothesisError):
         reg.verify_frozen(rec.record_id, tampered, cost_model_refs=COST_MODELS)
+    # A changed v2 pre-commitment (the thesis) is also a re-registration, not a mutation.
+    tampered2 = copy.deepcopy(_config(w))
+    tampered2["thesis"] = "a different claim entirely"
+    with pytest.raises(TamperedHypothesisError):
+        reg.verify_frozen(rec.record_id, tampered2, cost_model_refs=COST_MODELS)
+
+
+def test_changed_v2_field_registers_new_id(store):
+    """Editing a v2 pre-commitment yields a NEW hypothesis id (not a mutation)."""
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    a = reg.register(_config(w), cost_model_refs=COST_MODELS)
+    b = reg.register(
+        _config(w, thesis="A sharper, different one-sentence claim."),
+        cost_model_refs=COST_MODELS,
+    )
+    assert a.record_id != b.record_id
