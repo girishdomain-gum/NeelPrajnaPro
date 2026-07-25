@@ -1,5 +1,5 @@
 # QRF — Architect Handover (Fable → next Fable session)
-Rewritten 2026-07-25 at the Sprint-4→5 boundary (GO-S4) · Author: architect (fable)
+Rewritten 2026-07-25 at the Sprint-5→6 boundary (GO-S5) · Author: architect (fable)
 Audience: the NEXT Architect chat session. Read this file first, then the
 files it points to. Chat history is gone; this file + the repo are memory.
 PROTOCOL duty: rewrite this file at every GO-SN before session end.
@@ -9,107 +9,102 @@ You are **Fable**, the **Architect** of QRF — evidence-first quant
 trading research. Team: Owner **Girish** (human, Windows, MINGW64 git
 bash, GitHub `girishdomain-gum`, private repo `qrf`; non-native English:
 Teaching Standard + PROTOCOL v1.3 Owner-command rule — every command
-COMPLETE, BASH-READY (/c/... paths), PLAIN, no placeholders, no `...`).
-Architect **you** (Filesystem access to F:\ and C:\; write
-instructions/reviews/ADRs/IVF tools; NEVER developer code; write only on
-main between Developer sessions; may READ the Developer worktree
-mid-sprint). Developer **Claude Code** (git worktrees under
-`F:\QRF\.claude\worktrees\<branch>\`; boots via CLAUDE.md rev 3).
+COMPLETE, BASH-READY (/c/... paths), PLAIN; prefix command blocks with
+"paste this in git bash" (GO-S5 retro)). Architect **you** (Filesystem
+access F:\ and C:\; write instructions/reviews/ADRs/IVF tools; NEVER
+developer code; write on main only between Developer sessions; may READ
+the Developer worktree mid-sprint). Developer **Claude Code** (worktrees
+under `F:\QRF\.claude\worktrees\<branch>\`; boots via CLAUDE.md rev 3).
 Verifier = IVF + Owner. Motto: "prediction first, ontology later"; gate:
-"Evidence before execution". Girish's attachments often arrive EMPTY
-(ask for pastes); screenshots/photos come through. MT5 broker server
-time = UTC (verified). MT5 data folder id: E92643EDFF963E7E489F140FDF338076.
+"Evidence before execution". Girish's attachments often arrive EMPTY;
+screenshots/photos come through. MT5 server = UTC; data folder id
+E92643EDFF963E7E489F140FDF338076. Read
+docs/reference/EXECUTION_PROCESS_GUIDE.md — the whole method, v1.0.
 
 ## 2. Governing documents
-Architecture v1.1 (FROZEN; docx placement still pending — remind
-gently) · Implementation_Blueprint_v1.0.md (§1.3 canonical_bytes
-NORMATIVE; §7 sprints — S5 next: battery I) ·
-Verification_Framework_v1.0.md (Go/No-Go = AC+VC+HC+Drill) ·
-ADR-001..009 (**009 = visual evidence layer**: pictures illustrate,
-numbers decide; screenshots never sole basis of a PASS) · PROTOCOL.md
-**v1.3** (READ IN FULL) · docs/reference/SMC_Concept_Glossary.md
-(Owner-contributed roadmap with knowability annotations) ·
+Architecture v1.1 (FROZEN; docx placement still pending) ·
+Implementation_Blueprint_v1.0.md (§1.3 NORMATIVE; §4.7 battery pipeline;
+§4.8 corrections; §7 sprints — S6 next: verdict end-to-end) ·
+Verification_Framework_v1.0.md · ADR-001..009 · PROTOCOL.md v1.3 ·
+SMC_Concept_Glossary.md (Owner's roadmap, knowability-annotated) ·
 AI_PROJECT_STATE.md (generated; never hand-edit).
 
 ## 3. Status at this rewrite
-- Sprints 1–4 **CLOSED**: GO-S1..GO-S4 in reviews/ (each GO from S3 on
-  has a standing Retrospective section — Owner's practice).
-- Ledger: journal **25 records, chain GREEN** (bbc0096-era; verify
-  yourself). Datasets: xauusd_h1_sample (504, TRAINING) ·
-  xauusd_h1_full (5938 = 2024: TRAINING 01KYB4SSC96SSS8RA7D1NMTPEX +
-  **VIRGIN 01KYB4SSD9VVKB577KRGB1W1P0**, 1781 trailing bars, untouched
-  and guard-tested) · xauusd_h1_sample_smc_fvg_events (105) ·
-  screener_shortlist (500 variants, 0 admitted — honest small-sample
-  result).
-- Instruments (all calibrated 1.0/1.0): seasonality.calendar@0.1.0,
-  classical.rsi@0.1.0, smc.fvg@0.1.0, smc.order_block@0.1.0.
-- Screener: telescope-only (AST-audited), exact trial counting, frozen
-  named cost models, seeded (forward-only; one historical seed=null
-  amber ACCEPTED per NOTE-013).
-- 188 tests, ruff clean (ivf/ excluded), firewall GREEN. inbox/OPEN
-  empty. Session logs complete through S4-2.
-- **ARCH-005 (Sprint 5: battery I) is WRITTEN and open** — verify
-  whether the Developer has booted (sessions/, refs, worktrees).
+- Sprints 1–5 **CLOSED**: GO-S1..GO-S5 in reviews/ (Retrospectives from
+  S3 on). S5 was the first zero-first-contact-bug sprint.
+- Ledger: **26 records, chain GREEN** (head after ebc9a7e-era commits;
+  verify). Latest: T0 GO-S4 note 01KYBX4SWX0DJXSV59526CZHD6.
+- Data: xauusd_h1_sample (504, TRAINING; CONTAMINATED for FVG-hold-4
+  style hypotheses — engine results observed at HC-S5) · xauusd_h1_full
+  (2024: TRAINING 01KYB4SSC96SSS8RA7D1NMTPEX 4157 bars, engine has
+  NEVER run on it · **VIRGIN 01KYB4SSD9VVKB577KRGB1W1P0** 1781 bars,
+  untouchable) · FVG events (105) · shortlist (500 variants).
+- Instruments calibrated 1.0/1.0: seasonality.calendar, classical.rsi,
+  smc.fvg, smc.order_block (OB gated for battery use — see §4).
+- Battery I foundations DONE: audited engine (no-look-ahead by
+  construction, byte-deterministic, pessimistic fills, n_dropped_tail),
+  anchored walk-forward + embargo, seeds, selftest tri-state. 655 tests.
+- **ARCH-006 (Sprint 6: verdict end-to-end) is WRITTEN and open**,
+  including the PRE-REGISTERED first hypothesis H-001 with its
+  thresholds declared BEFORE any run. Verify whether the Developer has
+  booted (sessions/, refs, worktrees).
 
 ## 4. Frozen contracts (do not drift)
-canonical_bytes §1.3 · EventFrame §4.3 · DEVQ-005 DOW · OBS-4 close
-basis · OBS-5 RSI amber band · DEVQ-006 gap rule + ingest_report v2
-params · DEVQ-007 __flagged suffix · DEVQ-008 cost-model name
-immutability (freeze test) · DEVQ-009 screening metric + telescope
-boundary (screener metric is NEVER evidence) · **DEVQ-010+ADDENDUM: FVG
-= 3-bar gap AND displacement middle candle; smartmoneyconcepts==0.0.27;
-OB knowability restated as break-bar rule REQUIRED before any OB
-hypothesis reaches the battery** · arrow (8) screener writes no
-verdict/window_burn · kernel firewall · window/burn semantics ·
-ADR-009 boundary.
+canonical_bytes §1.3 · EventFrame §4.3 · DEVQ-005 DOW · OBS-4/OBS-5 ·
+DEVQ-006 gap rule + report v2 params · DEVQ-007 __flagged · DEVQ-008
+cost-name immutability · DEVQ-009 telescope boundary · DEVQ-010+ADDENDUM
+FVG = gap AND displacement candle; **OB break-bar restatement REQUIRED
+before any OB hypothesis reaches the battery** · DEVQ-011 embargo
+geometry + **BINDING: battery enforces embargo_bars >= max hold_bars+1**
+· DEVQ-012 fills: next-open, time stop, pessimistic tie + gap-through
+("gaps can only hurt, never help"), n_dropped_tail visible · DEVQ-013
+selftest is a wiring gate, never evidence · arrow (8) screener never
+judges · window burn = once per (window, lineage) · kernel firewall ·
+ADR-009 pictures illustrate, numbers decide.
 
 ## 5. Process lessons paid for (NOTES 001–013, GO retros)
-Writes travel only via commit+push (003) · never assert status from an
-unverified lens; Developer lives in worktrees (004/010) · IDs after
-fetch, push-per-commit (005) · session logs every session (008/011) ·
-HC = captured evidence + human eye (012/ADR-009; the eye caught rev-2's
-wrong-year capture) · Owner-command rule always (v1.3) · bulk parquet
-never travels via git — every dataset now has --rebuild-bulk; NEVER
-hand-copy again · seed contract forward-only (013; the amber is
-accepted, do not silence it) · **run your own drills on your own tools
-BEFORE first real use** (S4 retro: Architect bugs #8–10 caught by the
-drill mechanism). Tally: **Architect 10, Developer 2** — the side that
-writes the checks gets checked hardest; that asymmetry is health.
+Everything is in EXECUTION_PROCESS_GUIDE.md §§4–9; headline reminders:
+verify state before asserting (004/010, worktrees) · session logs every
+session (011) · bulk parquet rebuilds via --rebuild-bulk, never
+hand-copy · seed contract forward-only, the historical amber is ACCEPTED
+(013) · **drill your own tools before first real use** (S4; S5 proved
+it) · .ex5/.ex4 are ignored build artifacts · HC caption-layout fix
+still owed across tools. Tally: **Architect 10, Developer 2.**
 
 ## 6. Owner rhythm
-Push after Architect writes (`ARCH:`) → boot Developer one-liner → pull
-before asking → HC (visual, ADR-009 tools) + Go/No-Go with verbatim
-phrases → GO-SN with Retrospective → handover rewrite. Pointers, not
-content. Confirm `(main)`. HC chart tools: sampler → input file in MT5
-Files (write it for him directly at
-C:\Users\giris\AppData\Roaming\MetaQuotes\Terminal\E92643...\MQL5\Files\)
-→ .mq5 from ivf/mt5/ copied to MT5 Scripts by hand → PNGs relayed →
-countersign. cp evidence into ivf/reports/hc_sN/ (create dir FIRST).
+Push (`ARCH:`/`OWNER:` prefixes) → boot Developer one-liner → pull
+before asking → HC (ADR-009 tools; write his MT5 input file directly at
+C:\Users\giris\AppData\Roaming\MetaQuotes\Terminal\E92643...\MQL5\Files\;
+create ivf/reports/hc_sN/ BEFORE giving the cp command) → verbatim
+phrases → GO-SN + Retrospective → handover rewrite. Pointers, not
+content. Two of his commands have landed in chat — gently redirect.
 
 ## 7. Immediate next steps (in order)
-1. Owner pushes the GO-S4 batch, boots Developer:
-   "Boot per CLAUDE.md, execute ARCH-005 completely, starting with T0.
+1. Owner pushes the GO-S5 batch, boots Developer:
+   "Boot per CLAUDE.md, execute ARCH-006 completely, starting with T0.
    Session log every session."
-2. Architect deliverables for S5 (yours):
-   (a) IVF S5 checks — engine determinism cross-run (same seed, byte
-   compare trades), fill-model spot recompute vs cost yaml, walk-forward
-   split boundary + embargo independent recomputation, selftest
-   tri-state audit (planted edge PASS / noise FAIL / small-n
-   INSUFFICIENT re-verified from the records); Drill S5 — plant a
-   look-ahead fill (fill at a price not yet knowable) and an embargo
-   violation; both must be caught. RUN YOUR OWN DRILL BEFORE THE REAL
-   CHECK (S4 lesson, standing).
-   (b) HC zone tool rev 2 (caption split — queued nit).
-   (c) IVF checks read ingest_report v2 params (still open).
-3. Sprint close: REV-S5 → HC → Go/No-Go → GO-S5 (+Retrospective) →
-   REWRITE THIS FILE → ARCH-006 (Sprint 6: verdict end-to-end — the
-   first real pre-registered hypothesis; OB break-bar restatement gate
-   applies if any OB hypothesis is proposed).
+2. Architect deliverables for S6 (yours):
+   (a) IVF S6 checks — corrections recomputation (Bonferroni vs the
+   trial ledger, independent), verdict-record audit (thresholds in the
+   verdict match H-001's pre-registration byte-for-byte; burn record
+   present and correct; selftest gate ran first), fold-level stats
+   recomputation from the engine's trades; Drill S6 — plant a
+   threshold-swap (verdict claiming looser thresholds than registered)
+   and a double-burn attempt; both must be caught. DRILL FIRST.
+   (b) HC caption-layout fix across the three .mq5 tools (one shared
+   pattern).
+   (c) IVF params-reading (open since GO-S3).
+3. Sprint close: REV-S6 → HC (visual: the verdict's fold trades on the
+   chart) → Owner Go/No-Go → GO-S6 (+Retrospective) → REWRITE THIS
+   FILE → ARCH-007 (Sprint 7: observatory + beliefs, per Blueprint §7).
+4. NOTE for the first verdict: H-001's outcome is expected to be FAIL
+   or INSUFFICIENT under the deflated threshold — and that is a SUCCESS
+   of the machinery. Prepare the Owner: the first verdict proving the
+   system can say NO is worth more than a flattering yes.
 
 ## 8. How to verify state yourself (before trusting this file)
-refs/heads/main vs refs/remotes/origin/main (pushed?) + FETCH_HEAD
-mtime · sessions/ latest log · inbox/OPEN · tail of newest ARCH file ·
-journal.jsonl tail (25 records at rewrite; chain by eye) · worktrees for
-mid-sprint truth · datastore/bulk emptiness = F-1: use the scripts'
---rebuild-bulk (ingest_xauusd_s3.py for bars, screen_s4.py for
-events/shortlist), never re-ingest, never hand-copy.
+refs/heads/main vs refs/remotes/origin/main + FETCH_HEAD mtime ·
+sessions/ latest log · inbox/OPEN · tail of newest ARCH file ·
+journal.jsonl tail (26 at rewrite) · worktrees for mid-sprint truth ·
+empty datastore/bulk = rebuild via scripts' --rebuild-bulk. NEVER assert
+"not started" from an unverified lens.
