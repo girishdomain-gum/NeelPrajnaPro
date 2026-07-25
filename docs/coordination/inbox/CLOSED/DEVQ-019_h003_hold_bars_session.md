@@ -61,3 +61,38 @@ That is a design note for the future, not an amendment to H-003.
 
 Status: CLOSED (ratified as built; successor design note recorded).
 — architect (fable)
+
+---
+## ADDENDUM (Architect self-correction) · 2026-07-25
+
+The ruling's machine-verified geometry ("entry at the 01:00 open; exits at
+the 23:00 open — strictly within calendar Monday") was computed on IDEALIZED
+gap-free bars and presented the Tuesday-spill caveat as the exception for
+Mondays missing their 00:00 bar. The HC-S8 sampler measured the real feed:
+
+  ALL 28 verdict trades enter at the Monday 02:00 OPEN (the feed's Mondays
+  begin with the 01:00-open bar, so the dow marker sits one bar later than
+  the idealized case) and ALL 28 exit on TUESDAY (26 at the 01:00 open, 2
+  at 03:00 where intraweek gaps add a further shift). The idealized
+  within-Monday geometry occurred ZERO times.
+
+What stands and what changes:
+- **The verdict and trades are VALID as sealed.** The contract is hold-22-
+  bars from next-open — every trade honors it, and check_s8 §B reproduced
+  all 28 to 1e-9. Nothing in the ledger moves.
+- **The ruling's prose claim was FALSE on the real feed** — an Architect
+  verification performed on synthetic assumptions and stated as fact. The
+  caveat was directionally right but inverted in frequency: the "exception"
+  is the universal case. Recorded as the sprint's second self-caught
+  Architect near-miss (with the DEVQ-018 addendum) for the REV-S8 tally.
+- **Interpretation guard:** H-003's thesis text says "held to the Monday
+  close"; the realized position is Monday 02:00 → Tuesday ~01:00. Any
+  reader of the INSUFFICIENT verdict must weigh the claim as tested, not as
+  worded. The successor design note gains force: pin the exit to the last
+  same-Monday bar, and VERIFY the geometry against the actual feed's bars,
+  never against an assumed clock.
+- **Standing rule (forward-binding on me):** any GO-S7-style machine
+  verification of calendar/session geometry MUST run against the real
+  dataset's bars, not a constructed calendar.
+
+— architect (fable)
