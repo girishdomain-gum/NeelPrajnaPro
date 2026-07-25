@@ -1,10 +1,17 @@
 # CLAUDE.md — Standing Orders for the Developer AI
-<!-- rev 3 · 2026-07-24 · NOTE-008: session logs, boot-time freshness,
-     push-per-commit. rev 2: DEVQ-001 state-file exception. -->
+<!-- rev 4 · 2026-07-25 · worktree python path (S7-1 finding).
+     rev 3: NOTE-008 session logs, boot freshness, push-per-commit.
+     rev 2: DEVQ-001 state-file exception. -->
 
 You are the **Developer** on the QRF project. Your role, powers and
-limits are defined in `docs/coordination/PROTOCOL.md` (v1.1). Read it
+limits are defined in `docs/coordination/PROTOCOL.md` (v1.3). Read it
 first, once, every session.
+
+## Environment note (rev 4, from session S7-1)
+In worktrees, `uv run` re-resolves the environment (~2 min startup).
+Prefer invoking the venv python directly: `.venv/Scripts/python.exe`
+(~0.4 s). Use `uv` only when dependencies actually change (then run
+`uv sync` once and return to direct invocation).
 
 ## Boot sequence (every session, in order)
 1. **Freshness first:** `git fetch origin`; merge `origin/main` into

@@ -101,3 +101,44 @@ frozen rules (no VIRGIN read, corrections follow claims, verdict-only beliefs) r
 than fighting them. If you rule a different `strength` formula, it is a localized
 change to `BeliefLayer._stance_and_strength` + re-seeding one belief record (the
 current record stays in the append-only chain as the earlier state).
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED** on all five reconciliations (the DEVQ-014
+pattern; §2/§4.5 items join the Blueprint consolidation queue — the
+Bayesian belief_update odds/LR machinery is explicitly DEFERRED to its
+own ADR, to arrive only when claims accumulate multiple verdicts).
+
+**(a) Strength semantics — p-as-strength is REJECTED; ruled formula:**
+
+    strength = 2 · |p − 0.5|      (named: DECISIVENESS, ∈ [0,1])
+
+Rationale: p-as-strength over-believes marginal results — a PASS at
+p=0.049 would claim strength 0.951 from borderline evidence, and that
+number would sit in the layer every future session trusts on sight.
+Decisiveness fixes it transparently: marginal PASS (p=0.049) → 0.098
+(weakly supported — honest); H-001's FAIL (p=0.9435) → **0.887**
+(strongly rejected — the data leaned firmly negative); p≈0.5 → ≈0
+(decided, but on thin evidence). Symmetric, monotone in the tail,
+recomputable by the IVF from the verdict alone. The ruling includes its
+own boundary: strength is HOW DECISIVE the deciding verdict was — it is
+NOT a posterior probability and must never be read as one; posterior
+machinery is the deferred Bayesian ADR.
+
+**(b) Conflict — recency alone is REJECTED; ruled: CONTESTED stance.**
+Newest-decisive-wins holds while decisive verdicts agree. The moment
+decisive verdicts in a claim's history DISAGREE (a PASS after a FAIL or
+vice versa), stance = **CONTESTED** (strength = decisiveness of the
+newest, chain shows both) until a pre-registered replication
+tie-breaks. A memory layer must preserve conflict, not paper over it
+with recency.
+
+**(c) trial_count v3** (additive): `source` gains "observatory";
+re-record nothing — forward-only, the NOTE-013 shape.
+
+**Micro-task (one small session):** decisiveness formula + CONTESTED
+logic in _stance_and_strength (+tests incl. the marginal-PASS case and
+a synthetic conflict); append the re-derived H-001 belief state (old
+state REMAINS in the chain — the layer's own first demonstration of
+append-only memory); trial_count v3 enum.
+Status: CLOSED
