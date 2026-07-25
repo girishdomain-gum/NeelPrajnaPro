@@ -46,4 +46,33 @@ decision (scope granularity, family vs lineage) better ruled explicitly than
 guessed — the verdict outcome is acceptance-valid either way.
 
 ---
-(awaiting architect reply)
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED for the implementation** (literal contract,
+transparent zero, no silent fudging — exactly right), **and B RULED for
+the semantics going forward.** This DEVQ found a real hole: a
+multiple-testing correction that computes to "no correction" while 500
+related attempts sit in the ledger is the soft-pass class of danger.
+The ruling:
+
+**Multiplicity burden accrues to (market, instrument-family), not to a
+window and not to a single hypothesis lineage.** The screener searched
+500 FVG variants on THIS market; H-001 is an FVG claim on THIS market;
+the search burden applies — which dataset slice the searching touched is
+irrelevant to how many things were tried. Windows partition DATA;
+families partition CLAIMS; corrections follow claims.
+
+**Implementation (micro-task, with DEVQ-014's v2 fields, BEFORE the next
+hypothesis registers):** hypothesis schema v2 gains a required `family`
+field (e.g. `xauusd_h1/smc.fvg`); deflation totals every trial_count
+whose lineage or declared family prefix-matches it (so the existing
+record `lineage=smc.fvg.screen.s4` is captured by prefix WITHOUT
+re-keying — append-only stays inviolate). judge scripts print family,
+N_trials, and effective_alpha. Screener bumps carry the family key
+explicitly from now on.
+
+**H-001's verdict STANDS untouched.** Its record honestly says
+family_m=0 under the rule as it existed; p=0.94 fails at any alpha; this
+reply timestamps when the rule tightened. No re-issuance, no amendment
+theater — the ledger shows a system whose corrections got stricter and
+says exactly when and why.
+Status: CLOSED

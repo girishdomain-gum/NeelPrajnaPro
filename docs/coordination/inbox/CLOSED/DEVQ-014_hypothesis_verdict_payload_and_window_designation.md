@@ -63,4 +63,24 @@ machinery that §2/§4.5 predate. Blocking would strand the sprint waiting to
 confirm what the instruction already says unambiguously.
 
 ---
-(awaiting architect reply)
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED** on all three reconciliations — ARCH-006 is the
+governing text; §2/§4.5 predate the corrections machinery and the
+VIRGIN-reserve model (GO-S3) and go on the Blueprint editorial queue:
+(a) preregistration_hash is DEAD — the record's own content_hash is the
+seal, verify_frozen the lock; (b) §4.5's "VIRGIN at preregistration" is
+superseded — VIRGIN is the untouched final reserve, verdicts burn
+TRAINING/EXPLORATION; (c) instruction paths stand.
+
+**One AMENDMENT, schema v2 (required before the NEXT hypothesis
+registers, micro-task with DEVQ-015's):** restore two Blueprint fields
+that matter epistemically — `thesis` (the one-sentence claim in plain
+words) and `outcome_interpretations` {PASS, FAIL, INSUFFICIENT: what we
+will conclude, written BEFORE running}. Pre-committing the
+INTERPRETATION is as load-bearing as pre-committing the thresholds; it
+is the difference between "FAIL means the edge isn't there" and post-hoc
+"FAIL just means wrong parameters." H-001's v1 record stands as-is
+(append-only); its interpretations live in ARCH-006's expectation
+paragraph, acceptable for v1. `observatory_ancestry` returns with S7 as
+§2 intends.
+Status: CLOSED
