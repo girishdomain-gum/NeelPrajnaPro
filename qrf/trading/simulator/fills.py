@@ -19,6 +19,15 @@ Intrabar tie convention (declared, pessimistic — DEVQ-012): if a single bar's
 range spans BOTH the stop and the target, the **stop** is assumed to fill first.
 A backtest that resolves ambiguous bars against itself cannot flatter a strategy.
 
+Pessimistic gap-through, both ways (Owner refinement to DEVQ-012): a level that the
+market GAPS THROUGH does not fill at the untraded level. On the triggering bar the
+fill is the trader-adverse side of {level, bar open}, applied to BOTH exit types
+and BOTH directions — so a gap can only ever hurt, never help:
+  * STOP   — fills at the WORSE of the stop and the open (long: ``min(stop, open)``,
+             short: ``max(stop, open)``); an adverse gap fills you beyond the stop.
+  * TARGET — is CAPPED at the level: a favorable gap-open beyond the target is not
+             credited (you never book more than the target).
+
 Fill-rule scope this sprint (DEVQ-012): entries are next-open, fixed (not
 configurable); exits are time-stop-at-next-open plus optional intrabar
 stop/target. Alternative fill rules (signal-close with a declared lag, VWAP, …)
@@ -69,9 +78,10 @@ def resolve_exit(
     data the trade cannot be closed without look-ahead and ``None`` is returned
     (the engine drops it). When ``stop_offset`` / ``target_offset`` are given,
     bars ``entry_index+1 … entry_index+hold_bars`` are checked intrabar in order;
-    the first to touch a level closes the trade at that level (stop before target
-    on a bar that spans both). If no level is touched, the trade closes at the
-    OPEN of the time-stop bar.
+    the first to touch a level closes the trade there — the stop before the target
+    on a bar that spans both, and each level filled with pessimistic gap-through
+    (see module docstring). If no level is touched, the trade closes at the OPEN of
+    the time-stop bar.
     """
     n = len(opens)
     exit_index = entry_index + hold_bars
@@ -83,14 +93,27 @@ def resolve_exit(
 
     if stop_price is not None or target_price is not None:
         for j in range(entry_index + 1, exit_index + 1):
-            hi, lo = highs[j], lows[j]
+            hi, lo, op = highs[j], lows[j], opens[j]
             # Pessimistic: test the stop before the target within one bar.
             if stop_price is not None and _touched_stop(direction, hi, lo, stop_price):
-                return ExitFill(exit_index=j, exit_price=stop_price, reason="stop")
+                return ExitFill(j, _stop_fill(direction, stop_price, op), "stop")
             if target_price is not None and _touched_target(direction, hi, lo, target_price):
-                return ExitFill(exit_index=j, exit_price=target_price, reason="target")
+                # Cap at the target: a favorable gap-open is never credited.
+                return ExitFill(j, float(target_price), "target")
 
     return ExitFill(exit_index=exit_index, exit_price=float(opens[exit_index]), reason="time_stop")
+
+
+def _stop_fill(direction: int, stop_price: float, open_j: float) -> float:
+    """Pessimistic gap-through: fill a stop at the WORSE of the stop level and the open.
+
+    If the bar gaps open beyond the stop, the realistic fill is the gapped-open (a
+    price that actually traded), not the stop level (which never did): a long fills
+    at ``min(stop, open)``, a short at ``max(stop, open)``. A non-gapping touch
+    (the bar opens on the safe side and only reaches the stop intrabar) fills at the
+    stop exactly.
+    """
+    return float(min(stop_price, open_j) if direction > 0 else max(stop_price, open_j))
 
 
 def _stop_price(direction: int, entry_price: float, stop_offset: float | None) -> float | None:

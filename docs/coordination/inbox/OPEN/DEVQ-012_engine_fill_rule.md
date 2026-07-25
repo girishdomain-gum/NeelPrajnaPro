@@ -47,3 +47,31 @@ Non-blocking. Engine + fills complete and green under A.
 
 ## How to ask
 Ratify A (incl. pessimistic tie), or direct me to add the configurable entry enum.
+
+---
+## DEVELOPER ADDENDUM · Owner-commanded refinement · 2026-07-25 (session S5-2)
+The Owner directed two refinements to the DEVQ-012 fill rule, now implemented with
+tests (still OPEN — this records them for the Architect's ruling, not a self-close):
+
+1. **Pessimistic gap-through, both ways** (fills.py). A level the market GAPS
+   THROUGH no longer fills at the untraded level. On the triggering bar the fill is
+   the trader-adverse side of {level, bar open}, both exit types, both directions:
+   - STOP fills at the WORSE of stop and open (long `min(stop, open)`, short
+     `max(stop, open)`) — an adverse gap fills you BEYOND the stop.
+   - TARGET is CAPPED at the level — a favorable gap-open past the target is NOT
+     credited. Gaps can only ever hurt, never help.
+   Tests: long/short stop gap-through → worse open fill; long/short target favorable
+   gap → capped at target; non-gapping touch → exact level (unchanged).
+
+2. **n_dropped_tail reporting** (engine.py). Eligible events the data tail cannot
+   open+close (no next bar to enter on, or time-stop exit beyond the data) are still
+   never filled on absent bars — but they are now COUNTED in `Trades.n_dropped_tail`
+   and carried in the canonical image, so the drop is visible, not silent (the same
+   no-silent-truncation discipline as the screener's trial_count). Tests: count of
+   no-exit + no-entry tail drops; presence in canonical_payload.
+
+Both are additive/realism-improving and do not touch the no-look-ahead guarantee or
+the determinism byte-image contract (n_dropped_tail is deterministic; still byte-
+identical across a process restart). 655 tests green, ruff clean, firewall GREEN.
+If the eventual ruling prefers different semantics (e.g. crediting favorable target
+gaps, or a separate no-entry vs no-exit split), both are localized one-place changes.

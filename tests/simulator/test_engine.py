@@ -135,10 +135,91 @@ def test_short_trade_pnl_sign():
     assert t.gross_pnl == pytest.approx(10.0)  # (100 - 90)
 
 
-# --- dropped when it cannot close -------------------------------------------
+# --- dropped when it cannot close, and the drop is REPORTED ------------------
 def test_trade_dropped_when_exit_beyond_data():
     bars = _bars([100.0, 100.0, 100.0])  # entry at idx1, exit would be idx3 (absent)
-    assert len(_one_trade(bars, 1, ExecutionSpec(hold_bars=2))) == 0
+    trades = _one_trade(bars, 1, ExecutionSpec(hold_bars=2))
+    assert len(trades) == 0
+    assert trades.n_dropped_tail == 1  # counted, not silent
+
+
+def test_n_dropped_tail_counts_no_exit_and_no_entry():
+    # 10 bars; hold 3. Events late enough that their exit (or entry) runs off the end.
+    bars = _bars([100.0] * 10)
+    # signal ts 9 -> no next bar (no entry); ts 8 -> entry 9, exit 12 (beyond);
+    # ts 7 -> entry 8, exit 11 (beyond); ts 0 -> entry 1, exit 4 (fine, closes).
+    events = _events([(0, 1), (7, 1), (8, 1), (9, 1)])
+    trades = EventEngine().simulate(
+        bars, events, COST, seed=1, execution=ExecutionSpec(hold_bars=3)
+    )
+    assert len(trades) == 1  # only the ts0 event closes
+    assert trades.n_dropped_tail == 3  # the three tail events, all reported
+
+
+def test_n_dropped_tail_is_in_the_canonical_image():
+    bars = _bars([100.0, 100.0, 100.0])
+    trades = _one_trade(bars, 1, ExecutionSpec(hold_bars=2))
+    assert trades.canonical_payload()["n_dropped_tail"] == 1
+
+
+# --- pessimistic gap-through, both ways --------------------------------------
+def test_long_stop_gaps_through_fills_worse_at_open():
+    # Long stop = 98; the held bar GAPS DOWN, opening at 95 (below the stop).
+    bars = _bars(
+        opens=[100.0, 100.0, 95.0, 100.0],
+        highs=[100.0, 100.0, 96.0, 100.0],
+        lows=[100.0, 100.0, 94.0, 100.0],
+    )
+    t = _one_trade(bars, 1, ExecutionSpec(hold_bars=2, stop_offset=2.0)).trades[0]
+    assert t.exit_reason == "stop"
+    assert t.exit_price == 95.0  # filled at the gapped open, worse than the 98 stop
+
+
+def test_short_stop_gaps_through_fills_worse_at_open():
+    # Short stop = 102; the held bar GAPS UP, opening at 105 (above the stop).
+    bars = _bars(
+        opens=[100.0, 100.0, 105.0, 100.0],
+        highs=[100.0, 100.0, 106.0, 100.0],
+        lows=[100.0, 100.0, 104.0, 100.0],
+    )
+    t = _one_trade(bars, -1, ExecutionSpec(hold_bars=2, stop_offset=2.0)).trades[0]
+    assert t.exit_reason == "stop"
+    assert t.exit_price == 105.0  # filled at the gapped open, worse than the 102 stop
+
+
+def test_long_target_favorable_gap_is_capped_not_credited():
+    # Long target = 102; the held bar GAPS UP, opening at 110 (well past the target).
+    bars = _bars(
+        opens=[100.0, 100.0, 110.0, 100.0],
+        highs=[100.0, 100.0, 111.0, 100.0],
+        lows=[100.0, 100.0, 109.0, 100.0],
+    )
+    t = _one_trade(bars, 1, ExecutionSpec(hold_bars=2, target_offset=2.0)).trades[0]
+    assert t.exit_reason == "target"
+    assert t.exit_price == 102.0  # capped at the target — the favorable gap is NOT credited
+
+
+def test_short_target_favorable_gap_is_capped_not_credited():
+    # Short target = 98; the held bar GAPS DOWN, opening at 90 (well past the target).
+    bars = _bars(
+        opens=[100.0, 100.0, 90.0, 100.0],
+        highs=[100.0, 100.0, 91.0, 100.0],
+        lows=[100.0, 100.0, 89.0, 100.0],
+    )
+    t = _one_trade(bars, -1, ExecutionSpec(hold_bars=2, target_offset=2.0)).trades[0]
+    assert t.exit_reason == "target"
+    assert t.exit_price == 98.0  # capped at the target
+
+
+def test_non_gapping_touch_still_fills_at_the_level():
+    # No gap: bar opens on the safe side (100) and only dips to the stop intrabar.
+    bars = _bars(
+        opens=[100.0, 100.0, 100.0, 100.0],
+        highs=[100.0, 100.0, 101.0, 100.0],
+        lows=[100.0, 100.0, 97.0, 100.0],
+    )
+    t = _one_trade(bars, 1, ExecutionSpec(hold_bars=2, stop_offset=2.0)).trades[0]
+    assert t.exit_price == 98.0  # exact stop, no gap adjustment
 
 
 # --- intrabar stop / target + pessimistic tie -------------------------------

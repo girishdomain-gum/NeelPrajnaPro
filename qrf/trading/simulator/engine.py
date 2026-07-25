@@ -115,17 +115,25 @@ class Trades:
 
     seed: int
     trades: list[Trade] = field(default_factory=list)
+    n_dropped_tail: int = 0  # eligible events the data tail could not open+close
 
     def __len__(self) -> int:
         return len(self.trades)
 
     def canonical_payload(self) -> dict:
-        """A deterministic, JSON-safe image of the trade list (sorted for stability)."""
+        """A deterministic, JSON-safe image of the trade list (sorted for stability).
+
+        ``n_dropped_tail`` is part of the image: the honest count of eligible events
+        the engine could not turn into a closed trade because the required bars lie
+        beyond the data's end (no next bar to enter on, or no exit bar within the
+        window). Reporting it keeps the drop visible rather than silent — the same
+        no-silent-truncation discipline the screener's trial_count enforces.
+        """
         rows = sorted(
             (t.as_dict() for t in self.trades),
             key=lambda r: (r["signal_ts"], r["entry_ts"], r["direction"]),
         )
-        return {"seed": int(self.seed), "trades": rows}
+        return {"seed": int(self.seed), "n_dropped_tail": int(self.n_dropped_tail), "trades": rows}
 
     def canonical_bytes(self) -> bytes:
         return canonical_bytes(self.canonical_payload())
@@ -158,7 +166,8 @@ class EventEngine:
         order; it is sorted here). ``events`` needs ``ts, direction, strength``
         (an EventFrame's pandas view). Returns the closed :class:`Trades`; events
         that cannot open+close within the data (no next bar, or time-stop exit
-        beyond the data) are silently skipped — never filled on absent bars.
+        beyond the data) are never filled on absent bars — they are dropped and
+        counted in ``Trades.n_dropped_tail`` (visible, not silent).
         """
         if not isinstance(bars, pd.DataFrame):
             raise SchemaViolation(f"bars must be a pandas DataFrame, got {type(bars).__name__}")
@@ -181,6 +190,7 @@ class EventEngine:
         ev = events.sort_values(["ts", "direction"], kind="mergesort").reset_index(drop=True)
 
         trades: list[Trade] = []
+        n_dropped_tail = 0
         for signal_ts, direction, strength in zip(
             ev["ts"], ev["direction"], ev["strength"], strict=True
         ):
@@ -190,8 +200,11 @@ class EventEngine:
             if float(strength) < execution.strength_min:
                 continue
 
+            # An eligible event that the data tail cannot open+close is dropped and
+            # counted (n_dropped_tail) — never filled on absent bars, never silent.
             entry_i = entry_bar_index(int(signal_ts), ts_sorted)
             if entry_i is None:
+                n_dropped_tail += 1  # no next bar to enter on (event past the data)
                 continue
             entry_price = opens[entry_i]
 
@@ -207,6 +220,7 @@ class EventEngine:
                 target_offset=execution.target_offset,
             )
             if fill is None:
+                n_dropped_tail += 1  # time-stop exit bar lies beyond the data
                 continue
 
             gross = direction * (fill.exit_price - entry_price) * execution.size
@@ -226,4 +240,4 @@ class EventEngine:
                 )
             )
 
-        return Trades(seed=int(seed), trades=trades)
+        return Trades(seed=int(seed), trades=trades, n_dropped_tail=n_dropped_tail)
