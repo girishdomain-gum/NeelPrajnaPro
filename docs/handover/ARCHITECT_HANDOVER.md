@@ -1,5 +1,21 @@
 # QRF — Architect Handover (Fable → next Fable session)
 Rewritten 2026-07-25 at the Sprint-7→8 boundary (GO-S7) · Author: architect (fable)
+
+## 0. SESSION BOUNDARY SNAPSHOT (added at chat switch, 2026-07-25)
+Verified at handover moment: local main == origin/main == **d24ab5a**
+(the GO-S7 close batch — GO-S7, Blueprint_Amendments_A1, guide rules,
+this handover, ARCH-008 — is COMMITTED AND PUSHED). Journal 41 records
+chain GREEN. inbox/OPEN empty. HC-S7 evidence archived in
+ivf/reports/hc_s7/. **The Developer has NOT been booted for ARCH-008
+in this session** — your first act is §5 verify-before-trust (refs,
+sessions/ for any S8-1 log, worktrees) in case the Owner booted him
+between sessions, then proceed per §6. The Owner's pending one-liner if
+not yet run: "Boot per CLAUDE.md, execute ARCH-008 completely, starting
+with T0. Session log every session." Same-day context that colors
+everything: Sprints 1–7 ALL closed TODAY; the Owner is engaged and asks
+sharp questions (see PROGRAM_RETRO_001 and ADR-010 — both were his
+initiative); treat him as the system's conscience, not its operator.
+
 Audience: the NEXT Architect chat session. Read this first, then what it
 points to. Chat history is gone; this file + the repo are memory.
 PROTOCOL duty: rewrite at every GO-SN.
