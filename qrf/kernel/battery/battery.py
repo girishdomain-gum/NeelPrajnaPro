@@ -94,6 +94,27 @@ class _FoldOutcome:
     trade_rows: list[dict]
 
 
+@dataclass(frozen=True)
+class PipelineResult:
+    """The outcome of pipeline steps 4-7 (splits -> engine -> stats -> tri-state).
+
+    This is what a verdict is MADE OF, before it is written. :meth:`EvidenceBattery.run`
+    computes one and then appends the verdict + burn (step 8); :meth:`evaluate` computes
+    one and appends NOTHING (the placebo/dry-run path — G-3). Sharing this one method is
+    what makes the placebo provably the SAME judge as a real verdict.
+    """
+
+    verdict: str
+    outcomes: list[_FoldOutcome]
+    pooled_net: list[float]
+    pooled_gross: list[float]
+    n_total: int
+    n_dropped: int
+    statistics: dict
+    deflation: object
+    family: str | None
+
+
 class EvidenceBattery:
     """Run the §4.7 pipeline and emit a verdict + window_burn (Blueprint §4.7)."""
 
@@ -220,53 +241,19 @@ class EvidenceBattery:
         )
         return manifest.record_id
 
-    # -- the pipeline ---------------------------------------------------------
-    def run(
-        self,
-        hypothesis_ref: str,
-        *,
-        simulator,
-        cost_model,
-        bars: pd.DataFrame,
-        events: pd.DataFrame,
-        producer: str = "battery",
-    ) -> Record:
-        """Judge ``hypothesis_ref`` and return its verdict record (also burns window).
+    # -- shared pipeline core (steps 4-7, no writes) --------------------------
+    def _pipeline(
+        self, hyp: Record, simulator, cost_model, bars, window, events, *, engine_seed: int
+    ) -> PipelineResult:
+        """Steps 4-7: splits -> engine per fold TEST range -> pooled stats -> tri-state.
 
-        ``simulator`` must be the audited engine (screener rejected by type);
-        ``cost_model`` is the injected named model; ``bars`` and ``events`` are the
-        window's numeric frames (bars carry ts/open/high/low/close; events carry
-        ts/direction/strength). Any pipeline refusal raises before a verdict is
-        written; on success the verdict and its window_burn are appended together.
+        Pure computation: appends nothing, burns nothing. Both :meth:`run` (which then
+        writes the verdict + burn) and :meth:`evaluate` (which does not) call this, so a
+        placebo dry-run is byte-for-byte the same judgement machinery as a real verdict.
         """
-        # 1. type gate — screener rejected by type, not by inspection.
-        require_audited_simulator(simulator)
-
-        hyp = self._store.get(hypothesis_ref)
-        if hyp.record_type != "hypothesis":
-            raise SchemaViolation(
-                f"record {hypothesis_ref} is a {hyp.record_type!r}, not a hypothesis"
-            )
-        lineage = hyp.payload["lineage"]
-        scope = hyp.payload["scope"]
         thresholds = hyp.payload["thresholds"]
-        window_ref = self._hypothesis_window(hyp)
-        window = self._store.get(window_ref)
-
-        engine_seed = seeds.for_run(hypothesis_ref, window_ref)
-        selftest_seed = _SELFTEST_SEED
-
-        # 2. selftest gate (records the seed; aborts on failure).
-        self._selftest_gate(simulator, cost_model, seed=selftest_seed)
-
-        # 3. window checks: designation + not burned for this lineage.
-        designation = window.payload["designation"]
-        if designation not in _JUDGEABLE_DESIGNATIONS:
-            raise ContaminationError(
-                f"window {window_ref} is {designation}-designated; the battery judges "
-                "only TRAINING/EXPLORATION windows (VIRGIN is the untouched reserve)"
-            )
-        self._windows.check_available(window_ref, lineage)  # WindowBurnedError on re-run
+        scope = hyp.payload["scope"]
+        lineage = hyp.payload["lineage"]
 
         # 4. splits (embargo>=hold+1 re-checked via the config below).
         exec_dict = dict(hyp.payload["execution"])
@@ -308,6 +295,117 @@ class EvidenceBattery:
             verdict = PASS
         else:
             verdict = FAIL
+
+        return PipelineResult(
+            verdict=verdict,
+            outcomes=outcomes,
+            pooled_net=pooled_net,
+            pooled_gross=pooled_gross,
+            n_total=n_total,
+            n_dropped=n_dropped,
+            statistics=st,
+            deflation=defl,
+            family=family,
+        )
+
+    def evaluate(
+        self,
+        hypothesis_ref: str,
+        *,
+        simulator,
+        cost_model,
+        bars: pd.DataFrame,
+        events: pd.DataFrame,
+        engine_seed: int | None = None,
+    ) -> PipelineResult:
+        """Judge ``hypothesis_ref`` on the given ``events`` WITHOUT writing anything.
+
+        Steps 1-7 of the pipeline (type gate, designation check, splits, engine, stats,
+        tri-state) but NO verdict and NO window_burn — and NO burn-availability check, so
+        it may run even after the real window is burned. This is the placebo/dry-run
+        entry point (ARCH-008 §1, G-3): the caller replays the setup on a null-preserving
+        twin of ``events`` and reads the tri-state, never spending the window.
+        """
+        require_audited_simulator(simulator)
+        hyp = self._store.get(hypothesis_ref)
+        if hyp.record_type != "hypothesis":
+            raise SchemaViolation(
+                f"record {hypothesis_ref} is a {hyp.record_type!r}, not a hypothesis"
+            )
+        window_ref = self._hypothesis_window(hyp)
+        window = self._store.get(window_ref)
+        designation = window.payload["designation"]
+        if designation not in _JUDGEABLE_DESIGNATIONS:
+            raise ContaminationError(
+                f"window {window_ref} is {designation}-designated; the battery judges "
+                "only TRAINING/EXPLORATION windows (VIRGIN is the untouched reserve)"
+            )
+        if engine_seed is None:
+            engine_seed = seeds.for_run(hypothesis_ref, window_ref)
+        return self._pipeline(
+            hyp, simulator, cost_model, bars, window, events, engine_seed=engine_seed
+        )
+
+    # -- the pipeline ---------------------------------------------------------
+    def run(
+        self,
+        hypothesis_ref: str,
+        *,
+        simulator,
+        cost_model,
+        bars: pd.DataFrame,
+        events: pd.DataFrame,
+        producer: str = "battery",
+    ) -> Record:
+        """Judge ``hypothesis_ref`` and return its verdict record (also burns window).
+
+        ``simulator`` must be the audited engine (screener rejected by type);
+        ``cost_model`` is the injected named model; ``bars`` and ``events`` are the
+        window's numeric frames (bars carry ts/open/high/low/close; events carry
+        ts/direction/strength). Any pipeline refusal raises before a verdict is
+        written; on success the verdict and its window_burn are appended together.
+        """
+        # 1. type gate — screener rejected by type, not by inspection.
+        require_audited_simulator(simulator)
+
+        hyp = self._store.get(hypothesis_ref)
+        if hyp.record_type != "hypothesis":
+            raise SchemaViolation(
+                f"record {hypothesis_ref} is a {hyp.record_type!r}, not a hypothesis"
+            )
+        lineage = hyp.payload["lineage"]
+        thresholds = hyp.payload["thresholds"]
+        window_ref = self._hypothesis_window(hyp)
+        window = self._store.get(window_ref)
+
+        engine_seed = seeds.for_run(hypothesis_ref, window_ref)
+        selftest_seed = _SELFTEST_SEED
+
+        # 2. selftest gate (records the seed; aborts on failure).
+        self._selftest_gate(simulator, cost_model, seed=selftest_seed)
+
+        # 3. window checks: designation + not burned for this lineage.
+        designation = window.payload["designation"]
+        if designation not in _JUDGEABLE_DESIGNATIONS:
+            raise ContaminationError(
+                f"window {window_ref} is {designation}-designated; the battery judges "
+                "only TRAINING/EXPLORATION windows (VIRGIN is the untouched reserve)"
+            )
+        self._windows.check_available(window_ref, lineage)  # WindowBurnedError on re-run
+
+        # 4-7. splits -> engine -> stats -> tri-state (the shared pipeline core).
+        result = self._pipeline(
+            hyp, simulator, cost_model, bars, window, events, engine_seed=engine_seed
+        )
+        outcomes = result.outcomes
+        pooled_net = result.pooled_net
+        pooled_gross = result.pooled_gross
+        n_total = result.n_total
+        n_dropped = result.n_dropped
+        st = result.statistics
+        defl = result.deflation
+        family = result.family
+        verdict = result.verdict
 
         # 8. persist trades, append verdict, then burn — one code path.
         trades_manifest = self._trades_manifest(hyp, outcomes)

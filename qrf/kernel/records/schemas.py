@@ -754,6 +754,118 @@ def _validate_belief(payload: dict) -> None:
         _require_str(payload, "prev_state", "belief")
 
 
+# ===========================================================================
+# Sprint 8 (ARCH-008) — placebo battery (G-3) + graduation gate (G-1) records.
+# placebo_run: a null-twin dry-run of the verdict pipeline (writes no verdict,
+# burns no window). second_lens: the independent-feed evidence a promotion needs.
+# promotion: a claim's lifecycle record, appendable only through all four gates.
+# ===========================================================================
+
+# The null-construction methods a placebo may use (DEVQ-018). direction_permutation
+# for directional event claims; entry_time_shuffle for fixed-direction timing claims.
+_PLACEBO_METHODS = frozenset({"direction_permutation", "entry_time_shuffle"})
+
+
+def _validate_placebo_run(payload: dict) -> None:
+    """placebo_run v1 (ARCH-008 §1, G-3) — N seeded null-twin runs of a setup.
+
+    ``hypothesis_ref`` is the judged hypothesis whose exact setup was replayed;
+    ``method`` is the null construction (DEVQ-018); ``seed`` is the base seed (run
+    i uses seed+i); ``outcomes`` is one tri-state per run and ``n_runs`` == its
+    length; ``n_pass`` == the number of PASS outcomes (a healthy judge yields at
+    most ~alpha*n_runs). A placebo_run NEVER carries a window_burn or a verdict —
+    the closed key set makes that structurally impossible (the type-audit ARCH-008
+    §Acceptance requires).
+    """
+    _check_keys(
+        payload,
+        {"hypothesis_ref", "method", "seed", "n_runs", "outcomes", "n_pass"},
+        set(),
+        "placebo_run",
+    )
+    _require_str(payload, "hypothesis_ref", "placebo_run")
+    _require(
+        payload["method"] in _PLACEBO_METHODS,
+        f"placebo_run.method must be one of {sorted(_PLACEBO_METHODS)}",
+    )
+    _require_int(payload, "seed", "placebo_run", non_negative=True)
+    _require_int(payload, "n_runs", "placebo_run", non_negative=True)
+    _require(payload["n_runs"] >= 1, "placebo_run.n_runs must be >= 1")
+    _require(isinstance(payload["outcomes"], list), "placebo_run.outcomes must be a list")
+    for i, oc in enumerate(payload["outcomes"]):
+        _require(
+            oc in _VERDICT_VALUES,
+            f"placebo_run.outcomes[{i}] must be one of {sorted(_VERDICT_VALUES)}",
+        )
+    _require(
+        len(payload["outcomes"]) == payload["n_runs"],
+        "placebo_run.n_runs must equal len(outcomes)",
+    )
+    _require_int(payload, "n_pass", "placebo_run", non_negative=True)
+    _require(
+        payload["n_pass"] == sum(1 for oc in payload["outcomes"] if oc == "PASS"),
+        "placebo_run.n_pass must equal the count of PASS outcomes (audit consistency)",
+    )
+
+
+def _validate_second_lens(payload: dict) -> None:
+    """second_lens v1 (ARCH-008 §2, G-1, DEVQ-020) — independent-feed agreement.
+
+    The evidence leg a promotion needs beyond a PASS verdict: a SECOND, independent
+    data source agreeing on the overlapping slice. ``source_name`` names the feed;
+    ``overlap_manifest`` is the bulk_manifest id of the shared slice (auditable
+    against real bytes — the graduation module checks it resolves); ``agreement_summary``
+    is structured so an IVF can re-derive the agreement. No real second feed exists
+    yet (Owner-provided, future), so the GATE exists but no promotion can pass it.
+    """
+    _check_keys(
+        payload,
+        {"source_name", "overlap_manifest", "agreement_summary"},
+        set(),
+        "second_lens",
+    )
+    _require_str(payload, "source_name", "second_lens")
+    _require(payload["source_name"].strip(), "second_lens.source_name must be non-empty")
+    _require_str(payload, "overlap_manifest", "second_lens")
+    summ = payload["agreement_summary"]
+    _require(isinstance(summ, dict), "second_lens.agreement_summary must be an object")
+    _check_keys(summ, {"n_overlap", "n_agree", "agreement_rate", "notes"}, set(),
+                "second_lens.agreement_summary")
+    _require_int(summ, "n_overlap", "second_lens.agreement_summary", non_negative=True)
+    _require_int(summ, "n_agree", "second_lens.agreement_summary", non_negative=True)
+    _require_number(summ, "agreement_rate", "second_lens.agreement_summary")
+    _require(
+        0.0 <= float(summ["agreement_rate"]) <= 1.0,
+        "second_lens.agreement_summary.agreement_rate must be in [0, 1]",
+    )
+    _require_str(summ, "notes", "second_lens.agreement_summary")
+
+
+def _validate_promotion(payload: dict) -> None:
+    """promotion v1 (ARCH-008 §2, G-1) — a claim's lifecycle record.
+
+    A promotion is appendable ONLY when all four gates hold (enforced by the
+    graduation module, which alone has the store to check the referenced records):
+    (a) ``verdict_ref`` is a PASS verdict; (b) ``placebo_ref`` is a placebo_run with
+    no excess null passes; (c) ``second_lens_ref`` is a second_lens; (d) the belief
+    at ``belief_ref`` is not CONTESTED. The schema fixes the shape; the module fixes
+    the semantics (mirroring how the belief layer type-checks verdict_refs). A
+    promotion is a lifecycle record — it does NOT add a belief stance (beliefs stay
+    verdict-only); ``family``/``claim`` identify the belief chain it graduates.
+    """
+    _check_keys(
+        payload,
+        {"family", "claim", "hypothesis_ref", "verdict_ref", "placebo_ref",
+         "second_lens_ref", "belief_ref"},
+        set(),
+        "promotion",
+    )
+    for k in ("family", "claim", "hypothesis_ref", "verdict_ref", "placebo_ref",
+              "second_lens_ref", "belief_ref"):
+        _require_str(payload, k, "promotion")
+        _require(payload[k].strip(), f"promotion.{k} must be non-empty")
+
+
 # Registry keyed by (record_type, schema_version). Additive schema evolution
 # bumps the version (Blueprint §2); removals never happen.
 SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
@@ -776,6 +888,9 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("anomaly_scan", 1): _validate_anomaly_scan,
     ("question", 1): _validate_question,
     ("belief", 1): _validate_belief,
+    ("placebo_run", 1): _validate_placebo_run,
+    ("second_lens", 1): _validate_second_lens,
+    ("promotion", 1): _validate_promotion,
 }
 
 
