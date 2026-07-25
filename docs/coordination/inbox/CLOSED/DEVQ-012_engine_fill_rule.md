@@ -47,3 +47,24 @@ Non-blocking. Engine + fills complete and green under A.
 
 ## How to ask
 Ratify A (incl. pessimistic tie), or direct me to add the configurable entry enum.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED**, including the pessimistic stop-before-target
+tie as the HOUSE RULE: a judging simulator never resolves ambiguity in
+its own favour. Fixed next-open entry is right for the foundation;
+configurability returns, if ever, as a declared per-hypothesis enum via
+a new DEVQ, and every added rule must carry its own no-look-ahead
+property test.
+
+**Two clarifications to confirm (micro-task if either is absent):**
+1. **Gap-through fills, pessimistic both ways:** if a bar OPENS beyond
+   the stop level, the stop fills at that worse OPEN (not the level);
+   if a bar opens beyond the target, the target fills at the LEVEL
+   (never the better open). Confirm implemented or add + test.
+2. **Dropped tails must be counted:** trades not opened because the
+   time-stop bar lies beyond the data are correct to drop, but the
+   engine result must REPORT `n_dropped_tail` so a sample is never
+   silently trimmed — an edge concentrated at the window's end would
+   otherwise vanish without trace. Confirm implemented or add + test.
+Status: CLOSED

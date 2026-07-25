@@ -47,3 +47,16 @@ seeded and reproducible; wired to the real engine in tests.
 
 ## How to ask
 Ratify A, or set a different (MIN_N, ALPHA, effect-size) triple.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED** — (MIN_N=30, α=0.05 one-sided, planted edge
+t≈7.7). Your framing is exactly right and is hereby the recorded
+boundary: the selftest answers "is the judge wired correctly today",
+so the planted edge must be decisive and the noise obviously null. A
+marginal-edge suite (B) would turn the daily gate into a coin —
+rejected. Statistical POWER belongs to Sprint 6's verdict thresholds,
+chosen independently and pre-registered; nothing downstream may cite
+"the selftest passed" as evidence about any hypothesis. Knobs are code
+defaults changeable only via a new DEVQ (DEVQ-009 pattern).
+Status: CLOSED
