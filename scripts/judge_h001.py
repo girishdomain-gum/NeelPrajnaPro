@@ -178,6 +178,11 @@ def judge() -> None:
     print(f"H-001 hypothesis record = {hyp.record_id}")
     print(f"  lineage={hyp.payload['lineage']} scope={hyp.payload['scope']} "
           f"instruments={hyp.payload['instrument_refs']}")
+    ancestry = hyp.payload.get("observatory_ancestry")
+    if ancestry:
+        print(f"  observatory_ancestry: {ancestry} (question records this claim descends from)")
+    else:
+        print("  observatory_ancestry: (none — H-001 predates the observatory)")
 
     # 2. If already judged/burned, refuse re-run and report the existing verdict.
     existing = _existing_verdict(store, hyp.record_id)

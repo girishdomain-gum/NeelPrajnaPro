@@ -210,9 +210,21 @@ class HypothesisRegistry:
         v2 (DEVQ-014/015) adds ``thesis``, ``outcome_interpretations`` and
         ``family`` — all three, or none (a partial set is refused). Shape is fully
         validated by the schema at append; this fixes the canonical payload.
+
+        v2.1 (ARCH-007 §4, DEVQ-014): an optional ``observatory_ancestry`` — a list
+        of ``question`` record ids the hypothesis descends from. Each id is checked
+        to EXIST and be a ``question`` record (the composer cannot invent an
+        ancestor or point at the wrong record type). Ancestry only makes sense on a
+        v2 hypothesis, so it is refused when the v2 pre-commitments are absent.
         """
         present = [k for k in _V2_KEYS if k in config]
+        has_ancestry = "observatory_ancestry" in config
         if not present:
+            if has_ancestry:
+                raise SchemaViolation(
+                    "observatory_ancestry requires a v2 hypothesis (thesis, "
+                    "outcome_interpretations, family must be present)"
+                )
             return None
         if len(present) != len(_V2_KEYS):
             missing = [k for k in _V2_KEYS if k not in config]
@@ -225,11 +237,36 @@ class HypothesisRegistry:
             raise SchemaViolation(
                 f"outcome_interpretations must have exactly the keys {list(_OUTCOMES)}"
             )
-        return {
+        extra: dict[str, Any] = {
             "thesis": config["thesis"],
             "outcome_interpretations": {k: interp[k] for k in _OUTCOMES},
             "family": config["family"],
         }
+        if has_ancestry:
+            extra["observatory_ancestry"] = self._resolve_ancestry(config["observatory_ancestry"])
+        return extra
+
+    def _resolve_ancestry(self, ancestry: Any) -> list[str]:
+        """Validate ``observatory_ancestry``: a list of existing question ids."""
+        if not isinstance(ancestry, list):
+            raise SchemaViolation("observatory_ancestry must be a list of question ids")
+        resolved: list[str] = []
+        for qid in ancestry:
+            if not isinstance(qid, str) or not qid:
+                raise SchemaViolation("observatory_ancestry ids must be non-empty strings")
+            try:
+                rec = self._store.get(qid)
+            except UnknownRecordError as e:
+                raise SchemaViolation(
+                    f"observatory_ancestry {qid!r} does not exist — a hypothesis may "
+                    "only descend from a real question record"
+                ) from e
+            if rec.record_type != "question":
+                raise SchemaViolation(
+                    f"observatory_ancestry {qid} is a {rec.record_type!r}, not a question"
+                )
+            resolved.append(qid)
+        return resolved
 
     def _resolved_payload(
         self, config: dict[str, Any], cost_model_refs: Collection[str]

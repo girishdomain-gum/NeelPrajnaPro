@@ -421,7 +421,9 @@ _HYPOTHESIS_V1_FIELDS = {
 _HYPOTHESIS_V2_FIELDS = {"thesis", "outcome_interpretations", "family"}
 
 
-def _validate_hypothesis_core(payload: dict, extra_required: set[str]) -> None:
+def _validate_hypothesis_core(
+    payload: dict, extra_required: set[str], extra_optional: set[str] = frozenset()
+) -> None:
     """Shared hypothesis shape check (ARCH-006 §1) over v1 + any v2 fields.
 
     The record's own ``content_hash`` is the pre-registration seal: a changed
@@ -431,7 +433,7 @@ def _validate_hypothesis_core(payload: dict, extra_required: set[str]) -> None:
     order_block) are enforced by :class:`HypothesisRegistry` at registration,
     which alone has the store + allowlist to judge them; the schema fixes shape.
     """
-    _check_keys(payload, _HYPOTHESIS_V1_FIELDS | extra_required, set(), "hypothesis")
+    _check_keys(payload, _HYPOTHESIS_V1_FIELDS | extra_required, set(extra_optional), "hypothesis")
     _require_str(payload, "lineage", "hypothesis")
     _require_str(payload, "scope", "hypothesis")
     _require_str(payload, "cost_model_ref", "hypothesis")
@@ -461,8 +463,21 @@ def _validate_hypothesis_v2(payload: dict) -> None:
     pre-committed thresholds (the difference between "FAIL = the edge isn't there"
     and post-hoc "FAIL = wrong parameters"), and ``family`` fixes the
     multiplicity scope (DEVQ-015).
+
+    v2.1 (ARCH-007 §4, DEVQ-014): an OPTIONAL ``observatory_ancestry`` — a list of
+    ``question`` record ids the hypothesis descends from. Additive and optional,
+    so every existing v2 record still validates; the registry (not the schema)
+    checks each id exists and is a question record.
     """
-    _validate_hypothesis_core(payload, _HYPOTHESIS_V2_FIELDS)
+    _validate_hypothesis_core(payload, _HYPOTHESIS_V2_FIELDS, {"observatory_ancestry"})
+    if "observatory_ancestry" in payload:
+        anc = payload["observatory_ancestry"]
+        _require(isinstance(anc, list), "hypothesis.observatory_ancestry must be a list")
+        for i, qid in enumerate(anc):
+            _require(
+                isinstance(qid, str) and qid,
+                f"hypothesis.observatory_ancestry[{i}] must be a non-empty string",
+            )
     _require(
         isinstance(payload["thesis"], str) and payload["thesis"].strip(),
         "hypothesis.thesis must be a non-empty string",
@@ -583,6 +598,133 @@ def _validate_verdict_v2(payload: dict) -> None:
     _validate_verdict_core(payload, corrections_optional={"family"})
 
 
+# ===========================================================================
+# Sprint 7 (ARCH-007) — observatory + belief record types.
+# These reconcile Blueprint §2's earlier sketch (observatory_finding /
+# belief_update) with ARCH-007's governing shapes; the divergences are recorded
+# in DEVQ-016 (the DEVQ-014 pattern) for REV-S7 ratification.
+# ===========================================================================
+
+# Enum from Blueprint §2 question.origin. ARCH-007 parents each question to its
+# scan, so origin is "observatory" in practice; the full enum is kept for
+# alignment with §2 (a human/belief/contradiction question is a future producer).
+_QUESTION_ORIGINS = frozenset({"human", "belief", "observatory", "contradiction"})
+
+# Belief stance (ARCH-007 §3): a claim is SUPPORTED / REJECTED by verdict
+# evidence, or UNTESTED before any decisive verdict.
+_BELIEF_STANCES = frozenset({"SUPPORTED", "REJECTED", "UNTESTED"})
+
+
+def _require_str_list(payload: dict, key: str, where: str, *, non_empty: bool = False) -> None:
+    _require(isinstance(payload[key], list), f"{where}.{key} must be a list")
+    if non_empty:
+        _require(payload[key], f"{where}.{key} must be non-empty")
+    for i, item in enumerate(payload[key]):
+        _require(isinstance(item, str) and item, f"{where}.{key}[{i}] must be a non-empty string")
+
+
+def _validate_anomaly_scan(payload: dict) -> None:
+    """anomaly_scan v1 (ARCH-007 §1) — one systematic search over a window.
+
+    Records WHAT was scanned (``manifest_refs`` over ``window_ref``), WITH WHAT
+    method (``method``), under WHICH declared ``family`` and ``seed``, and a
+    ``findings`` summary. ``n_searched`` (>= 1) is how many things the scan looked
+    at — the multiplicity burden a scan carries (DEVQ-015 applies to looking, not
+    only screening; the observatory bumps the trial ledger for its family on every
+    scan). A scan carries NO thresholds and burns NO window — it is a search, not
+    a judgement. Divergence from Blueprint §2 ``observatory_finding`` (probe enum /
+    summary / artifact_manifest) is recorded in DEVQ-016.
+    """
+    _check_keys(
+        payload,
+        {"family", "window_ref", "manifest_refs", "method", "seed", "findings", "n_searched"},
+        set(),
+        "anomaly_scan",
+    )
+    _require_str(payload, "family", "anomaly_scan")
+    _require(payload["family"].strip(), "anomaly_scan.family must be non-empty")
+    _require_str(payload, "window_ref", "anomaly_scan")
+    _require_str_list(payload, "manifest_refs", "anomaly_scan", non_empty=True)
+    _require_str(payload, "method", "anomaly_scan")
+    _require(payload["method"].strip(), "anomaly_scan.method must be non-empty")
+    _require_int(payload, "seed", "anomaly_scan", non_negative=True)
+    _require(isinstance(payload["findings"], dict), "anomaly_scan.findings must be an object")
+    _require_int(payload, "n_searched", "anomaly_scan")
+    _require(payload["n_searched"] >= 1, "anomaly_scan.n_searched must be >= 1")
+
+
+def _validate_question(payload: dict) -> None:
+    """question v1 (ARCH-007 §1) — an observation worth a hypothesis, not one yet.
+
+    Carries the ``observation`` in plain words, the ``data_slice_refs`` (bulk/record
+    ids of the slices that provoked it), a ``candidate_hypothesis`` sketch (plain
+    words — NOT a pre-registration), the ``evidence_refs`` it cites, and its
+    ``origin`` (Blueprint §2 enum; "observatory" when parented to a scan). A
+    question is deliberately SHAPELESS where a hypothesis is precise: the schema's
+    closed key set means a question payload CANNOT carry ``thresholds``, a
+    ``verdict``, or a ``window_burn`` — a question burns nothing and pre-registers
+    nothing (the type-audit ARCH-007 §Acceptance requires). ``priority_score`` is
+    an optional §2 field. Divergence from §2 recorded in DEVQ-016.
+    """
+    _check_keys(
+        payload,
+        {"observation", "data_slice_refs", "candidate_hypothesis", "evidence_refs", "origin"},
+        {"priority_score"},
+        "question",
+    )
+    _require_str(payload, "observation", "question")
+    _require(payload["observation"].strip(), "question.observation must be non-empty")
+    _require_str_list(payload, "data_slice_refs", "question")
+    _require_str(payload, "candidate_hypothesis", "question")
+    _require_str_list(payload, "evidence_refs", "question")
+    _require(
+        payload["origin"] in _QUESTION_ORIGINS,
+        f"question.origin must be one of {sorted(_QUESTION_ORIGINS)}",
+    )
+    if "priority_score" in payload:
+        _require_number(payload, "priority_score", "question")
+
+
+def _validate_belief(payload: dict) -> None:
+    """belief v1 (ARCH-007 §3) — one append-only state of a (family, claim) belief.
+
+    A belief is updated ONLY by verdict events: ``verdict_refs`` is the evidence
+    chain and every id MUST resolve to a ``verdict`` record — the belief module
+    enforces the type at write time (the arrow-8 audit: beliefs never cite
+    screener metrics, selftest results, or questions). ``stance`` is
+    SUPPORTED / REJECTED / UNTESTED; ``strength`` is a [0, 1] evidence weight
+    derived from the cited verdicts' recorded statistics; ``prev_state`` (optional)
+    is the prior belief record id, so a future verdict UPDATES the chain rather
+    than overwriting it. Divergence from Blueprint §2 ``belief_update`` (odds/LR
+    model) recorded in DEVQ-016.
+    """
+    _check_keys(
+        payload,
+        {"family", "claim", "stance", "strength", "verdict_refs"},
+        {"prev_state"},
+        "belief",
+    )
+    _require_str(payload, "family", "belief")
+    _require(payload["family"].strip(), "belief.family must be non-empty")
+    _require_str(payload, "claim", "belief")
+    _require(payload["claim"].strip(), "belief.claim must be non-empty")
+    _require(
+        payload["stance"] in _BELIEF_STANCES,
+        f"belief.stance must be one of {sorted(_BELIEF_STANCES)}",
+    )
+    _require_number(payload, "strength", "belief")
+    _require(0.0 <= float(payload["strength"]) <= 1.0, "belief.strength must be in [0, 1]")
+    _require_str_list(payload, "verdict_refs", "belief")
+    # A decided stance must cite at least one verdict; UNTESTED may have none.
+    if payload["stance"] in {"SUPPORTED", "REJECTED"}:
+        _require(
+            payload["verdict_refs"],
+            "belief.verdict_refs must be non-empty for a SUPPORTED/REJECTED stance",
+        )
+    if "prev_state" in payload:
+        _require_str(payload, "prev_state", "belief")
+
+
 # Registry keyed by (record_type, schema_version). Additive schema evolution
 # bumps the version (Blueprint §2); removals never happen.
 SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
@@ -601,6 +743,9 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("hypothesis", 2): _validate_hypothesis_v2,
     ("verdict", 1): _validate_verdict,
     ("verdict", 2): _validate_verdict_v2,
+    ("anomaly_scan", 1): _validate_anomaly_scan,
+    ("question", 1): _validate_question,
+    ("belief", 1): _validate_belief,
 }
 
 
