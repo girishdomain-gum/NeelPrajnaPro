@@ -45,6 +45,11 @@ from qrf.kernel.records.store import RecordStore
 DIRECTION_PERMUTATION = "direction_permutation"
 ENTRY_TIME_SHUFFLE = "entry_time_shuffle"
 _METHODS = frozenset({DIRECTION_PERMUTATION, ENTRY_TIME_SHUFFLE})
+# The DEVQ-018 ruled null set, public so the HypothesisRegistry can validate a
+# sealed ``placebo_method`` against the SAME source of truth the judge dispatches
+# on (ARCH-009 §2). A new method lands here (with its bias direction documented,
+# DEVQ-018 clause 3) and both the seal-check and the run-dispatch see it at once.
+PLACEBO_METHODS = _METHODS
 
 # ARCH-008 §1 AC: at least 20 seeded repetitions.
 DEFAULT_N_RUNS = 20
@@ -119,6 +124,18 @@ class PlaceboBattery:
         if method not in _METHODS:
             raise SchemaViolation(
                 f"placebo method {method!r} unknown; must be one of {sorted(_METHODS)}"
+            )
+        # ARCH-009 §2 (DEVQ-018 ADDENDUM, forward-binding): if the hypothesis sealed a
+        # placebo_method in its content-hashed YAML, the requested method MUST agree
+        # with it — the pre-registration governs, a mismatch is refused naming both.
+        # A grandfathered record (Wave-1: no sealed field) proceeds with the caller's
+        # method exactly as it did when its window was burned.
+        sealed_method = self._store.get(hypothesis_ref).payload.get("placebo_method")
+        if sealed_method is not None and sealed_method != method:
+            raise SchemaViolation(
+                f"placebo method mismatch for hypothesis {hypothesis_ref}: sealed "
+                f"placebo_method={sealed_method!r} but run requested method={method!r} — "
+                "the content-hash-sealed pre-registration governs (ARCH-009 §2, DEVQ-018)"
             )
         if not isinstance(n_runs, int) or isinstance(n_runs, bool) or n_runs < 1:
             raise SchemaViolation("placebo n_runs must be an int >= 1")

@@ -38,6 +38,7 @@ from typing import Any
 
 import yaml
 
+from qrf.kernel.battery.placebo import PLACEBO_METHODS
 from qrf.kernel.errors import (
     SchemaViolation,
     TamperedHypothesisError,
@@ -219,11 +220,17 @@ class HypothesisRegistry:
         """
         present = [k for k in _V2_KEYS if k in config]
         has_ancestry = "observatory_ancestry" in config
+        has_placebo_method = "placebo_method" in config
         if not present:
             if has_ancestry:
                 raise SchemaViolation(
                     "observatory_ancestry requires a v2 hypothesis (thesis, "
                     "outcome_interpretations, family must be present)"
+                )
+            if has_placebo_method:
+                raise SchemaViolation(
+                    "placebo_method requires a v2 hypothesis (thesis, "
+                    "outcome_interpretations, family must be present) — ARCH-009 §2"
                 )
             return None
         if len(present) != len(_V2_KEYS):
@@ -244,7 +251,28 @@ class HypothesisRegistry:
         }
         if has_ancestry:
             extra["observatory_ancestry"] = self._resolve_ancestry(config["observatory_ancestry"])
+        if "placebo_method" in config:
+            extra["placebo_method"] = self._resolve_placebo_method(config["placebo_method"])
         return extra
+
+    def _resolve_placebo_method(self, method: Any) -> str:
+        """Validate a sealed ``placebo_method`` against the DEVQ-018 ruled set.
+
+        ARCH-009 §2: registration REFUSES an unknown method. The set is the placebo
+        judge's OWN dispatch set (single source of truth), so a sealed method that
+        registers is guaranteed runnable and a run whose method disagrees with this
+        sealed value is refused by :meth:`PlaceboBattery.run`. The field only makes
+        sense on a v2 hypothesis (it accompanies the pre-committed claim), exactly
+        like observatory_ancestry.
+        """
+        if not isinstance(method, str) or not method:
+            raise SchemaViolation("placebo_method must be a non-empty string")
+        if method not in PLACEBO_METHODS:
+            raise SchemaViolation(
+                f"placebo_method {method!r} is not a DEVQ-018 ruled null "
+                f"(known: {sorted(PLACEBO_METHODS)}) — registration refused (ARCH-009 §2)"
+            )
+        return method
 
     def _resolve_ancestry(self, ancestry: Any) -> list[str]:
         """Validate ``observatory_ancestry``: a list of existing question ids."""

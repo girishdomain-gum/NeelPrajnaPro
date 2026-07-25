@@ -496,8 +496,18 @@ def _validate_hypothesis_v2(payload: dict) -> None:
     ``question`` record ids the hypothesis descends from. Additive and optional,
     so every existing v2 record still validates; the registry (not the schema)
     checks each id exists and is a question record.
+
+    v2.2 (ARCH-009 §2, DEVQ-018 ADDENDUM): an OPTIONAL ``placebo_method`` — the
+    sealed null construction a placebo run of this claim must use. Additive and
+    optional so the grandfathered Wave-1 records (H-002/H-003, which fixed their
+    method in the ARCH-008 §3 instruction, not the YAML) still validate unchanged.
+    The schema fixes SHAPE (a non-empty string); the registry enforces MEMBERSHIP
+    in the DEVQ-018 ruled set (it owns the contract), and the placebo judge refuses
+    to run a method that disagrees with this sealed field.
     """
-    _validate_hypothesis_core(payload, _HYPOTHESIS_V2_FIELDS, {"observatory_ancestry"})
+    _validate_hypothesis_core(
+        payload, _HYPOTHESIS_V2_FIELDS, {"observatory_ancestry", "placebo_method"}
+    )
     if "observatory_ancestry" in payload:
         anc = payload["observatory_ancestry"]
         _require(isinstance(anc, list), "hypothesis.observatory_ancestry must be a list")
@@ -506,6 +516,11 @@ def _validate_hypothesis_v2(payload: dict) -> None:
                 isinstance(qid, str) and qid,
                 f"hypothesis.observatory_ancestry[{i}] must be a non-empty string",
             )
+    if "placebo_method" in payload:
+        _require(
+            isinstance(payload["placebo_method"], str) and payload["placebo_method"].strip(),
+            "hypothesis.placebo_method must be a non-empty string",
+        )
     _require(
         isinstance(payload["thesis"], str) and payload["thesis"].strip(),
         "hypothesis.thesis must be a non-empty string",
