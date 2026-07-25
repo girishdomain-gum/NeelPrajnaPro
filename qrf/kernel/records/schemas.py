@@ -318,8 +318,15 @@ def _validate_window_burn(payload: dict) -> None:
     _require_str(payload, "consumed_by", "window_burn")
 
 
-def _validate_trial_count_common(payload: dict, optional: set[str]) -> None:
-    """The v1 field checks shared by every trial_count schema version."""
+def _validate_trial_count_common(
+    payload: dict, optional: set[str], sources: frozenset[str] = _TRIAL_SOURCES
+) -> None:
+    """The v1 field checks shared by every trial_count schema version.
+
+    ``sources`` is the accepted ``source`` enum for this version — v1/v2 use the
+    original set; v3 widens it (forward-only, so v1/v2 records never accept a value
+    they were sealed without).
+    """
     _check_keys(
         payload,
         {"data_scope", "lineage", "n_attempts", "source"},
@@ -331,8 +338,8 @@ def _validate_trial_count_common(payload: dict, optional: set[str]) -> None:
     _require_int(payload, "n_attempts", "trial_count", non_negative=True)
     _require(payload["n_attempts"] >= 1, "trial_count.n_attempts must be >= 1")
     _require(
-        payload["source"] in _TRIAL_SOURCES,
-        f"trial_count.source must be one of {sorted(_TRIAL_SOURCES)}",
+        payload["source"] in sources,
+        f"trial_count.source must be one of {sorted(sources)}",
     )
     if "generator_ref" in payload:
         _require_str(payload, "generator_ref", "trial_count")
@@ -359,6 +366,27 @@ def _validate_trial_count_v2(payload: dict) -> None:
     """
     _validate_trial_count_common(payload, {"generator_ref", "family"})
     _require("family" in payload, "trial_count v2 requires a family")
+    _require_str(payload, "family", "trial_count")
+
+
+# trial_count v3 (DEVQ-016): the source enum gains "observatory" — an anomaly scan
+# is a search, and its multiplicity burden is now recorded with first-class
+# provenance. Forward-only (NOTE-013 shape): v1/v2 records are never re-recorded;
+# only new observatory bumps use v3.
+_TRIAL_SOURCES_V3 = _TRIAL_SOURCES | {"observatory"}
+
+
+def _validate_trial_count_v3(payload: dict) -> None:
+    """trial_count v3 (DEVQ-016): v2 plus ``source`` may be "observatory".
+
+    Same fields as v2 (``family`` required) with the widened source enum. The
+    observatory records its family bump here so a scan's search burden carries its
+    own provenance rather than borrowing ``human``/``screener``.
+    """
+    _validate_trial_count_common(
+        payload, {"generator_ref", "family"}, sources=_TRIAL_SOURCES_V3
+    )
+    _require("family" in payload, "trial_count v3 requires a family")
     _require_str(payload, "family", "trial_count")
 
 
@@ -610,9 +638,10 @@ def _validate_verdict_v2(payload: dict) -> None:
 # alignment with §2 (a human/belief/contradiction question is a future producer).
 _QUESTION_ORIGINS = frozenset({"human", "belief", "observatory", "contradiction"})
 
-# Belief stance (ARCH-007 §3): a claim is SUPPORTED / REJECTED by verdict
-# evidence, or UNTESTED before any decisive verdict.
-_BELIEF_STANCES = frozenset({"SUPPORTED", "REJECTED", "UNTESTED"})
+# Belief stance (ARCH-007 §3 + DEVQ-016): a claim is SUPPORTED / REJECTED by
+# verdict evidence, UNTESTED before any decisive verdict, or CONTESTED once
+# decisive verdicts disagree (a PASS after a FAIL, or vice versa).
+_BELIEF_STANCES = frozenset({"SUPPORTED", "REJECTED", "UNTESTED", "CONTESTED"})
 
 
 def _require_str_list(payload: dict, key: str, where: str, *, non_empty: bool = False) -> None:
@@ -716,10 +745,10 @@ def _validate_belief(payload: dict) -> None:
     _require(0.0 <= float(payload["strength"]) <= 1.0, "belief.strength must be in [0, 1]")
     _require_str_list(payload, "verdict_refs", "belief")
     # A decided stance must cite at least one verdict; UNTESTED may have none.
-    if payload["stance"] in {"SUPPORTED", "REJECTED"}:
+    if payload["stance"] in {"SUPPORTED", "REJECTED", "CONTESTED"}:
         _require(
             payload["verdict_refs"],
-            "belief.verdict_refs must be non-empty for a SUPPORTED/REJECTED stance",
+            "belief.verdict_refs must be non-empty for a SUPPORTED/REJECTED/CONTESTED stance",
         )
     if "prev_state" in payload:
         _require_str(payload, "prev_state", "belief")
@@ -739,6 +768,7 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("window_burn", 1): _validate_window_burn,
     ("trial_count", 1): _validate_trial_count,
     ("trial_count", 2): _validate_trial_count_v2,
+    ("trial_count", 3): _validate_trial_count_v3,
     ("hypothesis", 1): _validate_hypothesis,
     ("hypothesis", 2): _validate_hypothesis_v2,
     ("verdict", 1): _validate_verdict,

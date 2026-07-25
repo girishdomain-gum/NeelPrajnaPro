@@ -56,7 +56,7 @@ class Observatory:
         seed: int,
         findings: dict,
         n_searched: int = 1,
-        source: str = "human",
+        source: str = "observatory",
         producer: str = "observatory",
         event_ts: int | None = None,
     ) -> Record:

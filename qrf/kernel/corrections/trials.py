@@ -32,7 +32,10 @@ from qrf.kernel.errors import SchemaViolation
 from qrf.kernel.records.record import Record, now_ns
 from qrf.kernel.records.store import RecordStore
 
-_SOURCES = frozenset({"human", "screener", "generator"})
+# DEVQ-016: "observatory" joins the source enum (trial_count v3). An observatory
+# bump is written at v3 so its provenance is first-class; human/screener/generator
+# keep writing v1/v2 (forward-only, NOTE-013).
+_SOURCES = frozenset({"human", "screener", "generator", "observatory"})
 
 
 class TrialCountLedger:
@@ -89,6 +92,12 @@ class TrialCountLedger:
                 raise SchemaViolation("trial_count family must be a non-empty string")
             payload["family"] = family
             schema_version = 2
+        # DEVQ-016: an observatory bump is written at v3 (its source enum value only
+        # exists there); v3 requires a family, so refuse an observatory bump without.
+        if source == "observatory":
+            if family is None:
+                raise SchemaViolation("an observatory trial_count requires a family")
+            schema_version = 3
         return self._store.append(
             "trial_count",
             payload,

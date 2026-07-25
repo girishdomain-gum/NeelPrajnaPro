@@ -18,14 +18,19 @@ chain is the history of what a claim's evidence has said over time; :meth:`lates
 reads the head.
 
 Stance / strength are DERIVED from the cited verdicts alone (so the IVF can
-recompute a belief independently from the verdict set):
+recompute a belief independently from the verdict set) — the DEVQ-016 ruling:
 
 * stance = the decision of the most recent DECISIVE verdict — PASS ⇒ SUPPORTED,
-  FAIL ⇒ REJECTED; a chain with only INSUFFICIENT verdicts is UNTESTED.
-* strength = evidence weight of that decisive verdict from its own recorded
-  one-sided p (H0: no edge): a FAIL is strong when the data sit deep in the null
-  (strength = p); a PASS is strong when they sit far from it (strength = 1 - p);
-  UNTESTED has strength 0. (Exact semantics posed for ratification in DEVQ-016.)
+  FAIL ⇒ REJECTED; a chain with only INSUFFICIENT verdicts is UNTESTED. BUT the
+  moment decisive verdicts DISAGREE (a PASS after a FAIL, or vice versa) the
+  stance is CONTESTED — recency must not paper over a genuine conflict; the claim
+  stays contested until a pre-registered replication tie-breaks it.
+* strength = DECISIVENESS of the deciding verdict = ``2 · |p − 0.5|`` ∈ [0, 1],
+  where ``p`` is its one-sided p (H0: no edge): how far the evidence sits from a
+  coin-flip. H-001's FAIL (p=0.9435) ⇒ 0.887 (the data leaned firmly negative);
+  a result at p≈0.5 ⇒ ≈0 (decided, but on thin evidence). This is NOT a posterior
+  probability and must never be read as one — the Bayesian odds/LR layer is a
+  separate, deferred ADR (DEVQ-016). UNTESTED has strength 0.
 
 This module is kernel: records layer + error taxonomy + stdlib only. It has NO
 import of the battery and the battery has NO import of it (the posterior is never
@@ -41,9 +46,22 @@ from qrf.kernel.records.store import RecordStore
 SUPPORTED = "SUPPORTED"
 REJECTED = "REJECTED"
 UNTESTED = "UNTESTED"
+CONTESTED = "CONTESTED"
 
 # verdict.verdict value -> stance a decisive verdict drives.
 _DECISION = {"PASS": SUPPORTED, "FAIL": REJECTED}
+
+
+def _decisiveness(p: float | None) -> float:
+    """DECISIVENESS = ``2 · |p − 0.5|`` ∈ [0, 1] (DEVQ-016 ruling).
+
+    How far the deciding verdict's evidence sits from a coin-flip. A degenerate /
+    undefined p (a zero-variance decisive verdict) counts as maximally decisive.
+    NOT a posterior probability — see the module docstring.
+    """
+    if p is None:
+        return 1.0
+    return max(0.0, min(1.0, 2.0 * abs(float(p) - 0.5)))
 
 
 class BeliefLayer:
@@ -84,20 +102,23 @@ class BeliefLayer:
 
     @staticmethod
     def _stance_and_strength(verdicts: list[Record]) -> tuple[str, float]:
-        """Derive (stance, strength) from a verdict chain (newest-decisive wins)."""
+        """Derive (stance, strength) from a verdict chain (DEVQ-016 ruling).
+
+        Newest-decisive-wins WHILE decisive verdicts agree; the moment they
+        disagree (a PASS after a FAIL, or vice versa) the stance is CONTESTED —
+        the conflict is preserved, not resolved by recency. Strength is always the
+        DECISIVENESS (``2·|p−0.5|``) of the NEWEST decisive verdict.
+        """
         decisive = [v for v in verdicts if v.payload["verdict"] in _DECISION]
         if not decisive:
             return UNTESTED, 0.0
         driver = decisive[-1]  # most recent decisive verdict
-        stance = _DECISION[driver.payload["verdict"]]
         p = driver.payload.get("statistics", {}).get("t_one_sided", {}).get("p")
-        if p is None:
-            strength = 1.0  # a decisive verdict with a degenerate/undefined p
-        elif stance == REJECTED:
-            strength = float(p)
-        else:  # SUPPORTED
-            strength = 1.0 - float(p)
-        return stance, max(0.0, min(1.0, strength))
+        strength = _decisiveness(p)
+        decisions = {_DECISION[v.payload["verdict"]] for v in decisive}
+        if len(decisions) > 1:  # decisive verdicts disagree -> contested
+            return CONTESTED, strength
+        return _DECISION[driver.payload["verdict"]], strength
 
     def update(
         self,
@@ -144,4 +165,49 @@ class BeliefLayer:
             producer=producer,
             event_ts=event_ts if event_ts is not None else now_ns(),
             parents=parents,
+        )
+
+    # -- re-derivation --------------------------------------------------------
+    def rederive(
+        self,
+        family: str,
+        claim: str,
+        *,
+        producer: str = "belief",
+        event_ts: int | None = None,
+    ) -> Record | None:
+        """Recompute the head state under the CURRENT formula; append it if it moved.
+
+        A belief's stance/strength are a pure function of its cited verdicts and the
+        derivation rule. When the rule changes (e.g. the DEVQ-016 decisiveness
+        ruling superseding p-as-strength), the head state is re-derived from its OWN
+        verdict_refs and, if the recomputed (stance, strength) differs, a NEW belief
+        state is appended pointing at the prior one — the prior state REMAINS in the
+        chain (append-only memory: the ledger shows the belief moved and why).
+
+        Idempotent: if the head already matches the current formula, it is returned
+        unchanged. Returns None if the ``(family, claim)`` belief does not exist yet.
+        """
+        head = self.latest(family, claim)
+        if head is None:
+            return None
+        verdict_refs = list(head.payload["verdict_refs"])
+        verdicts = [self._store.get(r) for r in verdict_refs]
+        stance, strength = self._stance_and_strength(verdicts)
+        if stance == head.payload["stance"] and strength == head.payload["strength"]:
+            return head  # already at the current formula — idempotent no-op
+        payload = {
+            "family": family,
+            "claim": claim,
+            "stance": stance,
+            "strength": strength,
+            "verdict_refs": verdict_refs,
+            "prev_state": head.record_id,
+        }
+        return self._store.append(
+            "belief",
+            payload,
+            producer=producer,
+            event_ts=event_ts if event_ts is not None else now_ns(),
+            parents=[verdict_refs[-1], head.record_id],
         )

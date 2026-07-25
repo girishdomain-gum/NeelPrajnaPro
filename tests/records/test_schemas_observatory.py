@@ -106,6 +106,16 @@ def test_belief_accepts_valid():
     schemas.validate("belief", _valid_belief())
 
 
+def test_belief_accepts_contested_stance():
+    # DEVQ-016: CONTESTED is a valid stance (decisive verdicts disagree).
+    schemas.validate("belief", _valid_belief() | {"stance": "CONTESTED"})
+
+
+def test_belief_contested_needs_a_verdict():
+    with pytest.raises(SchemaViolation):
+        schemas.validate("belief", _valid_belief() | {"stance": "CONTESTED", "verdict_refs": []})
+
+
 def test_belief_accepts_untested_without_verdicts():
     schemas.validate(
         "belief",

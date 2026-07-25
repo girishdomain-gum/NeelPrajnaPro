@@ -208,7 +208,7 @@ def _ensure_scan_question(
     if scan is None:
         scan = obs.scan(
             family=FAMILY, window_ref=TRAINING_WINDOW, manifest_refs=manifest_refs,
-            method=method, seed=seed, findings=findings, n_searched=1, source="human",
+            method=method, seed=seed, findings=findings, n_searched=1,
         )
         print(f"appended anomaly_scan ({method}) = {scan.record_id} (+ family trial bump)")
     else:

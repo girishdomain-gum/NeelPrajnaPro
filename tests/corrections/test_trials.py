@@ -100,6 +100,32 @@ def test_empty_family_refused(tl):
         tl.bump(SCOPE, LINEAGE, 5, "screener", family="   ")
 
 
+# --- observatory source / trial_count v3 (DEVQ-016) --------------------------
+def test_observatory_source_written_as_v3(tl):
+    rec = tl.bump(SCOPE, LINEAGE, 1, "observatory", family="xauusd_h1/smc.fvg")
+    assert rec.schema_version == 3
+    assert rec.payload["source"] == "observatory"
+    assert rec.payload["family"] == "xauusd_h1/smc.fvg"
+
+
+def test_observatory_source_requires_family(tl):
+    with pytest.raises(SchemaViolation):
+        tl.bump(SCOPE, LINEAGE, 1, "observatory")  # v3 requires a family
+
+
+def test_observatory_source_rejected_by_v1_and_v2(tmp_path):
+    from qrf.kernel.records import schemas
+
+    base = {"data_scope": "s", "lineage": "l", "n_attempts": 1, "source": "observatory"}
+    # v1/v2 are forward-only: they never accept the observatory source (NOTE-013).
+    with pytest.raises(SchemaViolation):
+        schemas.validate("trial_count", base, 1)
+    with pytest.raises(SchemaViolation):
+        schemas.validate("trial_count", base | {"family": "f"}, 2)
+    # v3 accepts it.
+    schemas.validate("trial_count", base | {"family": "f"}, 3)
+
+
 # --- parents flow through ----------------------------------------------------
 def test_parents_are_recorded(tl):
     w = tl._store.append("window", {
