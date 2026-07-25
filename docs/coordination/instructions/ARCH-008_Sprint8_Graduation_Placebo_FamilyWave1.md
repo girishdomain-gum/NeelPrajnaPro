@@ -107,3 +107,54 @@ filter recomputation against the scan rule) + Drill S8 (planted
 placebo-pass-hidden + planted promotion-missing-a-leg; DRILL FIRST;
 clean control) + HC caption fix (owed) + visual HC (the wave's trades).
 Owner: HC + Go/No-Go → GO-S8 (+retro) → ARCH-009.
+
+---
+## COMPLETION REPORT (developer) · S8-1 · 2026-07-25 · claude-code
+
+**Status: §T0, §1, §2, §3 DONE; §4 partial (external-library leg deferred, DEVQ-021).**
+All commits LOCAL ONLY — origin unreachable this session; push on reconnection.
+
+### Deliverables
+- **T0** — GO-S7 note 01KYCNVX45TCMS16D22T2NEP3H (parent GO-S6 note). Journal 41→42.
+- **§1 Placebo (G-3)** — `qrf/kernel/battery/placebo.py`; battery refactored to a
+  shared non-writing `evaluate()` so the placebo is the SAME judge. Nulls (DEVQ-018):
+  `direction_permutation`, `entry_time_shuffle`. `placebo_run` schema; type-audited
+  no-burn/no-verdict. AC met (~0 passes under deflation).
+- **§2 Graduation (G-1)** — `qrf/kernel/graduation/`; `Promoter.promote` enforces all
+  four gates (PASS verdict · clean placebo · resolvable second_lens · non-CONTESTED
+  belief citing the verdict). `second_lens` + `promotion` schemas. Each missing leg
+  refused. No real second feed → no promotion possible today (by design).
+- **§3 Family Wave 1** — both judged on the real TRAINING window, each WITH a placebo:
+
+  | Hypothesis | id | family | eff.alpha | **VERDICT** | n | belief | placebo (method, n_pass/20) |
+  |---|---|---|---|---|---|---|---|
+  | H-002 intra-week FVG | 01KYCQBGW3C1M9ARZ1Y320WXW4 | xauusd_h1/smc.fvg (502) | 9.96e-5 | **FAIL** | 637 | REJECTED 0.862 | direction_permutation, 0 |
+  | H-003 Monday drift | 01KYCQBHTPAFQX3DZHJE2BEK28 | xauusd_h1/seasonality.calendar (0) | 0.05 | **INSUFFICIENT** | 28 | UNTESTED 0.0 | entry_time_shuffle, 6 |
+
+  Verdicts 01KYCQBHRJHY1A1PY1PQ01TAT5 (H-002) / 01KYCQBJ7N2D99N7CDKQ1V4J1K (H-003);
+  burns 01KYCQBHS6T92G5PHDVE6X01DS / 01KYCQBJ8APY08BQBZF8P2VDNQ; beliefs
+  01KYCQBHSWWW50DKGCHATQ4C67 / 01KYCQBJ8Z7CAB2K26SRKK0KVH; placebos
+  01KYCQBHMFK24B65JW4Y3BQJMR / 01KYCQBJ3Z272XDF96BXGH0N41. Journal 42→54, chain GREEN,
+  VIRGIN untouched. H-002 FAIL and H-003 INSUFFICIENT are both acceptance-valid
+  (whatever the data says). H-003's placebo 6/20 is a loud, honest flag that at these
+  thresholds random-timing long-hold PASSes ~30% under 2024's gold drift — exactly why
+  min_n INSUFFICIENT (not a looser threshold) is the honest call, and why the fresh
+  family's zero-deflation makes this the DEVQ-017 boundary in the wild.
+- **§4 Cross-impl** — `tests/concepts/test_smc_cross_impl_s8.py`: written difference
+  map + tested reconciliation harness + independent clean-room ICT FVG impl reconciled
+  to FULL agreement with ours. External-library (smc-toolkit) leg importorskip-gated,
+  SKIPS offline — DEFERRED (DEVQ-021: not installable offline; must differ from
+  smartmoneyconcepts).
+
+### DoD status
+Tests **777 passed, 1 skipped** · ruff clean · firewall GREEN · journal 54 (chain
+GREEN) · gen_state regenerated · session log S8-1 written · DEVQ-018..021 open for
+REV-S8. **Merge to main + push: BLOCKED on network** — all S8 commits are local; must
+be flushed to origin on reconnection (NOTE-005 "visible on origin" temporarily unmet).
+
+### Open for the Architect (REV-S8)
+Ratify DEVQ-018 (dual placebo nulls) · DEVQ-019 (H-003 hold 22 / embargo 23) ·
+DEVQ-020 (second_lens schema) · DEVQ-021 (smc-toolkit pin + §4 completion in a
+networked session). IVF S8 can recompute both placebos from their recorded (method,
+seed) and the H-002 weekend filter from `scans._spans_weekend` (the setup reuses that
+exact function — one source of truth).
