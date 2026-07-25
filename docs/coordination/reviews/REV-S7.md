@@ -67,3 +67,26 @@ datasets.
 
 Architect verdict on the development scope: **PASS — recommend GO** once
 the visual HC completes.
+
+---
+## ADDENDUM · HC-S7 result · 2026-07-25
+Owner sign-off, verbatim: **"HC-S7 PASS"** · Experts log FVG 5/5 MATCH.
+
+Evidence (stratified sampling — HC-1's debut): 3 weekend-born + 2
+intra-week FVG zones from the scan's own annotated events (seed=7),
+drawn by the reused IVF_S4_HC_Zones.mq5, both QUESTION record ids in
+every provenance line. PNGs: ivf/reports/hc_s7/HC_S4_1705406400 /
+1711936800 / 1718593200 / 1721012400 / 1722470400 .png. Architect
+countersigned: the Apr-1 Easter zone (75h hole, 13-dollar void) and the
+Jun-17/Jul-15 Sunday-reopen zones visibly straddle their gaps on the
+date axis; the Jan-16/Aug-1 controls sit in continuous bars. The
+partition behind the observatory's first question is human-verified.
+
+Process notes: (a) first HC attempt reproduced Sprint-4 evidence
+because the sampler step was skipped and the old input file was still
+in place — the tool honestly drew what it was fed; accidental bonus: S4
+evidence re-derived identically months of records later. (b) The
+Architect transposed one zone's hi/lo while writing the input file and
+caught it by re-reading the written file against the sampler output
+before the chart ran — near-miss recorded; exact-copy discipline now
+includes a mandatory read-back verification.
