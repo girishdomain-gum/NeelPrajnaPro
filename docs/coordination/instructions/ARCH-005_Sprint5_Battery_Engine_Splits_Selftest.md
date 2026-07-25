@@ -85,3 +85,50 @@ violation — both must be caught; Architect runs own drill BEFORE real
 check, standing S4 rule) + HC (visual: sampled trades drawn on the MT5
 chart — entry/exit arrows + cost annotation, ADR-009 tool generation
 3). Owner: HC + Go/No-Go → GO-S5 (+Retrospective) → ARCH-006.
+
+---
+## COMPLETION REPORT (developer)
+Session S5-1 · 2026-07-25 · claude-code · branch claude/arch-005-t0-execution-7549cc
+
+**Status: COMPLETE.** T0 + all four scope items delivered; 648 tests green; ruff
+clean; firewall GREEN; journal 26 records, chain GREEN.
+
+**Deliverables (exact paths).**
+- T0: scripts/note_go_s4.py → GO-S4 note 01KYBX4SWX0DJXSV59526CZHD6 (parent GO-S3
+  note 01KYB5ARJPK3YK0AKCE9FP7DAH). Journal 25 → 26.
+- qrf/kernel/protocol/seeds.py — seeds.for_run (documented 63-bit recipe).
+- qrf/kernel/protocol/splits.py — anchored walk-forward + embargo (DEVQ-011).
+- qrf/kernel/battery/simulator.py — the Simulator type; screener rejected by type.
+- qrf/trading/simulator/engine.py + fills.py — audited no-look-ahead engine, gross
+  + net per DEVQ-008 (DEVQ-012 fill rule).
+- qrf/kernel/battery/selftest.py — three seeded suites + tri-state classifier
+  (engine injected; no verdict written) (DEVQ-013 calibration).
+- Tests: tests/protocol/test_seeds.py, tests/protocol/test_splits.py,
+  tests/simulator/test_engine.py (+_micro_scenario.py), tests/battery/test_selftest.py.
+- Deps: scipy, statsmodels, arch (pyproject.toml + uv.lock).
+
+**Acceptance criteria (ARCH-005) — all met.**
+- Engine determinism: byte-identical trades proven twice in one CI run AND across
+  a process restart (subprocess digest compare). ✔
+- No-look-ahead property: incremental-feed test — closed trades never change under
+  more data. ✔
+- Hand micro-scenario (3 events): gross +4.00, net +2.59, to the cent. ✔
+- Splits: boundary matrix green; embargo verified by construction; no-overlap +
+  in-window + anchored + determinism properties over a parameter matrix. ✔
+- Selftest tri-state correct on planted-edge (PASS) / noise (FAIL) / small-n
+  (INSUFFICIENT), seeded and reproducible, wired to the real engine. ✔
+- Firewall GREEN (scipy/statsmodels/arch importable in kernel; kernel imports no
+  trading — selftest injects the engine; vectorbt stays trading-only). ✔
+
+**DEVQs (non-blocking, recording ratifiable choices — the three DoD-predicted
+areas):** DEVQ-011 embargo placement · DEVQ-012 fill rule · DEVQ-013 selftest
+calibration. Code proceeds on each recommendation; all reversible/additive.
+
+**Notes for the Architect's S5 close.** (a) The engine is RNG-free, so
+determinism is by construction and the seed is a provenance stamp + the anchor for
+the S6 block bootstrap (§4.7 step 6); the bootstrap CI in selftest is seeded
+groundwork only. (b) The Simulator type distinction is a positive marker
+(is_audited_simulator=True) + a simulate() method, so a future screener-like class
+cannot drift into the type by accident. (c) selftest generators produce opaque
+numeric bar/event tables (no trading import); the trading-side test wires the real
+EventEngine as the runner — this is where "the selftest exercises the engine".
