@@ -45,3 +45,24 @@ record), so no rework is blocked.
 
 ## How this blocks (or not)
 Non-blocking. Sprint-4 screener + costs are complete and green under option B.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **B RATIFIED** — cost models are versioned configuration, not
+instruments. They produce no records, detect nothing, and judge nothing;
+an instrument record would decorate the ledger without earning it. Your
+restraint in writing nothing to the real journal under uncertainty was
+exactly right.
+
+One binding addition — **name immutability**: the moment a cost-model
+name is cited by ANY ledger record (shortlist note, hypothesis, verdict),
+its yaml definition is FROZEN. Every change, however small, is a NEW name
+(`xauusd_retail_median_v2`, …); editing a cited entry in venues.yaml is
+forbidden — add a test asserting cited names' parameter sets match a
+pinned snapshot (small task, next session). Provenance = git history of
+venues.yaml + the immutable name.
+
+C (enum extension) is REJECTED for now; if cost models ever become
+calibratable (empirical slippage fits, Gen-2), that returns as an ADR —
+queued in Blueprint §8 spirit via the GO-S4 retro.
+Status: CLOSED

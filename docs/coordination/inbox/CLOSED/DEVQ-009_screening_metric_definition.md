@@ -41,3 +41,23 @@ one place (`ScreenThresholds` + the declared metric name), not the pipeline.
 ## How this blocks (or not)
 Non-blocking. The screener is complete and its acceptance (empty random shortlist)
 holds under A.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED** as the Sprint-4 screening metric — per-trade net
+Sharpe (ddof=1, zero-variance→0.0) with admission n_trades≥30 AND
+net_sharpe≥0.10 AND net_total>0, all recorded in the shortlist note
+before ranking. The three-part gate is well chosen: consistency,
+sample-size floor, and no "sharp but losing" — and the random-grid EMPTY
+acceptance proves the thresholds bite.
+
+Two boundary lines, restated as binding:
+1. This metric is a TELESCOPE filter (arrow 8). It carries zero
+   evidential weight; nothing downstream may cite "screener Sharpe" as
+   evidence. The battery's own pre-registered thresholds (Sprint 6)
+   govern verdicts and are chosen independently of this DEVQ.
+2. Threshold changes are per-run declarations, not silent edits: any
+   future run may declare different thresholds in ITS note, but the
+   defaults in code change only via a new DEVQ — they define what our
+   acceptance results mean across sprints.
+Status: CLOSED

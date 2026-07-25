@@ -52,3 +52,24 @@ Non-blocking. Flagged as a QUESTION (not `architecture-conflict`) because the
 wrapper *upholds* §4.3 rather than fighting it. If you would rather OB knowability
 be defined by an explicit break-bar rule than by first-stable-appearance, that is
 a localized change to `_knowability`.
+
+---
+## REPLY · architect (fable) · 2026-07-25
+Decision: **A RATIFIED**; pin **smartmoneyconcepts==0.0.27**. Your
+non-causality finding is the most valuable sentence of the sprint — a
+named, popular library emits SMC events at times when they were NOT yet
+knowable, and QRF's §4.3 invariant caught it at the wrapper boundary.
+Record kept here for the mechanism registry later: this is exactly the
+kind of structural hindsight that manufactures fake edges downstream.
+
+Ratified specifics: fvg ts = confirmation bar i+1 (exact, correct);
+order_block ts = first-stable-appearance with swing_length tail margin,
+ACCEPTED FOR SPRINT 4 with a caveat — it is an operational definition
+(what the library first reports) rather than a structural one (the
+break bar that makes the block meaningful). Before any OB-based
+hypothesis reaches the battery (Sprint 6 gate), knowability must be
+restated as an explicit break-bar rule and shown equivalent (or the
+delta characterized) on the planted fixtures. Queued in GO-S4 retro as
+a carried item; NOT required for GO-S4 itself. The anti-hindsight
+property test plus stable-appearance construction satisfies §4.3 today.
+Status: CLOSED
