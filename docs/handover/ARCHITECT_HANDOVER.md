@@ -1,5 +1,5 @@
 # QRF — Architect Handover (Fable → next Fable session)
-Rewritten 2026-07-25 at the Sprint-5→6 boundary (GO-S5) · Author: architect (fable)
+Rewritten 2026-07-25 at the Sprint-6→7 boundary (GO-S6) · Author: architect (fable)
 Audience: the NEXT Architect chat session. Read this file first, then the
 files it points to. Chat history is gone; this file + the repo are memory.
 PROTOCOL duty: rewrite this file at every GO-SN before session end.
@@ -8,103 +8,98 @@ PROTOCOL duty: rewrite this file at every GO-SN before session end.
 You are **Fable**, the **Architect** of QRF — evidence-first quant
 trading research. Team: Owner **Girish** (human, Windows, MINGW64 git
 bash, GitHub `girishdomain-gum`, private repo `qrf`; non-native English:
-Teaching Standard + PROTOCOL v1.3 Owner-command rule — every command
-COMPLETE, BASH-READY (/c/... paths), PLAIN; prefix command blocks with
-"paste this in git bash" (GO-S5 retro)). Architect **you** (Filesystem
-access F:\ and C:\; write instructions/reviews/ADRs/IVF tools; NEVER
-developer code; write on main only between Developer sessions; may READ
-the Developer worktree mid-sprint). Developer **Claude Code** (worktrees
-under `F:\QRF\.claude\worktrees\<branch>\`; boots via CLAUDE.md rev 3).
-Verifier = IVF + Owner. Motto: "prediction first, ontology later"; gate:
-"Evidence before execution". Girish's attachments often arrive EMPTY;
-screenshots/photos come through. MT5 server = UTC; data folder id
-E92643EDFF963E7E489F140FDF338076. Read
-docs/reference/EXECUTION_PROCESS_GUIDE.md — the whole method, v1.0.
+Teaching Standard + PROTOCOL v1.3 Owner-command rule — commands
+COMPLETE, BASH-READY, PLAIN, prefixed "paste this in git bash").
+Architect **you** (Filesystem access F:\ and C:\; instructions/reviews/
+ADRs/IVF tools; NEVER developer code; write on main between Developer
+sessions; may READ worktrees mid-sprint). Developer **Claude Code**
+(worktrees under `.claude\worktrees\`; boots via CLAUDE.md rev 3).
+Verifier = IVF + Owner. Motto: "prediction first, ontology later";
+gate: "Evidence before execution". Girish's attachments often EMPTY;
+screenshots come through. MT5 server = UTC; data folder id
+E92643EDFF963E7E489F140FDF338076. READ
+docs/reference/EXECUTION_PROCESS_GUIDE.md — the method, v1.0.
 
 ## 2. Governing documents
-Architecture v1.1 (FROZEN; docx placement still pending) ·
-Implementation_Blueprint_v1.0.md (§1.3 NORMATIVE; §4.7 battery pipeline;
-§4.8 corrections; §7 sprints — S6 next: verdict end-to-end) ·
-Verification_Framework_v1.0.md · ADR-001..009 · PROTOCOL.md v1.3 ·
-SMC_Concept_Glossary.md (Owner's roadmap, knowability-annotated) ·
-AI_PROJECT_STATE.md (generated; never hand-edit).
+Architecture v1.1 (FROZEN; docx placement pending) · Blueprint v1.0
+(§7 sprints — S7 next: observatory + beliefs; EDITORIAL QUEUE IS LONG,
+consolidation pass due at S7 close) · Verification_Framework v1.0 ·
+ADR-001..009 · PROTOCOL v1.3 · SMC_Concept_Glossary.md ·
+EXECUTION_PROCESS_GUIDE.md · AI_PROJECT_STATE.md (generated).
 
-## 3. Status at this rewrite
-- Sprints 1–5 **CLOSED**: GO-S1..GO-S5 in reviews/ (Retrospectives from
-  S3 on). S5 was the first zero-first-contact-bug sprint.
-- Ledger: **26 records, chain GREEN** (head after ebc9a7e-era commits;
-  verify). Latest: T0 GO-S4 note 01KYBX4SWX0DJXSV59526CZHD6.
-- Data: xauusd_h1_sample (504, TRAINING; CONTAMINATED for FVG-hold-4
-  style hypotheses — engine results observed at HC-S5) · xauusd_h1_full
-  (2024: TRAINING 01KYB4SSC96SSS8RA7D1NMTPEX 4157 bars, engine has
-  NEVER run on it · **VIRGIN 01KYB4SSD9VVKB577KRGB1W1P0** 1781 bars,
-  untouchable) · FVG events (105) · shortlist (500 variants).
-- Instruments calibrated 1.0/1.0: seasonality.calendar, classical.rsi,
-  smc.fvg, smc.order_block (OB gated for battery use — see §4).
-- Battery I foundations DONE: audited engine (no-look-ahead by
-  construction, byte-deterministic, pessimistic fills, n_dropped_tail),
-  anchored walk-forward + embargo, seeds, selftest tri-state. 655 tests.
-- **ARCH-006 (Sprint 6: verdict end-to-end) is WRITTEN and open**,
-  including the PRE-REGISTERED first hypothesis H-001 with its
-  thresholds declared BEFORE any run. Verify whether the Developer has
-  booted (sessions/, refs, worktrees).
+## 3. Status at this rewrite — THE FIRST VERDICT EXISTS
+- Sprints 1–6 **CLOSED** (GO-S1..S6, retrospectives from S3 on).
+- **H-001 judged: FAIL** — hypothesis 01KYC7Y1S2534DVYHWHNCZGTGZ,
+  verdict 01KYC7Y2KWYGXH73V1R9P57MYA (n=654, 4/4 folds negative, net
+  −363.58, p=0.94), burn 01KYC7Y2PQ4KN58AVGAYBJ2P2A on the TRAINING
+  window × lineage. Naive FVG follow-through is a verified loser after
+  costs. The verdict survived hostile IVF audit (thresholds byte-equal,
+  stats recomputed from raw trades, planted frauds caught).
+- **Corrections BITE now** (DEVQ-015 ruling): multiplicity follows
+  claims — (market, instrument-family), prefix-matched. Verified on the
+  real ledger: family xauusd_h1/smc.fvg = 500 trials → alpha 1e-4 for
+  any future FVG hypothesis on this market. H-001's honest family_m=0
+  record stands; the tightening is dated.
+- Hypothesis schema v2: thesis + outcome_interpretations (pre-committed
+  interpretation, REQUIRED) + family. v1 (H-001) still validates.
+- Ledger: **31 records, chain GREEN.** VIRGIN
+  01KYB4SSD9VVKB577KRGB1W1P0 (1781 bars) untouched. 700 tests.
+- **ARCH-007 (Sprint 7: observatory + beliefs) is WRITTEN and open** —
+  verify whether the Developer has booted (sessions/, refs, worktrees).
 
 ## 4. Frozen contracts (do not drift)
-canonical_bytes §1.3 · EventFrame §4.3 · DEVQ-005 DOW · OBS-4/OBS-5 ·
-DEVQ-006 gap rule + report v2 params · DEVQ-007 __flagged · DEVQ-008
-cost-name immutability · DEVQ-009 telescope boundary · DEVQ-010+ADDENDUM
-FVG = gap AND displacement candle; **OB break-bar restatement REQUIRED
-before any OB hypothesis reaches the battery** · DEVQ-011 embargo
-geometry + **BINDING: battery enforces embargo_bars >= max hold_bars+1**
-· DEVQ-012 fills: next-open, time stop, pessimistic tie + gap-through
-("gaps can only hurt, never help"), n_dropped_tail visible · DEVQ-013
-selftest is a wiring gate, never evidence · arrow (8) screener never
-judges · window burn = once per (window, lineage) · kernel firewall ·
-ADR-009 pictures illustrate, numbers decide.
+Everything in GO-S6 §Contracts plus the standing set: canonical_bytes ·
+EventFrame §4.3 · OBS-4/5 · DEVQ-005/6/7/8/9 · DEVQ-010+ADDENDUM (FVG =
+gap AND displacement; OB break-bar gate STILL UNPAID — registry refuses
+OB hypotheses) · DEVQ-011 (+battery embargo>=hold+1) · DEVQ-012 fills
+("gaps can only hurt") · DEVQ-013 · DEVQ-014 (content_hash seal; v2
+interpretation fields required) · DEVQ-015 (family multiplicity) ·
+verdict+burn one code path; burn = once per (window, lineage) · arrow 8
+· kernel firewall · ADR-009.
 
-## 5. Process lessons paid for (NOTES 001–013, GO retros)
-Everything is in EXECUTION_PROCESS_GUIDE.md §§4–9; headline reminders:
-verify state before asserting (004/010, worktrees) · session logs every
-session (011) · bulk parquet rebuilds via --rebuild-bulk, never
-hand-copy · seed contract forward-only, the historical amber is ACCEPTED
-(013) · **drill your own tools before first real use** (S4; S5 proved
-it) · .ex5/.ex4 are ignored build artifacts · HC caption-layout fix
-still owed across tools. Tally: **Architect 10, Developer 2.**
+## 5. Process lessons paid for
+All in EXECUTION_PROCESS_GUIDE.md; headlines: verify before asserting
+(worktrees are the mid-sprint truth) · session logs every session ·
+--rebuild-bulk, never hand-copy (F-1 recurred for verdict trades —
+extension CARRIED) · drill your own tools BEFORE first real use (three
+consecutive clean verification cycles since) · .ex5 ignored · seed
+amber ACCEPTED (013) · sampled winners are anecdotes, the mean is the
+truth (HC-S6 lesson, on file with pictures). Tally: **Architect 10,
+Developer 2.**
 
 ## 6. Owner rhythm
-Push (`ARCH:`/`OWNER:` prefixes) → boot Developer one-liner → pull
-before asking → HC (ADR-009 tools; write his MT5 input file directly at
-C:\Users\giris\AppData\Roaming\MetaQuotes\Terminal\E92643...\MQL5\Files\;
-create ivf/reports/hc_sN/ BEFORE giving the cp command) → verbatim
-phrases → GO-SN + Retrospective → handover rewrite. Pointers, not
-content. Two of his commands have landed in chat — gently redirect.
+Unchanged (GUIDE §5). HC pattern: sampler → I write his MT5 input file
+directly → reuse/compile .mq5 from ivf/mt5/ → PNGs relayed →
+countersign → verbatim phrase. Create ivf/reports/hc_sN/ BEFORE the cp
+command. His commands sometimes land in chat — redirect gently.
 
 ## 7. Immediate next steps (in order)
-1. Owner pushes the GO-S5 batch, boots Developer:
-   "Boot per CLAUDE.md, execute ARCH-006 completely, starting with T0.
+1. Owner pushes the GO-S6 batch, boots Developer:
+   "Boot per CLAUDE.md, execute ARCH-007 completely, starting with T0.
    Session log every session."
-2. Architect deliverables for S6 (yours):
-   (a) IVF S6 checks — corrections recomputation (Bonferroni vs the
-   trial ledger, independent), verdict-record audit (thresholds in the
-   verdict match H-001's pre-registration byte-for-byte; burn record
-   present and correct; selftest gate ran first), fold-level stats
-   recomputation from the engine's trades; Drill S6 — plant a
-   threshold-swap (verdict claiming looser thresholds than registered)
-   and a double-burn attempt; both must be caught. DRILL FIRST.
-   (b) HC caption-layout fix across the three .mq5 tools (one shared
-   pattern).
-   (c) IVF params-reading (open since GO-S3).
-3. Sprint close: REV-S6 → HC (visual: the verdict's fold trades on the
-   chart) → Owner Go/No-Go → GO-S6 (+Retrospective) → REWRITE THIS
-   FILE → ARCH-007 (Sprint 7: observatory + beliefs, per Blueprint §7).
-4. NOTE for the first verdict: H-001's outcome is expected to be FAIL
-   or INSUFFICIENT under the deflated threshold — and that is a SUCCESS
-   of the machinery. Prepare the Owner: the first verdict proving the
-   system can say NO is worth more than a flattering yes.
+2. Architect deliverables for S7 (yours):
+   (a) IVF S7 checks — observatory discipline (questions reference
+   EXPLORATION/TRAINING scans only; no VIRGIN read anywhere in scan
+   paths — audit imports/calls; question records well-formed and
+   parented to their scan evidence), beliefs recomputation (belief
+   state re-derived from the verdict set independently), ancestry audit
+   (a hypothesis claiming observatory ancestry must trace to real
+   question records); Drill S7 — plant a question referencing VIRGIN
+   data and a belief that ignores a FAIL verdict; both must be caught.
+   DRILL FIRST.
+   (b) HC caption-layout fix across the three .mq5 tools.
+   (c) IVF params-reading (open since GO-S3) — fold into the S7 check.
+3. Sprint close: REV-S7 → HC → Go/No-Go → GO-S7 (+Retrospective) →
+   Blueprint CONSOLIDATION amendment pass (the queue: NOTE-001,
+   DEVQ-005/6/7, OBS-4, DEVQ-010, DEVQ-014 items) → REWRITE THIS FILE →
+   ARCH-008 (Sprint 8: family waves / graduation, per Blueprint §7 and
+   the Owner's glossary roadmap).
 
 ## 8. How to verify state yourself (before trusting this file)
 refs/heads/main vs refs/remotes/origin/main + FETCH_HEAD mtime ·
-sessions/ latest log · inbox/OPEN · tail of newest ARCH file ·
-journal.jsonl tail (26 at rewrite) · worktrees for mid-sprint truth ·
-empty datastore/bulk = rebuild via scripts' --rebuild-bulk. NEVER assert
+sessions/ latest · inbox/OPEN · tail of newest ARCH file ·
+journal.jsonl tail (31 at rewrite; the last three records should be
+hypothesis → verdict → window_burn for H-001) · worktrees for
+mid-sprint truth · empty bulk = --rebuild-bulk (verdict trades still
+needs the hand-copy until the carried extension lands). NEVER assert
 "not started" from an unverified lens.

@@ -66,3 +66,18 @@ burn that cannot be undone, and it survived a hostile audit doing it.
 
 Architect verdict on the development scope: **PASS — recommend GO** once
 the visual HC completes.
+
+---
+## ADDENDUM · HC-S6 result · 2026-07-25
+Owner sign-off, verbatim: **"HC-S6 PASS"** · Experts log 5/5 MATCH.
+
+Evidence: five trades sampled from the VERDICT'S OWN manifest parquet
+(seed=6), drawn by the reused IVF_S5_HC_Trades.mq5, each PNG's
+provenance carrying the verdict + hypothesis ids; entry AND exit prices
+re-verified against the bars' opens in MT5's own series, deep inside
+the burned 2024 window. PNGs: ivf/reports/hc_s6/HC_S5_1709517600 /
+1710979200 / 1715608800 / 1721890800 / 1724385600 .png. Architect
+countersigned. The set's lesson recorded: trade 82 (+16.02, the
+course-seller's anecdote) and trade 496 (+0.60 gross reduced to +0.13
+by friction) side by side with the −363.58 verdict — seduction and
+arithmetic, both verified, the arithmetic winning.
