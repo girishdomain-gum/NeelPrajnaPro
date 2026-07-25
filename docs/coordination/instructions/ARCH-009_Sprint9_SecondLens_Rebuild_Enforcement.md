@@ -1,8 +1,12 @@
-# ARCH-009 · Sprint 9 instruction · **DRAFT — awaiting Owner review** · 2026-07-25
+# ARCH-009 · Sprint 9 instruction · **FINAL** · 2026-07-25
 Author: architect (fable) · For: developer (claude-code)
-Status: DRAFT. §§1–3 are Owner-approved-in-principle carried items
-(GO-S8). §4 is a PROPOSAL requiring three Owner decisions (marked ◆)
-before this instruction is finalized. Do not boot on a DRAFT.
+Status: FINAL. Owner approved 2026-07-25: §§1–3 without change; §4
+Decisions 1/2/3 all GO, with one binding amendment to Decision 1 (the
+independence definition below) and one recorded architecture note (the
+lens-generality note at the end). Owner's assessment of record: "ARCH-009
+is approved in principle … Sprint 9 doesn't broaden QRF indiscriminately;
+it completes an important capability that Sprint 8 deliberately left
+unavailable: independent corroboration before promotion."
 
 Theme: **make evidence portable, make honesty enforceable, open the
 second eye.** Sprint 8 built the gates; Sprint 9 supplies what the
@@ -49,22 +53,34 @@ the Architect ships rev 2 (caption line 1 theme-safe color; all caption
 lines ≤63 chars; MON dow verdict on its own line) during a write
 window. Developer: no action.
 
-## §4 — PROPOSAL: the second lens + data extension + H-004 ◆◆◆
+## §4 — the independent lens + data extension + H-004 (Owner-approved)
 The program's stated bottleneck (GO-S8): no promotion is possible until
-an independent feed exists. This section opens that eye. It requires:
+an independent feed exists. This section opens that eye. All three
+decisions are GO.
 
-◆ DECISION 1 (Owner): provide a SECOND, independent XAUUSD H1 source —
-  a different broker's MT5 export (not Winprofx), same 2024 span at
-  minimum. Independence means a different originating venue, not a
-  re-download.
-◆ DECISION 2 (Owner): provide 2025 H1 data from the PRIMARY feed, to
-  give H-003's successor statistical room (28 Mondays cannot clear a
-  40 floor; ~2 years can). New data is ingested under NEW window
-  records; the 2024 VIRGIN reserve stays untouched and its boundary
-  unmoved.
-◆ DECISION 3 (Owner): approve registering H-004 (below) as Wave 2.
+DECISION 1 (GO, with the Owner's amendment now BINDING): the Owner
+provides a second XAUUSD H1 source. **Independence is defined by the
+ORIGIN of the market observations, not by the broker label on the
+export: the second feed must come from an independently generated
+market data production process, materially different from the
+primary's. A re-export, mirror, cache, or repackaging of the primary
+feed does NOT qualify.** Independence is a SPECTRUM, recorded, not a
+binary: tiers are (i) broker-independent (different broker, possibly
+shared liquidity provider), (ii) LP-independent (different liquidity
+sourcing), (iii) venue-independent (different exchange/venue). At
+provision time the Owner states the source's provenance (broker,
+platform, what is known of its liquidity sourcing); the Developer
+records the DECLARED tier — tier=UNKNOWN is acceptable and recorded
+honestly, never silently upgraded. The tier lives in the ingest note
+and in the lens record's source_name context so future consumers can
+weight agreement by depth of independence.
+DECISION 2 (GO): primary-feed 2025 data under NEW window records; the
+2024 VIRGIN reserve stays untouched and its boundary unmoved.
+DECISION 3 (GO): H-004 registered as Wave 2, with the Owner's
+emphasis of record: the claim under test is "Monday beats RANDOM
+TIMING", not "Monday is profitable".
 
-If approved, Developer scope:
+Developer scope:
 1. Ingest the second feed (ingest_report v2, params recorded; new
    dataset + manifest). Compute the OVERLAP against the primary per
    DEVQ-020: shared-timestamp bars, agreement on OHLC within a
@@ -87,14 +103,26 @@ If approved, Developer scope:
    a PASS claims "Monday beats random timing", and the placebo ceiling
    at the deflated alpha is the arbiter of that claim.
 AC (§4): second_lens record exists with pre-registered-then-computed
-agreement; new windows ingested with VIRGIN extension designated;
-H-004 judged with its placebo; all three tri-states acceptance-valid.
+agreement AND a declared independence tier; new windows ingested with
+VIRGIN extension designated; H-004 judged with its placebo; all three
+tri-states acceptance-valid.
 NOTE: even a clean H-004 PASS does NOT promote unless every gate holds
 — that is the machinery working, either way.
 
+## Architecture note of record (Owner, 2026-07-25 — no S9 scope change)
+The "second lens" is the FIRST IMPLEMENTATION of a more general
+concept: **Independent Observation Lenses**. Future lenses (order
+flow, volume profile, macro, news, options…) may join without changing
+the scientific engine — only the number of observation sources and the
+cross-lens agreement layer grow. Naming and schemas introduced this
+sprint should therefore avoid baking "exactly two" into anything
+structural: `second_lens` remains the sealed DEVQ-020 record type for
+THIS lens, but new code comments and any new identifiers should speak
+of independent lenses generally. Sprint 9 stays strictly two-feed.
+
 ## Acceptance (sprint)
 §1 hashes assert-equal on all three lineages · §2 refusals tested,
-Wave 1 grandfathered · §4 (if approved) second_lens + windows + H-004
+Wave 1 grandfathered · §4 second_lens (declared tier) + windows + H-004
 judged placebo-first · journal chain GREEN · VIRGIN(s) untouched ·
 firewall GREEN · session logs per session · DEVQs to inbox/OPEN at any
 genuine decision point.

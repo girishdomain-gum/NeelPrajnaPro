@@ -8,11 +8,14 @@ is being committed by the Owner — VERIFY local main == origin/main
 yourself before trusting anything (§5). Journal **54 records chain
 GREEN**. inbox/OPEN empty (DEVQ-018..021 CLOSED; 018/019 carry
 ADDENDA — read both, they bind you). HC-S8 evidence in
-ivf/reports/hc_s8/ (8 PNGs, generation-4 tool). **ARCH-009 is a DRAFT
-awaiting Owner review** — §4 (second lens + data extension) needs his
-explicit approval and his DATA before the Developer can be booted; §§1–3
-are approved-in-principle carried items. The Developer has NOT been
-booted for ARCH-009. Same-day context: Sprints 1–8 ALL closed TODAY;
+ivf/reports/hc_s8/ (8 PNGs, generation-4 tool). **ARCH-009 is FINAL
+and Owner-approved** (§§1–3 unchanged; §4 all three decisions GO with
+the independence-spectrum amendment and the Independent-Observation-
+Lenses architecture note — read ARCH-009's header and §4). The
+Developer boot is GATED on the Owner PROVIDING the §4 data (second
+feed with declared independence tier; 2025 primary data): §§1–2 can
+be booted first if the Owner wants to run the sprint in two phases.
+The Developer has NOT been booted for ARCH-009. Same-day context: Sprints 1–8 ALL closed TODAY;
 the Owner is engaged, reads the reviews, and asked for the GO-S8 retro
 to emphasize scientific lessons — treat him as the system's conscience,
 not its operator.
@@ -100,18 +103,20 @@ FETCH age, sessions/ (S8-1, S8-2 are the latest), inbox/OPEN, journal
 tail (54 now), worktrees for mid-sprint truth.
 
 ## 6. Immediate next steps
-1. Owner reviews the **ARCH-009 DRAFT** (docs/coordination/
-   instructions/): §1 rebuild-bulk for verdict_trades · §2
-   placebo_method enforcement · §3 HC tool rev 2 captions · §4
-   PROPOSAL: second-lens feed + data extension + H-004 successor —
-   NEEDS Owner decisions (second XAUUSD H1 source; 2025 data; H-004
-   approval). Do not finalize §4 or boot the Developer without them.
-2. On approval: finalize ARCH-009, Owner commits, boots Developer in a
-   NEW session: "Boot per CLAUDE.md, execute ARCH-009 completely,
-   starting with T0. Session log every session."
+1. **ARCH-009 is FINAL.** The gate on booting is DATA, not approval:
+   the Owner must provide the second feed (with a provenance statement
+   → declared independence tier) and the 2025 primary data. If the
+   data is not ready, offer the two-phase option: boot §§1–2 now
+   ("Boot per CLAUDE.md, execute ARCH-009 §1 and §2 only, starting
+   with T0. Session log every session."), §4 in a second session when
+   the data lands.
+2. On data provision: Owner commits, boots Developer in a NEW session:
+   "Boot per CLAUDE.md, execute ARCH-009 completely, starting with T0.
+   Session log every session."
 3. Architect S9 duties will include: IVF for the rebuild determinism
    (rebuilt bytes == manifest hash), for placebo_method enforcement,
-   and — if §4 approved — the second-lens overlap recomputation
-   (threshold pre-registration BEFORE overlap, DEVQ-020). Drills
+   and for the second-lens overlap recomputation (threshold
+   pre-registration BEFORE overlap, DEVQ-020) plus the H-004 verdict
+   anchor. Drills
    first, clean control, HC with the rev-2 tool. Then REV-S9 → HC →
    Go/No-Go → GO-S9 (+retro) → REWRITE THIS → ARCH-010.
