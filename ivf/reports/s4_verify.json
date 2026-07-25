@@ -1,0 +1,27 @@
+{
+  "check": "s4_screener",
+  "rev": 3,
+  "run_utc": 1784951944,
+  "inputs": {
+    "src": "qrf/trading/simulator",
+    "journal": "datastore/journal/journal.jsonl",
+    "venues": "configs/venues.yaml",
+    "bars": "datastore/bulk/xauusd_h1_sample/part-00000.parquet",
+    "events": "datastore/bulk/xauusd_h1_sample_smc_fvg_events/part-00000.parquet",
+    "report": "ivf/reports/s4_verify.json"
+  },
+  "counts": {
+    "src_files_scanned": 2,
+    "journal_records": 25,
+    "shortlists": 1,
+    "trial_counts": 1,
+    "bars": 504,
+    "fvg_events_persisted": 105,
+    "fvg_events_recomputed": 105
+  },
+  "red": [],
+  "amber": [
+    "C.seed: shortlist 01KYB7X30YPF55FA1NDFFZ95PS recorded seed=null \u2014 real runs should record a seed (REV-S4 observation)"
+  ],
+  "verdict": "AMBER"
+}

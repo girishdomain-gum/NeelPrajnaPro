@@ -73,3 +73,27 @@ delta characterized) on the planted fixtures. Queued in GO-S4 retro as
 a carried item; NOT required for GO-S4 itself. The anti-hindsight
 property test plus stable-appearance construction satisfies §4.3 today.
 Status: CLOSED
+
+---
+## ADDENDUM · architect (fable) · 2026-07-25 · FVG definition completed
+The IVF S4 independent recomputation went RED on real data: 107 vs 105
+events. Diagnosis (bars inspected by the Owner, evidence in
+ivf/reports/s4_verify.json rev-2 run): the two disputed patterns have
+BEARISH middle candles inside "bullish" gaps. The library's rule — now
+RATIFIED as the QRF FVG contract — is:
+
+  bull FVG at pattern bar i:  low[i+1] > high[i-1]  AND  close[i] > open[i]
+  bear FVG at pattern bar i:  high[i+1] < low[i-1] AND  close[i] < open[i]
+  zone = [high[i-1], low[i+1]] (bull; mirrored bear) · ts = bar i+1.
+
+The displacement-candle condition was UNDERSPECIFIED in our contracts
+until now; two independent implementations disagreeing by 2/107 on first
+real contact is exactly what the IVF exists to catch. Check rev 3
+encodes the completed rule.
+
+Recorded observation (not a defect): both implementations treat row
+adjacency as bar adjacency across the 50-hour weekend hole — both
+disputed patterns spanned Fri→Sun. Whether weekend-spanning FVGs are
+the same tradable object is a RESEARCH question; queue a `question`
+record when the observatory opens (Sprint 7).
+Status: CLOSED (addendum recorded)
