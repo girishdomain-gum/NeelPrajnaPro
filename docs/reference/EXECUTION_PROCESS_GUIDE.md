@@ -250,6 +250,15 @@ GO-SN.
 - Definitions discovered to be underspecified get completed IN THE
   RECORD (DEVQ addendum) — the ruling includes the evidence that forced
   it.
+- Ruling hygiene (added at GO-S7, bought by Architect bugs #11–13 and
+  one near-miss): (1) numeric worked examples in rulings are
+  MACHINE-VERIFIED before the ruling ships; (2) an independent
+  re-implementation reads the NORMATIVE definition (spec/docstring),
+  never prose summaries or completion reports; (3) every written
+  artifact (input files, configs) is READ BACK and compared against its
+  source before use. Instructors are audited like everyone else — the
+  Developer catching a ruling's arithmetic is the system working, not
+  failing.
 
 ---
 
