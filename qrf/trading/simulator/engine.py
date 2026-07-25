@@ -84,6 +84,22 @@ class ExecutionSpec:
             "size": float(self.size),
         }
 
+    @classmethod
+    def from_dict(cls, d: dict) -> ExecutionSpec:
+        """Build an ExecutionSpec from a plain mapping (a hypothesis's execution).
+
+        The kernel battery holds a hypothesis's ``execution`` as a domain-blind
+        dict; this coerces it into the engine's spec at the trading boundary, so
+        the kernel never imports the trading type.
+        """
+        return cls(
+            hold_bars=d["hold_bars"],
+            strength_min=float(d.get("strength_min", 0.0)),
+            stop_offset=(None if d.get("stop_offset") is None else float(d["stop_offset"])),
+            target_offset=(None if d.get("target_offset") is None else float(d["target_offset"])),
+            size=float(d.get("size", 1.0)),
+        )
+
 
 @dataclass(frozen=True)
 class Trade:
@@ -150,6 +166,8 @@ class EventEngine:
 
     # Marker read by qrf.kernel.battery.simulator.require_audited_simulator.
     is_audited_simulator: bool = True
+    # Provenance stamp recorded in every verdict (Blueprint §2 verdict.engine_version).
+    engine_version: str = "engine.s5.1"
 
     def simulate(
         self,
@@ -158,7 +176,7 @@ class EventEngine:
         cost_model: CostModel,
         *,
         seed: int,
-        execution: ExecutionSpec,
+        execution: ExecutionSpec | dict,
     ) -> Trades:
         """Simulate ``events`` over ``bars`` under ``execution``, charging ``cost_model``.
 
@@ -169,6 +187,8 @@ class EventEngine:
         beyond the data) are never filled on absent bars — they are dropped and
         counted in ``Trades.n_dropped_tail`` (visible, not silent).
         """
+        if not isinstance(execution, ExecutionSpec):
+            execution = ExecutionSpec.from_dict(execution)
         if not isinstance(bars, pd.DataFrame):
             raise SchemaViolation(f"bars must be a pandas DataFrame, got {type(bars).__name__}")
         missing = [c for c in _REQUIRED_BAR_COLUMNS if c not in bars.columns]

@@ -1,0 +1,43 @@
+# H-001 — FVG follow-through (PRE-REGISTERED in ARCH-006, thresholds fixed
+# BEFORE any run on xauusd_h1_full). This YAML is the human surface; the
+# hypothesis RECORD it registers into is the truth. Editing any field below
+# re-registers as a NEW hypothesis id (a changed question, not a mutated one).
+#
+# Thesis (informal): after a fair-value gap forms, price follows through in the
+# gap's direction. Symmetric: bull FVG -> long, bear FVG -> short, trading the
+# event's own direction. Naive, no stop/target — the first thing the battery
+# should be able to say NO to (ARCH-006 pre-registered expectation:
+# FAIL or INSUFFICIENT is the likely, healthy outcome).
+
+lineage: h001_fvg_follow_through
+scope: xauusd_h1
+
+# The TRAINING window on the full XAUUSD H1 dataset (4157 bars). The engine has
+# NEVER run on this window; this registration is therefore clean.
+window: 01KYB4SSC96SSS8RA7D1NMTPEX
+
+instruments:
+  - smc.fvg@0.1.0            # calibrated bull+bear FVG detector (Sprint 4)
+
+setup_dsl:
+  event: smc.fvg
+  direction: follow_through  # trade the event's own direction (bull AND bear)
+
+execution:
+  hold_bars: 4               # time stop = 4 bars (DEVQ-012 defaults)
+  size: 1.0
+  strength_min: 0.0
+  stop_offset: null          # no stop
+  target_offset: null        # no target
+
+cost_model_ref: xauusd_retail_median
+
+split_spec:
+  n_folds: 4
+  embargo_bars: 8            # >= hold_bars + 1 (= 5); extra margin chosen (DEVQ-011)
+
+thresholds:
+  min_n: 100
+  base_alpha: 0.05           # one-sided
+  correction:
+    method: bonferroni       # vs the trial ledger for (scope, lineage) at judging time

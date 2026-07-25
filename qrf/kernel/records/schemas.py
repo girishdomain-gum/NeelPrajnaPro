@@ -67,6 +67,21 @@ def _require_str(payload: dict, key: str, where: str) -> None:
     _require(isinstance(payload[key], str), f"{where}.{key} must be a string")
 
 
+def _require_number(payload: dict, key: str, where: str) -> None:
+    val = payload[key]
+    _require(
+        isinstance(val, (int, float)) and not isinstance(val, bool),
+        f"{where}.{key} must be a number",
+    )
+
+
+def _require_number_or_none(value: object, where: str) -> None:
+    _require(
+        value is None or (isinstance(value, (int, float)) and not isinstance(value, bool)),
+        f"{where} must be a number or null",
+    )
+
+
 def _validate_note(payload: dict) -> None:
     _check_keys(payload, {"text"}, set(), "note")
     _require(isinstance(payload["text"], str), "note.text must be a string")
@@ -329,6 +344,177 @@ def _validate_trial_count(payload: dict) -> None:
         _require_str(payload, "generator_ref", "trial_count")
 
 
+# Enum from Blueprint §2 / ARCH-006 §3, verdict.verdict (tri-state).
+_VERDICT_VALUES = frozenset({"PASS", "FAIL", "INSUFFICIENT"})
+
+
+def _validate_execution(payload: dict, where: str) -> None:
+    """A hypothesis's ``execution`` sub-object (mirrors ExecutionSpec.as_dict)."""
+    _check_keys(
+        payload,
+        {"hold_bars", "size"},
+        {"strength_min", "stop_offset", "target_offset"},
+        where,
+    )
+    _require_int(payload, "hold_bars", where)
+    _require(payload["hold_bars"] >= 1, f"{where}.hold_bars must be >= 1")
+    _require_number(payload, "size", where)
+    _require(payload["size"] > 0, f"{where}.size must be > 0")
+    if "strength_min" in payload:
+        _require_number(payload, "strength_min", where)
+    for name in ("stop_offset", "target_offset"):
+        if name in payload:
+            val = payload[name]
+            _require_number_or_none(val, f"{where}.{name}")
+            _require(val is None or val > 0, f"{where}.{name} must be > 0 or null")
+
+
+def _validate_split_spec(payload: dict, where: str) -> None:
+    _check_keys(payload, {"n_folds", "embargo_bars"}, set(), where)
+    _require_int(payload, "n_folds", where)
+    _require(payload["n_folds"] >= 1, f"{where}.n_folds must be >= 1")
+    _require_int(payload, "embargo_bars", where, non_negative=True)
+
+
+def _validate_thresholds(payload: dict, where: str) -> None:
+    _check_keys(payload, {"min_n", "base_alpha", "correction"}, set(), where)
+    _require_int(payload, "min_n", where)
+    _require(payload["min_n"] >= 1, f"{where}.min_n must be >= 1")
+    _require_number(payload, "base_alpha", where)
+    _require(0.0 < float(payload["base_alpha"]) < 1.0, f"{where}.base_alpha must be in (0, 1)")
+    _require(isinstance(payload["correction"], dict), f"{where}.correction must be an object")
+    _check_keys(payload["correction"], {"method"}, set(), f"{where}.correction")
+    _require_str(payload["correction"], "method", f"{where}.correction")
+
+
+def _validate_hypothesis(payload: dict) -> None:
+    """hypothesis (ARCH-006 §1) — the pre-registered, frozen-by-hash question.
+
+    The record's own ``content_hash`` is the pre-registration seal: a changed
+    YAML yields a different canonical payload, hence a new hypothesis id
+    (ARCH-006 §1). Cross-record/semantic checks (embargo >= hold_bars + 1;
+    cost_model_ref exists; instruments exist, are calibrated, and none is an
+    order_block) are enforced by :class:`HypothesisRegistry` at registration,
+    which alone has the store + allowlist to judge them; the schema fixes shape.
+    """
+    _check_keys(
+        payload,
+        {
+            "lineage",
+            "scope",
+            "instrument_refs",
+            "setup_dsl",
+            "execution",
+            "cost_model_ref",
+            "split_spec",
+            "thresholds",
+        },
+        set(),
+        "hypothesis",
+    )
+    _require_str(payload, "lineage", "hypothesis")
+    _require_str(payload, "scope", "hypothesis")
+    _require_str(payload, "cost_model_ref", "hypothesis")
+    _require(
+        isinstance(payload["instrument_refs"], list) and payload["instrument_refs"],
+        "hypothesis.instrument_refs must be a non-empty list",
+    )
+    for i, ref in enumerate(payload["instrument_refs"]):
+        _require(isinstance(ref, str), f"hypothesis.instrument_refs[{i}] must be a string")
+    _require(isinstance(payload["setup_dsl"], dict), "hypothesis.setup_dsl must be an object")
+    _require(isinstance(payload["execution"], dict), "hypothesis.execution must be an object")
+    _validate_execution(payload["execution"], "hypothesis.execution")
+    _require(isinstance(payload["split_spec"], dict), "hypothesis.split_spec must be an object")
+    _validate_split_spec(payload["split_spec"], "hypothesis.split_spec")
+    _require(isinstance(payload["thresholds"], dict), "hypothesis.thresholds must be an object")
+    _validate_thresholds(payload["thresholds"], "hypothesis.thresholds")
+
+
+def _validate_stat_block(block: object, where: str) -> None:
+    """One statistics entry: ``{stat, p, ci_low, ci_high}`` (each number or null)."""
+    _require(isinstance(block, dict), f"{where} must be an object")
+    _check_keys(block, {"stat", "p", "ci_low", "ci_high"}, set(), where)
+    for k in ("stat", "p", "ci_low", "ci_high"):
+        _require_number_or_none(block[k], f"{where}.{k}")
+
+
+def _validate_verdict(payload: dict) -> None:
+    """verdict (Blueprint §2 + ARCH-006 §3.8) — the battery's sole judgement record.
+
+    A superset of the §2 fields (``verdict, n_trades, gross, net, statistics,
+    corrections, seed, engine_version, trades_manifest``) plus the ARCH-006
+    additions the corrections machinery requires: ``thresholds`` AS REGISTERED
+    (byte-equal), ``selftest_seed``, per-fold means, ``n_dropped_tail``, and the
+    ``base_alpha``/``family_m``(=N_trials)/``effective_alpha`` correction fields.
+    """
+    _check_keys(
+        payload,
+        {
+            "hypothesis_ref",
+            "window_ref",
+            "verdict",
+            "n_trades",
+            "n_dropped_tail",
+            "gross",
+            "net",
+            "statistics",
+            "folds",
+            "corrections",
+            "thresholds",
+            "seed",
+            "selftest_seed",
+            "engine_version",
+            "trades_manifest",
+        },
+        set(),
+        "verdict",
+    )
+    _require_str(payload, "hypothesis_ref", "verdict")
+    _require_str(payload, "window_ref", "verdict")
+    _require(
+        payload["verdict"] in _VERDICT_VALUES,
+        f"verdict.verdict must be one of {sorted(_VERDICT_VALUES)}",
+    )
+    _require_int(payload, "n_trades", "verdict", non_negative=True)
+    _require_int(payload, "n_dropped_tail", "verdict", non_negative=True)
+    _require_int(payload, "seed", "verdict", non_negative=True)
+    _require_int(payload, "selftest_seed", "verdict", non_negative=True)
+    _require_str(payload, "engine_version", "verdict")
+    _require_str(payload, "trades_manifest", "verdict")
+    for agg in ("gross", "net"):
+        _require(isinstance(payload[agg], dict), f"verdict.{agg} must be an object")
+        _check_keys(payload[agg], {"total", "mean"}, set(), f"verdict.{agg}")
+        _require_number_or_none(payload[agg]["total"], f"verdict.{agg}.total")
+        _require_number_or_none(payload[agg]["mean"], f"verdict.{agg}.mean")
+    _require(isinstance(payload["statistics"], dict), "verdict.statistics must be an object")
+    for name, block in payload["statistics"].items():
+        _validate_stat_block(block, f"verdict.statistics[{name!r}]")
+    _require(isinstance(payload["folds"], list), "verdict.folds must be a list")
+    for i, fold in enumerate(payload["folds"]):
+        where = f"verdict.folds[{i}]"
+        _check_keys(
+            fold, {"index", "n_trades", "mean_net", "test_start", "test_end"}, set(), where
+        )
+        _require_int(fold, "index", where)
+        _require_int(fold, "n_trades", where, non_negative=True)
+        _require_number_or_none(fold["mean_net"], f"{where}.mean_net")
+        _require_int(fold, "test_start", where, non_negative=True)
+        _require_int(fold, "test_end", where, non_negative=True)
+    _require(isinstance(payload["corrections"], dict), "verdict.corrections must be an object")
+    _check_keys(
+        payload["corrections"],
+        {"family_m", "method", "base_alpha", "effective_alpha"},
+        set(),
+        "verdict.corrections",
+    )
+    _require_int(payload["corrections"], "family_m", "verdict.corrections", non_negative=True)
+    _require_str(payload["corrections"], "method", "verdict.corrections")
+    _require_number(payload["corrections"], "base_alpha", "verdict.corrections")
+    _require_number(payload["corrections"], "effective_alpha", "verdict.corrections")
+    _require(isinstance(payload["thresholds"], dict), "verdict.thresholds must be an object")
+    _validate_thresholds(payload["thresholds"], "verdict.thresholds")
+
+
 # Registry keyed by (record_type, schema_version). Additive schema evolution
 # bumps the version (Blueprint §2); removals never happen.
 SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
@@ -342,6 +528,8 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("window", 1): _validate_window,
     ("window_burn", 1): _validate_window_burn,
     ("trial_count", 1): _validate_trial_count,
+    ("hypothesis", 1): _validate_hypothesis,
+    ("verdict", 1): _validate_verdict,
 }
 
 
