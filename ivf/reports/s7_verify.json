@@ -1,0 +1,20 @@
+{
+  "check": "s7_observatory",
+  "rev": 3,
+  "run_utc": 1784981829,
+  "counts": {
+    "journal_records": 41,
+    "beliefs": 2,
+    "scans": 2,
+    "questions": 2,
+    "terminal_beliefs": 1,
+    "weekend_n": 18,
+    "intra_n": 807,
+    "events_skipped_tail": 0,
+    "weekend_mean": -1.559444444444403,
+    "intra_mean": -0.12840148698884718
+  },
+  "red": [],
+  "amber": [],
+  "verdict": "GREEN"
+}

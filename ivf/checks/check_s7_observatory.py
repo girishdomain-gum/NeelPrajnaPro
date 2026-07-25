@@ -20,15 +20,23 @@ Five sections, one verdict (GREEN / AMBER / RED; exit 0 / 0 / 1):
   D) PARAMS-READING (owed since GO-S3). Every schema_version>=2
      ingest_report payload carries a params object with
      timeframe_seconds, gap_k, holidays, dataset.
-  E) WEEKEND-QUESTION RECOMPUTATION. From bars + verdict trades, the
-     weekend-spanning FVG split is re-derived (pattern span > 48h ⇒
-     spanning) and the recomputed (n, mean) pair must appear in some
-     anomaly_scan's findings (ints exact, means to 0.005).
+  E) WEEKEND-QUESTION RECOMPUTATION (rev 3 — the scan's DECLARED spec).
+     Population: events with a matching bar, k>=2, and horizon room.
+     Metric: direction × (close[k+4] − close[k]) — close-based, from the
+     knowability bar, NO costs. Weekend flag: for either adjacent
+     forming-bar pair (k-2,k-1) or (k-1,k), the gap exceeds one
+     timeframe AND any calendar day from the first endpoint's date
+     through the second's (inclusive) is a Sat/Sun (UTC). Recomputed
+     (n, mean) per partition must equal the scan record to 1e-6.
+     Bug history: rev 1 used the wrong population+metric (#12); rev 2
+     used an interval-probe weekend rule that over-flagged by 8 — both
+     caught by the drill's clean-control requirement before any false
+     judgement of the real ledger.
 
 INDEPENDENCE: no qrf imports; stdlib + pyarrow.
 
 Usage (paste in git bash, from /f/QRF):
-  uv run python ivf/checks/check_s7_observatory.py --journal datastore/journal/journal.jsonl --bars datastore/bulk/xauusd_h1_full/part-00000.parquet --trades datastore/bulk/verdict_trades.h001_fvg_follow_through/part-00000.parquet --virgin 01KYB4SSD9VVKB577KRGB1W1P0 --report ivf/reports/s7_verify.json
+  uv run python ivf/checks/check_s7_observatory.py --journal datastore/journal/journal.jsonl --bars datastore/bulk/xauusd_h1_full/part-00000.parquet --events "datastore/bulk/xauusd_h1_training_smc_fvg_scan/part-00000.parquet" --virgin 01KYB4SSD9VVKB577KRGB1W1P0 --report ivf/reports/s7_verify.json
 """
 
 from __future__ import annotations
@@ -91,7 +99,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--journal", required=True)
     ap.add_argument("--bars", required=True)
-    ap.add_argument("--trades", required=True)
+    ap.add_argument("--events", required=True)
     ap.add_argument("--virgin", required=True)
     ap.add_argument("--report", default=None)
     a = ap.parse_args()
@@ -181,41 +189,60 @@ def main() -> int:
                     red.append(f"D.params: report {r['record_id']} params "
                                f"missing {k!r}")
 
-    # --- E: weekend-question recomputation ----------------------------------
+    # --- E: weekend-question recomputation (scan semantics, rev 2) ----------
     import pyarrow.parquet as pq
+    from datetime import UTC, datetime, timedelta
     bars = sorted(pq.read_table(a.bars).to_pylist(), key=lambda r: int(r["ts"]))
     ts_index = {int(r["ts"]): i for i, r in enumerate(bars)}
-    trades_rows = pq.read_table(a.trades).to_pylist()
+    events = [e for e in pq.read_table(a.events).to_pylist()
+              if str(e.get("event_type", "")).startswith("smc.fvg.")]
+
+    def spans_weekend(a_ns: int, b_ns: int) -> bool:
+        if b_ns - a_ns <= 3600 * NS:
+            return False
+        day = datetime.fromtimestamp(a_ns // NS, UTC).date()
+        end = datetime.fromtimestamp(b_ns // NS, UTC).date()
+        while day <= end:
+            if day.weekday() >= 5:
+                return True
+            day += timedelta(days=1)
+        return False
+
     wk, intra = [], []
-    unmatched = 0
-    for t in trades_rows:
-        j = ts_index.get(int(t["signal_ts"]))
-        if j is None or j < 2:
-            unmatched += 1
+    skipped = 0
+    for e in events:
+        k = ts_index.get(int(e["ts"]))
+        if k is None or k < 2 or k + 4 >= len(bars):
+            skipped += 1
             continue
-        span = int(bars[j]["ts"]) - int(bars[j - 2]["ts"])
-        (wk if span > 48 * 3600 * NS else intra).append(float(t["net_pnl"]))
+        ft = int(e["direction"]) * (float(bars[k + 4]["close"])
+                                    - float(bars[k]["close"]))
+        weekend = (spans_weekend(int(bars[k - 2]["ts"]), int(bars[k - 1]["ts"]))
+                   or spans_weekend(int(bars[k - 1]["ts"]), int(bars[k]["ts"])))
+        (wk if weekend else intra).append(ft)
     counts_e = {"weekend_n": len(wk), "intra_n": len(intra),
-                "unmatched": unmatched,
+                "events_skipped_tail": skipped,
                 "weekend_mean": (sum(wk) / len(wk)) if wk else 0.0,
                 "intra_mean": (sum(intra) / len(intra)) if intra else 0.0}
-    found = False
-    for s in scans:
-        nums = deep_numbers(s["payload"])
-        if float(len(wk)) in nums and any(
-                abs(x - counts_e["weekend_mean"]) < 0.005 for x in nums):
-            found = True
-            break
-    if wk and not found:
-        red.append(f"E.weekend: my recomputation (n={len(wk)}, "
-                   f"mean={counts_e['weekend_mean']:.3f}) appears in NO "
-                   f"scan's findings — definition or arithmetic mismatch")
-    if not wk:
-        amber.append("E.weekend: zero weekend-spanning trades found by my "
-                     "rule — investigate the definition")
+    scan_wk = next((s for s in scans if str(s["payload"].get("method", ""))
+                    .startswith("fvg.weekend_partition")), None)
+    if scan_wk is None:
+        red.append("E.scan: no fvg.weekend_partition anomaly_scan found")
+    else:
+        parts = scan_wk["payload"]["findings"]["partitions"]
+        for name, mine_n, mine_mean in (("weekend_spanning", len(wk),
+                                         counts_e["weekend_mean"]),
+                                        ("intra_week", len(intra),
+                                         counts_e["intra_mean"])):
+            rec = parts.get(name, {})
+            if int(rec.get("n", -1)) != mine_n:
+                red.append(f"E.n: {name} scan n={rec.get('n')} vs my {mine_n}")
+            if abs(float(rec.get("mean", 9e9)) - mine_mean) > 1e-6:
+                red.append(f"E.mean: {name} scan {rec.get('mean')} vs my "
+                           f"{mine_mean:.9f}")
 
     verdict = "RED" if red else ("AMBER" if amber else "GREEN")
-    report = {"check": "s7_observatory", "rev": 1, "run_utc": int(time.time()),
+    report = {"check": "s7_observatory", "rev": 3, "run_utc": int(time.time()),
               "counts": {"journal_records": len(journal),
                          "beliefs": len(beliefs), "scans": len(scans),
                          "questions": len(questions),

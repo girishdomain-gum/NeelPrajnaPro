@@ -14,7 +14,7 @@ ledger. Scratch copies of the real journal, two planted frauds:
 Exit 0 = CAUGHT (both + clean control), 1 = MISSED.
 
 Usage (paste in git bash, from /f/QRF):
-  uv run python ivf/checks/drill_s7.py --journal datastore/journal/journal.jsonl --bars datastore/bulk/xauusd_h1_full/part-00000.parquet --trades datastore/bulk/verdict_trades.h001_fvg_follow_through/part-00000.parquet --virgin 01KYB4SSD9VVKB577KRGB1W1P0 --workdir ivf/reports/drill_s7_tmp --report ivf/reports/s7_drill.json
+  uv run python ivf/checks/drill_s7.py --journal datastore/journal/journal.jsonl --bars datastore/bulk/xauusd_h1_full/part-00000.parquet --events "datastore/bulk/xauusd_h1_training_smc_fvg_scan/part-00000.parquet" --virgin 01KYB4SSD9VVKB577KRGB1W1P0 --workdir ivf/reports/drill_s7_tmp --report ivf/reports/s7_drill.json
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ def dump(path: str, records: list[dict]) -> None:
 def run_check(journal: str, a) -> tuple[int, str]:
     p = subprocess.run(
         [sys.executable, CHECK, "--journal", journal, "--bars", a.bars,
-         "--trades", a.trades, "--virgin", a.virgin],
+         "--events", a.events, "--virgin", a.virgin],
         capture_output=True, text=True, cwd=os.getcwd())
     return p.returncode, p.stdout
 
@@ -54,7 +54,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--journal", required=True)
     ap.add_argument("--bars", required=True)
-    ap.add_argument("--trades", required=True)
+    ap.add_argument("--events", required=True)
     ap.add_argument("--virgin", required=True)
     ap.add_argument("--workdir", required=True)
     ap.add_argument("--report", default=None)

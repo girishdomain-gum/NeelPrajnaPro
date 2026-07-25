@@ -7,8 +7,9 @@ for contrast, and emit the two-line input for the EXISTING
 ivf/mt5/IVF_S4_HC_Zones.mq5 (which re-verifies FVG zone edges from MT5's
 own bars). The Owner looks at what the machine is WONDERING about.
 
-Weekend flag: the 3-bar pattern's close-ts span exceeds 48h (the
-DEVQ-010/S7 scan convention; internal weekend hole).
+Weekend flag (the scan's declared rule): for either adjacent forming-bar
+pair, the gap exceeds one timeframe AND the endpoint dates (inclusive)
+contain a Sat/Sun (UTC).
 
 Usage (paste in git bash, from /f/QRF):
   uv run python ivf/human/sample_s7_questions.py --events "datastore/bulk/xauusd_h1_training_smc_fvg_scan/part-00000.parquet" --bars datastore/bulk/xauusd_h1_full/part-00000.parquet --question-weekend <QUESTION_ID_A> --question-drift <QUESTION_ID_B> --seed 7
@@ -39,13 +40,27 @@ def main() -> int:
     events = [e for e in pq.read_table(a.events).to_pylist()
               if str(e.get("event_type", "")).startswith("smc.fvg.")]
 
+    from datetime import UTC, datetime, timedelta
+
+    def spans_weekend(a_ns: int, b_ns: int) -> bool:
+        if b_ns - a_ns <= 3600 * NS:
+            return False
+        day = datetime.fromtimestamp(a_ns // NS, UTC).date()
+        end = datetime.fromtimestamp(b_ns // NS, UTC).date()
+        while day <= end:
+            if day.weekday() >= 5:
+                return True
+            day += timedelta(days=1)
+        return False
+
     weekend, intra = [], []
     for e in events:
-        j = idx.get(int(e["ts"]))
-        if j is None or j < 2:
+        k = idx.get(int(e["ts"]))
+        if k is None or k < 2 or k + 4 >= len(bars):
             continue
-        span = int(bars[j]["ts"]) - int(bars[j - 2]["ts"])
-        (weekend if span > 48 * 3600 * NS else intra).append(e)
+        w = (spans_weekend(int(bars[k - 2]["ts"]), int(bars[k - 1]["ts"]))
+             or spans_weekend(int(bars[k - 1]["ts"]), int(bars[k]["ts"])))
+        (weekend if w else intra).append(e)
 
     rng = random.Random(a.seed)
     picks = (rng.sample(weekend, min(3, len(weekend)))
@@ -57,9 +72,11 @@ def main() -> int:
     entries = []
     for e in picks:
         close_utc = datetime.fromtimestamp(int(e["ts"]) // NS, UTC)
-        j = idx[int(e["ts"])]
-        span_h = (int(bars[j]["ts"]) - int(bars[j - 2]["ts"])) // (3600 * NS)
-        tag = "WEEKEND" if span_h > 48 else "intra"
+        k = idx[int(e["ts"])]
+        w = (spans_weekend(int(bars[k - 2]["ts"]), int(bars[k - 1]["ts"]))
+             or spans_weekend(int(bars[k - 1]["ts"]), int(bars[k]["ts"])))
+        tag = "WEEKEND" if w else "intra"
+        span_h = (int(bars[k]["ts"]) - int(bars[k - 2]["ts"])) // (3600 * NS)
         print(f"{tag:8s} {e['event_type']:<14} close-ts "
               f"{close_utc:%Y-%m-%d %H:%M} UTC  zone "
               f"[{float(e['zone_lo']):.2f}, {float(e['zone_hi']):.2f}]  "
