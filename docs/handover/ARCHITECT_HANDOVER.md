@@ -77,13 +77,13 @@ inbox, worktrees.
    lens work grows.
 
 ## 6. Immediate next steps
-ARCH-010 DRAFT (docs/coordination/instructions/ARCH-010_*.md): §1 trial
-accounting (ADR + implementation + retro-count decision ◆), §2
-housekeeping, §3 PROPOSAL: Exploration Wave 2 — a screener sweep over
-the 2025-TRAINING extension to birth NEW families with correct trial
-accounting from day one (◆ Owner approves scope + any new detector
-list). Owner reviews, decides the ◆s, then boots the Developer:
+**ARCH-010 is FINAL** (both ◆s decided: retro-count YES; Wave-2 sweep
+approved, S4 detector list unchanged) and carries the Owner's BINDING
+recommendation: **Sprint 10 formally concludes GENERATION 1** — after
+GO-S10 comes the Generation-1 Final Report + freeze + Gen-2 planning,
+NOT ARCH-011 directly. Boot the Developer:
 "Boot per CLAUDE.md, execute ARCH-010 completely, starting with T0.
 Session log every session." Architect S10 duties: IVF for trial
-accounting + the wave (drills first), HC, REV-S10, GO-S10, rewrite
-this, ARCH-011.
+accounting + the wave (drills first), HC, REV-S10, GO-S10, then author
+GENERATION_1_FINAL_REPORT.md, record the freeze note, plan Gen 2 with
+the Owner, rewrite this at the GENERATION boundary.
