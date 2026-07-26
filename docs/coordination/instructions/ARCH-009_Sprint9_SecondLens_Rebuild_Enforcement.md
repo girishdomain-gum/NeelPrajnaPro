@@ -184,3 +184,56 @@ overlap-computed-before-threshold), then checks (rebuild determinism;
 placebo_method enforcement audit; second-lens overlap recomputation
 with ordering audit; H-004 verdict anchor). HC with the rev-2 tool.
 REV-S9 → Owner Go/No-Go → GO-S9 → handover rewrite → ARCH-010.
+
+## COMPLETION REPORT (developer)
+Developer: claude-code · Closed: 2026-07-26 (session S9-3) · Branch:
+`claude/arch-009-hypothesis-schema-v3-cebf6a` (merged to main).
+
+All sections DONE; sprint AC met. Journal 73 records, chain GREEN;
+both VIRGIN reserves UNTOUCHED; firewall 8/8 GREEN; full suite GREEN
+(843 tests: 835 baseline + 8 new §4.1 cases); ruff clean.
+
+- **§1 rebuild-bulk** (S9-1): every `verdict_trades.*` regenerates from
+  (journal + bars) with sha256 assert-equal, all four lineages
+  (h001/h002/h003/h004), cross-process byte-stable. `scripts/rebuild_bulk.py`.
+- **§2 placebo_method under the seal** (S9-1): hypothesis schema bump;
+  registration refuses an unknown method; `PlaceboBattery.run` refuses a
+  sealed/requested mismatch; Wave-1 grandfathered. Tests green.
+- **§3 HC tool rev 2**: Architect-owned; no developer action (as specified).
+- **§4.2 primary-2025 window + VIRGIN extension** (S9-1): Owner designated
+  the 2025 reserve by typed phrase; DEVQ-022 seam fix applied.
+- **§4.3 multi-window schema v3 + H-004** (S9-2): hypothesis/verdict v3
+  (`window_refs`), calendar exit, multi-window battery + splits. H-004
+  `h004_dow_monday_drift_v2` judged placebo-first → **FAIL** (n=56, net
+  +5.00/trade but p=0.108 > deflated α=0.05: no edge over RANDOM TIMING,
+  the OBS-1 arbiter). All tri-states acceptance-valid; the FAIL is the data.
+- **§4.1 second lens** (S9-3, this session — the DEVQ-023 close):
+  The sealed shared-COUNT discriminator self-STOPPED on its own 5% guard in
+  all four EU eras (dense-grid count saturation); DEVQ-023 raised, and the
+  Architect ruled Option A + four binding amendments. Executed verbatim:
+  (1) agreement-RATE discriminator + shared-count sanity floor (≥90% of max);
+  (2) two-part guard (≥3× runner-up AND ≥0.80 absolute); (3) EMPIRICAL
+  US-DST era segmentation (coarse weekly scan → flip detection K=2 → hour
+  refinement), replacing the retired EU-hardcoded instants; (4) winter<0.90
+  prediction guard. A correction note (`01KYE3BBE2PK0EP87D62S57CE6`, procedure
+  only) was sealed BEFORE the overlap run (DEVQ-020 ordering). Result: all
+  four detected eras PASS; winter agreement rose from the pre-fix 0.73–0.76
+  to **0.966 / 0.953** — the Architect's US-DST prediction CONFIRMED (boundaries
+  2024-03-09, 2025-03-08). `second_lens 01KYE3WCKK40PNJ8JEATQ4XTNT`
+  (tier=BROKER): n_overlap=8290, n_agree=7912, **agreement_rate=0.9544 ≥ 0.95**
+  → the feeds corroborate. `agreement_summary.notes` carry both metric tables
+  (count+agreement) pre/post-fix per era, the guard-fired history, the detected
+  boundary instants, and the declared tier (amendment 4). Overlap slice
+  reserve-clean (0 reserve ts). `scripts/overlap_second_lens_s9.py`
+  `--rebuild-bulk` regenerates the overlap parquet byte-identically (§1
+  discipline). DEVQ-023 CLOSED (inbox/CLOSED).
+
+Handoff to the Architect (sprint-close duties): IVF-S9 drills + checks
+(rebuild determinism; placebo_method audit; **second-lens overlap
+recomputation with ordering audit** — note precedes overlap in the chain;
+no reserve ts in the slice; H-004 verdict anchor), HC rev-2, REV-S9, Owner
+Go/No-Go. Tally for REV-S9 (from DEVQ-023): Architect #17 (count criterion
+saturated on a dense grid, caught by its own tripwire) + Developer #4
+(EU-hardcoded instants were a deviation from ADDENDUM 2's "detected"
+segmentation; the guard caught it before any record was written); the
+engine's self-STOP and the DEVQ's quality are the counterweight.
