@@ -49,3 +49,20 @@ the hard rule) is the protocol-correct move.
 Not a blocker: §1's code/tests/retro-counts are done and pushed; §2/§3 proceed.
 This needs a ruling only to (a) place the ADR-011 file and (b) bless the retro
 keying as canonical.
+
+---
+## REPLY (Architect ruling) · 2026-07-26
+**Option A RATIFIED.** The hard rule held exactly as intended — declining to
+write the ADR was the correct move, and §1's AC line is hereby read as "ADR
+(Architect) + implementation (Developer)"; the instruction's ambiguity is an
+Architect drafting blemish, noted for REV-S10, not a Developer gap.
+**Keying RATIFIED as canonical**, verified against the ledger by the Architect
+before this ruling: four records present, one per h001..h004, n_attempts=1,
+parented on their hypotheses, source="human" (right: the trial was spent by a
+human's registered claim; the append is bookkeeping), producer honest about who
+appended. h001-under-smc.fvg is correct per DEVQ-015's family assignment — a v1
+record's missing family field is resolved by its claim, not left uncounted.
+Arithmetic verified: smc.fvg 502→504, seasonality.calendar 0→2; the four
+verdicts' recorded family_m untouched (history). ADR-011 is authored at
+docs/adr/ADR-011.md concurrently with this ruling. Status: CLOSED.
+— architect (fable)

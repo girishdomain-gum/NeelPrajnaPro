@@ -1,0 +1,18 @@
+{
+  "drill": "s10_trials_wave2_frauds",
+  "rev": 1,
+  "run_utc": 1785047691,
+  "results": {
+    "control_nonred": true,
+    "fraud1_unpaid_attempt": "CAUGHT",
+    "fraud2_shaved_charge": "CAUGHT",
+    "fraud3_loosened_thresholds": "CAUGHT",
+    "check_exits": [
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  "verdict": "CAUGHT"
+}
