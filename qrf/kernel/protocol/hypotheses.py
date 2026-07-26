@@ -39,6 +39,7 @@ from typing import Any
 import yaml
 
 from qrf.kernel.battery.placebo import PLACEBO_METHODS
+from qrf.kernel.corrections.trials import TrialCountLedger
 from qrf.kernel.errors import (
     SchemaViolation,
     TamperedHypothesisError,
@@ -396,6 +397,15 @@ class HypothesisRegistry:
         outcome_interpretations, family — DEVQ-014/015); only a record already in
         the ledger under the v1 schema (H-001) is exempt, and it is returned by
         the idempotency match rather than re-registered.
+
+        ARCH-010 §1 (ADR-011): registration SPENDS one family attempt. The same
+        flow that appends a NEW hypothesis appends exactly one ``trial_count``
+        ``{family, lineage, n_attempts: 1}`` parented on the new hypothesis and
+        sharing its instant, so the multiplicity ledger counts the attempt the
+        moment it is made — whatever the verdict later says. An idempotent return
+        (the hypothesis already exists) appends NOTHING: the attempt was counted
+        when the record was first written, and re-registration must never
+        double-count.
         """
         if isinstance(config, (str, Path)):
             config = self.load_config(config)
@@ -413,14 +423,29 @@ class HypothesisRegistry:
                 "family (schema v2, DEVQ-014/015); the pre-committed interpretation is "
                 "as load-bearing as the pre-committed thresholds"
             )
-        return self._store.append(
+        ts = event_ts if event_ts is not None else now_ns()
+        rec = self._store.append(
             "hypothesis",
             payload,
             producer=producer,
-            event_ts=event_ts if event_ts is not None else now_ns(),
+            event_ts=ts,
             parents=list(window_refs),
             schema_version=schema_version,
         )
+        # ARCH-010 §1: the registration attempt, counted in the same flow. family is
+        # guaranteed present (schema_version >= 2 enforced above). Parented on the
+        # hypothesis so every registration's trial is auditable back to its claim.
+        TrialCountLedger(self._store).bump(
+            scope=payload["scope"],
+            lineage=payload["lineage"],
+            n=1,
+            source="human",
+            family=payload["family"],
+            parents=[rec.record_id],
+            producer=producer,
+            event_ts=ts,
+        )
+        return rec
 
     # -- freeze verification --------------------------------------------------
     def verify_frozen(
