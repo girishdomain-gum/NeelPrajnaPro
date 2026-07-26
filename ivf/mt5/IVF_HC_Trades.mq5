@@ -24,8 +24,13 @@
 //| Run as SCRIPT on the XAUUSD H1 chart.                            |
 //+------------------------------------------------------------------+
 #property copyright "QRF IVF"
-#property version   "1.00"
+#property version   "2.00"
 #property script_show_inputs
+// rev 2 (REV-S8 OBS-2): caption line 1 theme-safe (chart foreground color,
+// never white-on-light); every caption line kept <= 63 chars (the MQL5
+// OBJ_LABEL text limit that silently truncated rev 1's MON-OK stamp); the
+// dow verdict on its OWN line. New note MONX (calendar-exit wave): entry
+// AND exit bars must both OPEN on a Monday.
 
 input string InpFile           = "HC_input.txt";
 input int    InpUtcOffsetHours = 0;      // server = UTC + offset (0 verified)
@@ -126,13 +131,13 @@ void OnStart()
       // exit early Tuesday — checklist_s8.md explains).
       bool dow_ok = true;
       string dowtxt = "";
-      if(note == "MON")
+      if(note == "MON" || note == "MONX")
         {
          int edow = DayOfWeekOf(e_open - InpUtcOffsetHours * 3600); // UTC
          int xdow = DayOfWeekOf(x_open - InpUtcOffsetHours * 3600);
-         dow_ok = (edow == 1);
-         dowtxt = StringFormat(" | entry dow=%d %s, exit dow=%d",
-                               edow, dow_ok ? "MON-OK" : "MON-BAD", xdow);
+         dow_ok = (edow == 1) && (note != "MONX" || xdow == 1);
+         dowtxt = StringFormat("eDOW=%d xDOW=%d %s", edow, xdow,
+                               dow_ok ? "MON-OK" : "MON-BAD");
         }
       bool ok = price_ok && dow_ok;
       checked++; if(ok) matched++;
@@ -147,16 +152,16 @@ void OnStart()
       ObjectSetInteger(0, tag+"_l", OBJPROP_WIDTH, 2);
       ObjectSetInteger(0, tag+"_l", OBJPROP_RAY_RIGHT, false);
 
-      string cap1 = StringFormat("%s | %s %s | entry %.2f exit %.2f%s",
-                                 label, dir > 0 ? "LONG" : "SHORT", f[0],
-                                 entry, exitp,
-                                 note == "" ? "" : " | " + note);
-      string cap2 = StringFormat("gross %s net %s | MT5 opens %.2f/%.2f | %s%s",
-                                 f[5], f[6], mt5_entry_open, mt5_exit_open,
-                                 ok ? "MATCH" : "MISMATCH", dowtxt);
+      string cap1 = StringFormat("%s %s %s %s", label,
+                                 dir > 0 ? "LONG" : "SHORT", f[0],
+                                 note == "" ? "" : note);
+      string cap2 = StringFormat("gross %s net %s | opens %.2f/%.2f",
+                                 f[5], f[6], mt5_entry_open, mt5_exit_open);
+      string cap3 = StringFormat("%s %s", ok ? "MATCH" : "MISMATCH", dowtxt);
       color vcol = ok ? clrLime : clrRed;
-      string caps[2]; caps[0] = cap1; caps[1] = cap2;
-      for(int c = 0; c < 2; c++)
+      color fg = (color)ChartGetInteger(0, CHART_COLOR_FOREGROUND);
+      string caps[3]; caps[0] = cap1; caps[1] = cap2; caps[2] = cap3;
+      for(int c = 0; c < 3; c++)
         {
          string ct = StringFormat("%s_t%d", tag, c);
          ObjectCreate(0, ct, OBJ_LABEL, 0, 0, 0);
@@ -165,15 +170,15 @@ void OnStart()
          ObjectSetInteger(0, ct, OBJPROP_YDISTANCE, 34 + 18 * c);
          ObjectSetString (0, ct, OBJPROP_TEXT, caps[c]);
          ObjectSetInteger(0, ct, OBJPROP_FONTSIZE, 10);
-         ObjectSetInteger(0, ct, OBJPROP_COLOR, c == 1 ? vcol : clrWhite);
+         ObjectSetInteger(0, ct, OBJPROP_COLOR, c == 2 ? vcol : fg);
         }
-      ObjectCreate(0, tag+"_t2", OBJ_LABEL, 0, 0, 0);
-      ObjectSetInteger(0, tag+"_t2", OBJPROP_CORNER, CORNER_LEFT_UPPER);
-      ObjectSetInteger(0, tag+"_t2", OBJPROP_XDISTANCE, 10);
-      ObjectSetInteger(0, tag+"_t2", OBJPROP_YDISTANCE, 70);
-      ObjectSetString (0, tag+"_t2", OBJPROP_TEXT, prov);
-      ObjectSetInteger(0, tag+"_t2", OBJPROP_FONTSIZE, 8);
-      ObjectSetInteger(0, tag+"_t2", OBJPROP_COLOR, clrSilver);
+      ObjectCreate(0, tag+"_t3", OBJ_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, tag+"_t3", OBJPROP_CORNER, CORNER_LEFT_UPPER);
+      ObjectSetInteger(0, tag+"_t3", OBJPROP_XDISTANCE, 10);
+      ObjectSetInteger(0, tag+"_t3", OBJPROP_YDISTANCE, 90);
+      ObjectSetString (0, tag+"_t3", OBJPROP_TEXT, prov);
+      ObjectSetInteger(0, tag+"_t3", OBJPROP_FONTSIZE, 8);
+      ObjectSetInteger(0, tag+"_t3", OBJPROP_COLOR, clrSilver);
 
       int width_bars = (int)ChartGetInteger(0, CHART_WIDTH_IN_BARS);
       bool visible = false;
@@ -200,7 +205,8 @@ void OnStart()
                      visible ? "" : ", NAVFAIL — evidence INVALID");
 
       ObjectDelete(0, tag+"_t0"); ObjectDelete(0, tag+"_t1");
-      ObjectDelete(0, tag+"_t2"); ObjectDelete(0, tag+"_e");
+      ObjectDelete(0, tag+"_t2"); ObjectDelete(0, tag+"_t3");
+      ObjectDelete(0, tag+"_e");
       ObjectDelete(0, tag+"_x"); ObjectDelete(0, tag+"_l");
      }
    ChartRedraw();

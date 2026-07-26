@@ -1,0 +1,85 @@
+{
+  "check": "s9_lens_multiwindow",
+  "rev": 1,
+  "run_utc": 1785036672,
+  "counts": {
+    "journal_records": 73,
+    "window_bars": [
+      4157,
+      4143
+    ],
+    "monday_markers_full": 104,
+    "monday_markers_union": 72,
+    "n_dropped_hole_mine": 0,
+    "h004_trades_rows": 56,
+    "anchor_h004": {
+      "n": 56,
+      "tri_mine": "FAIL",
+      "tri_recorded": "FAIL",
+      "eff": 0.05
+    },
+    "placebo_h004": {
+      "n_pass_recorded": 1,
+      "n_pass_mine": 1
+    },
+    "lens_mine": {
+      "n_overlap": 8290,
+      "n_agree": 7912,
+      "rate": 0.9544028950542822,
+      "eras": [
+        {
+          "shift": -2,
+          "n": 1122,
+          "agree": 1084,
+          "rate": 0.9661
+        },
+        {
+          "shift": -3,
+          "n": 3031,
+          "agree": 2889,
+          "rate": 0.9532
+        },
+        {
+          "shift": -2,
+          "n": 1076,
+          "agree": 1025,
+          "rate": 0.9526
+        },
+        {
+          "shift": -3,
+          "n": 3061,
+          "agree": 2914,
+          "rate": 0.952
+        }
+      ],
+      "boundaries_tie_sets": [
+        [
+          1709942400000000000,
+          1710122400000000000
+        ],
+        [
+          1735783200000000000,
+          1735786800000000000
+        ],
+        [
+          1741392000000000000,
+          1741572000000000000
+        ]
+      ]
+    },
+    "overlap_reserve_hits": 0,
+    "ordering": {
+      "note": 70,
+      "manifest": 71,
+      "lens": 72
+    },
+    "promotions_found": 0,
+    "verdicts_total": 4,
+    "burns_total": 5,
+    "second_lens_found": 1,
+    "cost_round_trip": 0.47
+  },
+  "red": [],
+  "amber": [],
+  "verdict": "GREEN"
+}
