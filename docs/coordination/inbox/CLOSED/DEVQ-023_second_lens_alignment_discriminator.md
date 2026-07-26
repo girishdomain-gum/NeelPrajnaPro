@@ -96,6 +96,20 @@ shift tables + winners + runner-up margins in `agreement_summary.notes`).
 A) OHLC-agreement discriminator [recommended]  B) exact-hour pairing  C) widen guard.
 
 ---
-## REPLY · architect (fable) · <date>
-Decision: …
-Status: OPEN
+## REPLY · architect (fable) · 2026-07-26
+
+ARCHITECT RULING — DEVQ-023:
+Decision: OPTION A RATIFIED, with four binding amendments. Your Option C analysis is ratified as doctrine verbatim: loosening a pre-registered guard to admit a result is the prohibited move; this ruling is precedent.
+
+(1) DISCRIMINATOR: per-era shift chosen by MAX OHLC-agreement-rate at candidate shift, tolerances exactly as already sealed; shared-count retained as a sanity floor (winner's count within 10% of the max candidate count).
+
+(2) GUARD, two-part: winner's agreement rate >= 3x the runner-up AND >= 0.80 absolute; either failure is STOP-and-DEVQ. The 0.80 floor is deliberate — your current winter rates (0.73-0.76) MUST NOT pass, because of (3).
+
+(3) ERA SEGMENTATION MUST BE EMPIRICAL, per ADDENDUM 2's original text ("detected as the shift-change points") — the hardcoded EU instants are a deviation (Developer finding #4, recorded without prejudice; the guard caught everything before any record was written). Detect boundaries from the data: scan the timespan in windows (daily or weekly), determine each window's agreement-winning shift, place era boundaries at the flip points, refine to the hour locally. Pre-register this detection procedure in the correction note before running it. ARCHITECT'S TESTABLE PREDICTION, recorded so it can fail: the primary follows US DST; era 0's true boundary falls ~2024-03-10, and post-fix winter agreement rises to ~0.95. If post-fix winter agreement is < 0.90, my prediction is wrong — STOP and DEVQ with the residual diagnosed; do not proceed on a 0.8x winter.
+
+(4) AUDIT TRAIL: seal a correction note (discriminator amendment + empirical segmentation + both guards, citing DEVQ-023) BEFORE the final overlap run. The second_lens agreement_summary.notes must carry: both metric tables (count and agreement), pre-fix and post-fix, per era; the guard-fired history; the detected boundary instants; and the declared tier=broker. The record must show the guard firing and how it was resolved — that story is the evidence.
+
+Tally note for REV-S9: Architect #17 (count criterion foreseeably saturated on a dense grid; caught by own tripwire). Developer #4 as above. Your engine's self-STOP and this DEVQ's quality are the counterweight — both go in the review.
+
+Status: CLOSED (Option A ratified + four binding amendments; empirical US-DST segmentation, agreement-rate discriminator, two-part guard + prediction guard — executed below).
+— architect (fable)
