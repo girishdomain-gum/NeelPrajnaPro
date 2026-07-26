@@ -1,69 +1,23 @@
 # QRF — Architect Handover (Fable → next Fable session)
-Rewritten 2026-07-26 at the **GENERATION 1 → 2 boundary** (GO-S10 + FREEZE)
+Rewritten 2026-07-27 at the **GENERATION 2 DESIGN-PHASE CLOSE** (architecture approved for ratification; freeze recommended; ratifications pending)
 Author: architect (fable)
 
 ## 0. WHERE YOU ARE
-**Generation 1 is COMPLETE and FROZEN.** Freeze note
-01KYEMDYSFRXWZ4TSFDK2BW7TJ (producer human:girish), journal **84
-records chain GREEN**. Sprints 1–10 closed (GO-S1..S10). Read, in this
-order: docs/reports/GENERATION_1_FINAL_REPORT.md (the permanent
-reference — architecture, verdict record, tally 17/4, limitations,
-Gen-2 recommendations), then docs/planning/GEN2_PLANNING.md (six
-charter questions AWAITING THE OWNER'S ANSWERS). **Nothing happens
-until the Owner answers them** — the pause is his own prescription. Do
-not draft ARCH-011 before the answers arrive; when they do, they ARE
-the Generation-2 charter and ARCH-011 is drafted from them for his
-review. inbox/OPEN empty (DEVQ-001..024 CLOSED). The Developer is
-idle; its next boot is the first Gen-2 session.
+**Generation 1 remains COMPLETE and FROZEN** (journal 84 records chain GREEN, freeze note 01KYEMDYSFRXWZ4TSFDK2BW7TJ, producer human:girish — verify, don't trust). **Generation 2's ARCHITECTURE PHASE is now CLOSED**: independently reviewed, APPROVED FOR RATIFICATION, with an Architecture Freeze recommended and observed by the design team. Nothing new binds yet — **ten Owner ratifications are pending** (see docs/method/GEN2_ESTATE_INDEX.md for the full manifest and list). The estate was committed to main as DRAFT in an Owner-declared write window on 2026-07-27. Read, in this order: (1) docs/method/GEN2_ESTATE_INDEX.md; (2) docs/method/VOLUME_0_THE_SCIENTIFIC_METHOD.md; (3) docs/architecture/GEN2_WHITEBOARD_EDITION_v4.md; (4) docs/planning/GEN2_EXECUTION_ROADMAP; (5) this file's §2–§4. GENERATION_1_FINAL_REPORT.md remains the permanent Gen-1 reference.
 
-## 1. Identity and rules (unchanged, proven over 10 sprints)
-You are Fable, Architect. Owner Girish (git bash; commands COMPLETE,
-BASH-READY, PLAIN). You write on main only in Owner-declared write
-windows; NEVER developer code (qrf/, scripts/); ivf/** is yours; ADRs
-are yours (DEVQ-024 held that boundary — keep it). Developer = Claude
-Code, new session per task, worktrees. **FREEZE DOCTRINE (binding):
-no new framework subsystems. Generation 2 builds knowledge — new
-concept families arrive as detectors + sealed hypotheses +
-applications on frozen machinery.** The one pre-flagged possible
-exception: a VIRGIN-unlock ceremony IF the Owner's Q5 answer requires
-it — and only via his explicit approval.
+## 1. Identity and rules (unchanged + design-phase additions)
+You are Fable, Architect. Owner Girish (git bash; commands COMPLETE, BASH-READY, PLAIN). Write on main only in Owner-declared write windows; NEVER developer code (qrf/, scripts/); ivf/** is yours; ADRs are yours. Developer = Claude Code, new session per task, worktrees. Gen-1 freeze doctrine stands, amended only by the narrow §6.1 amendment awaiting ratification. NEW standing rules from the design phase, binding on you: **Architecture Freeze** (no foundational change without an evidence-bearing ADR — ideas are no longer admission tickets, evidence is); **Three Gates** for any proposed foundation; **three-layer documentation** (Charter normative / ADR reasoning / Whiteboard narrative); **Ontological Discipline** (names never precede evidence — descriptive names only until establishment; classical terms are aliases, never identities); **unification-first** (simplify before expanding).
 
-## 2. The frozen estate (verify, don't trust — refs/journal/sessions)
-Ledger: 84 records; every dataset rebuilds sha-assert-equal from
-committed CSVs (ivf/mt5/) via the rebuild scripts. Reserves: 2024
-01KYB4SSD9… and 2025 01KYDE784NHY…, both untouched, typed-phrase
-protected. Lens: 01KYE3WCKK40PNJ8JEATQ4XTNT (Exness, tier=broker,
-0.9544; sealed procedure in note 01KYE3BBE2…). Clock doctrine: broker
-server time, piecewise US-DST alignment. Trial ledger complete
-(ADR-011): smc.fvg 1004 (α≈5e-5, deprioritized), seasonality.calendar
-2. Verdicts: 3 FAIL, 1 INSUFFICIENT, 0 promotions — reproducible to
-the last digit (IVF S8/S9/S10 all GREEN, drills all CAUGHT). Wave-2:
-39/500 leads = "the trend in 39 costumes" (Owner's read, GO-S10);
-candidates for a Gen-2 conversation, NOT claims. HC tooling:
-generation-4 rev-2 (label-driven, MONX). 853 tests · firewall GREEN.
+## 2. What Generation 2 IS (ratification pending)
+Mission: **Autonomous Market Science Platform — XAUUSD is the first laboratory; the mission is markets, permanently.** The design: a Market Science Pipeline (Measurements → Observations → Market Phenomena → Mechanisms → Hypotheses → Experiments → Evidence → Beliefs → Knowledge → Principles → Theory-named-never-promised); two type roots (**Record** immutable / **Scientific Object** versioned — knowledge evolves, history accrues); one universal lifecycle with α charged at Registered; the **ECF** (existence claims E1 rate / E2 arrangement / E3 association; null families N1 rotation / N2 block / N3 model-surrogate; verdicts operationalization-scoped; the definition-buys-its-own-evidence trap closed); the **MML** (MD-UBL decile descriptors on the shape simplex; aliases courtesy-only); the **Wave-1 slate** (Foundation: MML · RP-001 Merge-Revealed Geometry · RP-002 Price-Level Memory on ordinal k-bar extrema + robustness companion · RP-003 MCEC deferred pending its clustering-vs-states null); **Q5 lifecycle** (Publication → Forward Prediction Register → Continuous Evidence → Belief Evolution; VIRGIN Challenge ceremony sealed in S1, executed never except by separate Owner decision; trading outside Gen 2 entirely, LP/venue-tier lens prerequisite). Long arc: Ten Generations / five eras (Build the Judge → … → Test the Theory), Gens 5–10 vision-not-promise.
 
-## 3. Standing rules distilled (the 21 findings' residue)
-Verify prose against real artifacts and real data; tripwires on your
-own criteria, honored when they fire on you; predictions recorded so
-they can fail; calendar/session/seam arithmetic from data, never
-convention; rehearse every check end-to-end on raw data before
-shipping; machine-verify numerics before rulings; read back every
-write; drills before checks, clean control; DEVQs over guesses —
-refusal at a boundary is the system's finest behavior. Tally
-Architect 17 / Developer 4: keep counting honestly, including
-yourself. The full lessons live in the Final Report §3.
+## 3. Next actions (in order, gated on the Owner)
+1. Owner records the **ten ratifications** (manifest list) and declares the Architecture Freeze.
+2. You draft **ARCH-011** from the ratified charter (Q1–Q6 all now answered: Q1 verdicts+beliefs criterion; Q2 Wave-1 slate; Q3 XAUUSD-only + 2026 reserve by typed phrase; Q4 per-claim conditioning + sealed regime definitions S7; Q5 lifecycle; Q6 roadmap cadence/roles). Explanatory reasoning goes to ADRs, never charter text.
+3. **Sprint 1 (Ratify & Speak)** per docs/planning/GEN2_EXECUTION_ROADMAP: write window → estate becomes records; F0 Volume 0 + Constitution (Twelve Principles + P13 Informative Outcomes + Ontological Discipline + Ethos + five epigraphs + permanently-human powers incl. VIRGIN ceremony spec); F1 primitives session (T0 for the Developer); F2 decomposition. Then S2 MML → S3–S4 ECF certification (never rushed) → S5 RP-001 → S6 RP-002 (+MCEC null design) → S7 synthesis → S8 black-box acceptance (BB-1..6, sealed criteria, one unbroken campaign) + boundary ruling.
+4. Rhythm unchanged: instruction → Developer sessions → IVF (drill first) → HC → REV → Go/No-Go → GO+retro → REWRITE THIS. Standing tripwire: a sprint of foundations with no verdict progress = No-Go finding against the Architect.
 
-## 4. Next actions (in order, gated on the Owner)
-1. Owner reads the Final Report + answers GEN2_PLANNING.md Q1–Q6 (his
-   pace; do not prompt beyond a gentle reminder if asked).
-2. You draft ARCH-011 (the first Gen-2 instruction) FROM his answers,
-   as DRAFT with ◆ decisions where his answers leave choices; he
-   approves; only then the Developer boots ("Boot per CLAUDE.md,
-   execute ARCH-011 completely, starting with T0. Session log every
-   session.").
-3. The rhythm thereafter is unchanged and proven: instruction →
-   Developer sessions (DEVQs ruled in write windows) → IVF (drill
-   first) → HC → REV → Owner Go/No-Go → GO(+retro) → REWRITE THIS.
-Generation 1's last words, the Owner's: the framework no longer needs
-to know what the concept is — it already knows how to evaluate
-scientific claims about it. Your job now is to keep that true.
+## 4. Design-phase tally residue (keep counting honestly, including yourself)
+Two Architect positions were corrected by review and must stay corrected: (a) the v2 generic-platform mission (struck — mission is markets); (b) "don't design the VIRGIN ceremony yet" (reversed — registration-before-experimentation applies to the ceremony itself; design in the uncontaminated hour). The culture that caught them is the product: *ideas are retained because they survive disciplined criticism; a withdrawn hypothesis is evidence the process works.* The Chief Scientist's closing standard is yours to uphold: when an execution problem appears, ask "implementation defect, or evidence the architecture is insufficient?" — only the second reopens architecture, via ADR.
+
+Generation 2's last words before execution, the review board's: **the architecture should not succeed because its designers are wise; it should succeed because, when its designers are wrong, the framework gives them a disciplined way to discover it.** Your job is to keep that true — starting with yourself.

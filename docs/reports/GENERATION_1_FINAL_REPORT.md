@@ -43,7 +43,45 @@ its own mistakes. Subsystems, in the order they earned trust:
   standing proof of its worth: it found what two machine layers agreed
   on (the idealized-calendar error) because eyes see differently.
 
-## 2. The scientific record
+## 2. Generation 1 Design Principles (added at Owner review — the
+## philosophical foundation Generation 2 is bound to preserve)
+1. **Observations before interpretation.** Detectors record what was
+   knowable at the bar; meaning is assigned later, under seal, or not
+   at all. Prediction first, ontology later.
+2. **Registration before experimentation.** Thresholds, methods,
+   placebo constructions, agreement criteria — sealed BEFORE the data
+   is looked at; the ordering is auditable in the chain and audited.
+3. **Every attempt counts.** The scientific cost is paid at
+   registration, not at success; sweeps are charged at birth; the
+   garden of forking paths is priced at the gate (ADR-011).
+4. **Candidate discovery is not validation.** Screeners produce
+   candidates; only a sealed hypothesis, judged placebo-first against
+   its claim-matched null, produces a verdict.
+5. **History is append-only.** Nothing is rewritten; the ledger
+   learns by new records; corrections are themselves records.
+6. **Evidence must be reproducible, not merely archived.** Every
+   dataset rebuilds hash-identical from raw sources; every verdict
+   re-derives independently from normative texts.
+7. **Independence is a spectrum, declared and never upgraded.**
+   Corroboration requires an independently produced observation, and
+   the depth of that independence is on the record.
+8. **Reserves are inviolable and human-held.** Unseen data is
+   designated, and would only ever be unlocked, by the Owner's typed
+   hand — never by an AI's judgment.
+9. **Verification is layered, and the layers must disagree to be
+   useful.** Machine recomputation, adversarial drills with clean
+   controls, and human eyes each see what the others cannot.
+10. **Tripwires bind their authors.** Pre-registered guards are
+    honored especially when they fire on the one who wrote them;
+    predictions are recorded so they can fail.
+11. **Scientific integrity over positive findings.** A FAIL that
+    answers a question outranks a PASS that flatters one; zero
+    promotions honestly refused is a result, not an absence.
+12. **Boundaries hold under convenience.** Roles refuse work their
+    rules forbid, even when compliance would be easier — the system
+    is its behavior at exactly those moments.
+
+## 3. The scientific record
 4 hypotheses judged, 0 promoted, every verdict reproducible:
 - H-001 FVG follow-through — FAIL.
 - H-002 intra-week FVG — FAIL (n=637, p=0.93): the weekend question
@@ -62,7 +100,7 @@ candidates, not evidence. One corroborated lens; gate (c) payable,
 never yet paid — because nothing earned it. **Zero promotions is the
 proudest line in this report.**
 
-## 3. Findings tally and its lessons — Architect 17, Developer 4
+## 4. Findings tally and its lessons — Architect 17, Developer 4
 Twenty-one findings across ten sprints, every one caught BEFORE harm,
 most by the system's own tripwires. The recurring species and the
 rules they left behind:
@@ -79,7 +117,7 @@ rules they left behind:
   rules forbade. A system is its behavior when compliance would be
   easier.
 
-## 4. Known limitations (stated so Generation 2 inherits them honestly)
+## 5. Known limitations (stated so Generation 2 inherits them honestly)
 One instrument (XAUUSD), one timeframe (H1), ~2 years judged; broker
 server clocks (doctrine handles it; absolute UTC never needed but never
 available); retail cost model (0.47/oz round trip — a spread-sensitive
@@ -91,7 +129,7 @@ sampled, not exhaustive; and every negative result is conditioned on
 THIS market regime — 2024–25 trending gold — a fact the placebo
 measured (6/20, 1/20 null passes) but cannot remove.
 
-## 5. Recommendations for Generation 2
+## 6. Recommendations for Generation 2
 1. **Build knowledge, not framework.** The OS is frozen. New concepts
    (CRT, TBS, momentum, order flow, anything) arrive as families +
    detectors + sealed hypotheses — applications, not subsystems.
@@ -105,7 +143,7 @@ measured (6/20, 1/20 null passes) but cannot remove.
    OB break-bar gate, HC coverage expansion, additional lenses under
    the Independent-Observation-Lenses naming.
 
-## 6. Closing
+## 7. Closing
 "By the end of Generation 1, QRF no longer needs to know whether a
 future hypothesis is based on FVG, CRT, TBS, momentum, moving
 averages, order flow, or an entirely new market concept. It already

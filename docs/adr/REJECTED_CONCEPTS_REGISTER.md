@@ -1,0 +1,27 @@
+# QRF Rejected Concepts Register
+*An Architectural Decision Record for ideas considered and declined — preserving the reasoning, not just the outcome*
+
+Status: DRAFT for ratification alongside the Constitution. Append-only once ratified; entries are Records.
+Governing rule (proposed for Volume 1): **A foundational concept may be added only if it resolves a scientifically significant ambiguity that cannot be resolved by an existing concept.** Every rejection below passed through the Three Gates: (1) Scientific necessity — can QRF not function without it? (2) Architectural uniqueness — can an existing concept express it? (3) Implementation independence — concepts are never rejected to ease implementation, only for lacking unique scientific value.
+
+| # | Proposed concept | Origin | Decision | Reason (the gate it failed) |
+|---|---|---|---|---|
+| R-001 | Wide Market Atlas (rankable catalog incl. reserves) | Foundations doc discussion | Rejected for Gen 2; re-proposable with freeze amendment | Gate 1: adds search capability whose scientific cost (unbudgeted α, reserve exposure) exceeds its value; Narrow Atlas expresses the defensible portion |
+| R-002 | "Concept" as a type name | Original v1/v2 architecture | Rejected (v3) | Gate 2: subsumed by **Market Phenomenon** (candidate/established), which carries scientific commitment the older word lacked |
+| R-003 | Generic Scientific Platform as mission | v2 preamble; Part 15 framing | Rejected (v3) | Gate 1: no market-science capability gained; mission is markets permanently. The coupling *test* survives as an engineering lint rule |
+| R-004 | Standalone Reputation subsystem | Knowledge Graph six-capability list | Rejected (v2→v3) | Gate 2: a property of Belief (confidence composition), not an independent capability |
+| R-005 | Standalone Knowledge Decay subsystem | Same list | Rejected | Gate 2: a property of Belief (revalidation scheduling), executed by the Scheduler |
+| R-006 | Curiosity Engine as a named component | Orchestrator's original twelve | Rejected | Gate 2: one exploration-weight parameter of Planner policy; a dial, not a system |
+| R-007 | Autonomous Bootstrapping subsystem | Same twelve | Rejected | Gate 2: the first run of the loop — a startup procedure, not architecture |
+| R-008 | Detector Registry subsystem | Same twelve | Rejected | Gate 2: Scientific Objects of type Detector in the Knowledge Core |
+| R-009 | Twelve top-level Orchestrator subsystems | Foundations doc Part 6.5.2 | Rejected; six subsystems + four services adopted | Gate 2: half were advisory inputs to the Planner, not peers of it |
+| R-010 | Volume -1: The Philosophy of Market Science | Reviewer proposal, later withdrawn by proposer | Rejected | Gates 1+2: assumptions fully captured in Volume 0 §0; a separate volume adds a permanently contested boundary with Volume 0 and no unique scientific content |
+| R-011 | Scientific Evolution layer (formal history-of-understanding subsystem) | Reviewer observation | **Deferred, not rejected** — watch during implementation | Gate 1 not yet demonstrable: version history + immutable Records may suffice. Promote to design only if teams repeatedly ask "when/why did we stop believing X" and the Records can't answer economically |
+| R-012 | Question-centric reorganization of the whole method | Reviewer insight | **Deferred** to the Deferred Scientific Questions register (Volume 0 §8, item 1/6) | A sea-trial question: unanswerable by blueprint reasoning; no interim work may presuppose an answer |
+| R-013 | Machinery for self-revising research strategy | Evolving-strategy review | Rejected for Gen 2–3; Theme D territory | Gate 1: strategy evolution already has a mechanism — Owner-ratified generation-boundary reviews |
+| R-014 | Bayesian belief engine in Gen 2 | Q1 discussion | Deferred to Gen 3 candidate | Gate 1 at current scale: prose beliefs suffice below a verdict volume that demands arithmetic; the Record/Object split keeps the later upgrade clean |
+| R-015 | Latent/probabilistic phenomenon claim forms (hidden-state inference in ECF) | ECF review | **Deferred** — ECF §9 scope clause records the extension path | Gate 1 not yet: Gen 2's phenomena are detector-definable; extend only when a real latent phenomenon demands it, preserving the same sealed principles |
+| R-016 | Evidence Graph / Cross-Operationalization Consistency machinery | Operationalization discussion | **Deferred** — Volume 0 §4 records the network-of-evidence structure so nothing forecloses it | Gate 1 not yet: Gen 2 has one operationalization per phenomenon; formal network machinery earns design only when multiple certified detectors per phenomenon exist and prose can no longer carry their relations |
+| R-017 | Confidence Domains / domain-of-validity modelling ("where is this phenomenon real?") | Review-board close | **Deferred** to Gen 3 | Gate 1 not yet: with one instrument, domain structure is degenerate — becomes real the day a gold-established phenomenon is judged on a second instrument; until then, Observation Space scoping on every verdict carries the need |
+
+Standing procedure: any newly rejected or deferred foundational concept receives an entry here in the same write window as the decision, with its origin credited and its failing gate named. Six years from now, nobody re-litigates from scratch — they read the row, and if the *evidence* has changed, they reopen it through the front door.
