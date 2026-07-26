@@ -153,3 +153,55 @@ pre-registered variant (not a re-sweep), judged on the 2025-VIRGIN reserve, and
 it must clear ~5e-5 — a very high bar the honest ledger now enforces. The
 alternative the estate points to: a genuinely new instrument family (new claims,
 fresh multiplicity), which is a Generation-2 conversation.
+
+---
+## COMPLETION REPORT (developer) — 2026-07-26
+Developer scope of ARCH-010 executed end to end. Branch
+`claude/arch-010-t0-execution-1ab7e3`, merged to main.
+
+**T0.** Pruned the 9 merged worktrees from git's registry (only `main` +
+this worktree remain); the physical dirs were locked by other processes and
+could not be force-deleted — recorded honestly, branches left intact. Appended
+the GO-S9 note `01KYECDTTN4HDKQB4SMBXYEWAZ` (parented on GO-S8), via
+`scripts/t0_s10.py` (idempotent).
+
+**§1 — Trial accounting (implementation half).** `HypothesisRegistry.register`
+now appends exactly one `trial_count {family, lineage, n_attempts: 1}` in the
+SAME flow as a NEW hypothesis — parented on the hypothesis, sharing its instant;
+an idempotent return appends nothing (no double-count). RETRO-COUNT
+(`scripts/retro_trials_s10.py`, idempotent): four back-dated trials for
+h001..h004 (`01KYECR96S…`, `…97E…`, `…981…`, `…98R…`), each parented on its
+hypothesis at that hypothesis's own `event_ts`; H-001 (v1, no family) counted
+under `xauusd_h1/smc.fvg`. Result: `xauusd_h1/smc.fvg` 502→504,
+`xauusd_h1/seasonality.calendar` 0→2; the four existing verdicts' recorded
+`family_m` (0/502/0/0) UNTOUCHED. 6 tests (`tests/protocol/test_trial_accounting_s10.py`):
+exactly-one, idempotent-no-second, shared-ts, deflation-sees-it, sibling-deflation,
+distinct-families, and verdict-family_m-immutable-under-later-append.
+**ADR-011 doc NOT authored** — the one-direction rule / hard rule forbids the
+Developer writing `docs/adr/`; raised **DEVQ-024** (QUESTION) so the Architect
+authors the ADR file and blesses the retro keying. §1 code/tests are live and
+GREEN regardless of the doc.
+
+**§2 — Housekeeping.** Fixed `scripts/t0_s9.py:59` E501; added a "Session close
+list" to CLAUDE.md requiring `gen_state.py` regeneration every close (done this
+session — state now reflects journal 83 / 853 tests). The superseded primary2025
+export pair was already absent (nothing to delete).
+
+**§3 — Exploration Wave 2.** See the CANDIDATES REPORT above. Unchanged S4 suite
++ 500-grid over 2025-TRAINING, reserve-safe slice, 39/500 admitted (leads only,
+top net_sharpe 0.27), trial_count n=500 → family m=1004 / effective_alpha ~5e-5.
+NO hypothesis registered; 2025-VIRGIN untouched (0 burns). 3 tests
+(`tests/scripts/test_wave2_screen_s10.py`); parquet rebuilds byte-identically.
+
+**DoD.** Full suite **853 passed** (green) · firewall 8/8 GREEN · ruff clean
+repo-wide · journal 83 records, chain GREEN · both VIRGIN reserves untouched ·
+no writes outside permitted paths (scripts/, tests/, qrf/, journal via
+RecordStore.append/BulkStore, CLAUDE.md [root, not docs/], the sanctioned
+ARCH-010 appends, DEVQ-024, gen_state state file, session log). Branch merged to
+main and pushed.
+
+**Open for the Architect (sprint-close duties, per the instruction):** DEVQ-024
+(ADR-011 authorship + retro-keying blessing); IVF-S10 drills + checks; HC; REV-S10
+→ Owner Go/No-Go → GO-S10; then the GENERATION-1 FINAL REPORT + FREEZE note +
+Gen-2 planning. The trial ledger is now complete and the wave's candidates are
+recorded for the Sprint-11 conversation.
