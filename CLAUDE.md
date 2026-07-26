@@ -68,4 +68,12 @@ no writes outside permitted paths; completion report appended under
 `## COMPLETION REPORT (developer)`; final session log written; branch
 merged to main and pushed.
 
+## Session close list (ARCH-010 §2)
+At every session close, in addition to the DoD above:
+- Regenerate the state file: `.venv/Scripts/python.exe scripts/gen_state.py`
+  (DEVQ-001 = C; the ONLY sanctioned way to touch
+  `docs/handover/AI_PROJECT_STATE.md`). Commit + push the regenerated
+  file so the record's DERIVED rows (test count, journal count, branch)
+  stay current for the next session's boot.
+
 Start now: run the boot sequence.

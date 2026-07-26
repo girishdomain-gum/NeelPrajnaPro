@@ -56,7 +56,9 @@ def main() -> None:
     store = RecordStore(JOURNAL)  # verifies the chain on open
 
     for n in store.query(record_type="note"):
-        if n.payload["text"].startswith("Sprint 8 (Graduation + Placebo + Family Wave 1) signed off"):
+        if n.payload["text"].startswith(
+            "Sprint 8 (Graduation + Placebo + Family Wave 1) signed off"
+        ):
             print(f"GO-S8 note already present ({n.record_id}) — T0 is idempotent, nothing to do.")
             return
 
