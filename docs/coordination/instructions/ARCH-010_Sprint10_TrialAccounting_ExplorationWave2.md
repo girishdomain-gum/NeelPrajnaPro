@@ -80,3 +80,76 @@ binding recommendation, NOT ARCH-011 but:
    operating system. Freeze recorded as a note in the journal.
 3. **GENERATION 2 PLANNING** with the Owner → only then ARCH-011.
 Handover rewrite reflects the generation boundary.
+
+---
+## CANDIDATES REPORT (Exploration Wave 2 — developer, 2026-07-26)
+Appended per §3 AC ("a candidates report, families ranked, honest
+multiplicity figures, for the Owner"). This wave produced CANDIDATES only —
+**no hypothesis was registered** (registration is a Sprint-11 decision with
+the Owner). The 2025-VIRGIN reserve is UNTOUCHED (still VIRGIN-designated, 0
+burns reference it; total window_burn count unchanged at 5).
+
+### What ran
+The UNCHANGED S4 detector suite (`smc.fvg`) and the UNCHANGED 500-variant grid
+(`hold_bars 1..25 × strength_min 0.0..0.9 × {long,short}`) over the
+**2025-TRAINING** window `01KYDE784029NZNXPPN5PA8P8G` — a NEW year, same market,
+same telescope. Reserve-safe by construction: the primary feed parquet spans
+2024+2025 incl. the reserve, so the bars were sliced to the training interval
+FIRST (`ts_start <= ts < ts_end`, the battery's own rule) and events detected on
+that slice alone — an explicit guard asserts the slice ends before the VIRGIN
+start. Screened in 13.1 s.
+
+Records appended (journal 78 → 83, chain GREEN):
+- bars slice `01KYED4A1YP8AZZ4M87AHATBRY` (`xauusd_h1_primary_2025train`, 4143 bars)
+- FVG events `01KYED4AJ1MR7PSCNJXKB25Q6R` (851 events)
+- shortlist manifest `01KYED4QB699QHXNBB0YH93M4N` (500 ranked rows)
+- **trial_count `01KYED4QC5XYMRNMKP9AW2G8V6` (n=500, source=screener, family
+  `xauusd_h1/smc.fvg`)** — every configuration counted from birth (§1)
+- shortlist note `01KYED4QCVRZ38T0HARNGQVA4E` (declares metric + thresholds
+  BEFORE ranking: net_sharpe; min_trades 30, min_sharpe 0.10, net_total > 0)
+All three parquet datasets rebuild byte-identically via
+`wave2_screen_s10.py --rebuild-bulk` (sha assert-equal, no journal writes).
+
+### Families ranked, with honest multiplicity
+One family was searched (the S4 suite is single-family):
+
+| Family | Wave-2 trials | Family total m (after retro-count) | effective_alpha @ base 0.05 |
+|---|---|---|---|
+| `xauusd_h1/smc.fvg` | 500 | **1004** | **4.98e-5** |
+
+The honest burden is the headline. `xauusd_h1/smc.fvg` now carries **1004**
+recorded trials (502 from the 2024 estate + h001/h002 registrations retro-counted
+this sprint + 500 from this wave). Any future FVG claim on this market is judged
+at effective_alpha ≈ **5e-5**, not 0.05 — a ~1000× penalty. This is the ADR-011
+machinery working as designed: pointing the telescope at a new year does not buy
+back the multiplicity already spent on the family.
+
+### The leads (screen-admitted; NOT edges)
+39 of 500 variants cleared the screen's soft thresholds — **all long**, hold
+7–25, strength_min ≤ 0.3 (the short side never cleared the 30-trade floor: its
+few high-Sharpe variants had n=2). Best by the declared metric:
+
+| rank | hold | smin | side | n | net_total | net_sharpe |
+|---|---|---|---|---|---|---|
+| 36 | 23 | 0.3 | long | 60 | 581.9 | 0.271 |
+| 38 | 22 | 0.3 | long | 60 | 589.4 | 0.266 |
+| 37 | 21 | 0.3 | long | 60 | 512.1 | 0.267 |
+| 55 | 20 | 0.0 | long | 172 | 627.3 | 0.155 |
+
+**Read these as leads, not results.** Screen admission is a soft filter
+(min trades + positive net + a low Sharpe floor), NOT a significance test. The
+strongest admitted variant is net_sharpe ≈ 0.27 over 60 trades; a crude
+`net_sharpe·√n` scale tops out around **2.1** across all 39 — nowhere near what an
+effective_alpha of 5e-5 would demand of a registered claim. A clustered long-only,
+mid-hold, low-strength signature on one training year is exactly the shape a
+screener surfaces from noise; whether any of it survives a pre-registered,
+placebo-controlled, deflated verdict is the Sprint-11 question — to be decided
+WITH the Owner, on a fresh window, under the trial burden recorded above.
+
+### Recommendation to the Owner (Sprint-11 input, not a decision)
+The FVG family is now expensive to the point of near-prohibitive (m=1004). If a
+Wave-2 lead is ever promoted to a hypothesis, it should be a SINGLE, sharply
+pre-registered variant (not a re-sweep), judged on the 2025-VIRGIN reserve, and
+it must clear ~5e-5 — a very high bar the honest ledger now enforces. The
+alternative the estate points to: a genuinely new instrument family (new claims,
+fresh multiplicity), which is a Generation-2 conversation.
