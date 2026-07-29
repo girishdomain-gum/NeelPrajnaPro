@@ -3,25 +3,29 @@
      DERIVED rows (test suite, ADR range, journal count, git branch) are
      recomputed; its HAND rows and the two hand-maintained sections are
      preserved verbatim. Generated-at: 2026-07-26 05:13 UTC. Branch: claude/arch-010-t0-execution-1ab7e3. -->
+<!-- HAND rows refreshed 2026-07-29 by the Architect (Fable) in an
+     Owner-declared write window; DERIVED rows below are stale until
+     scripts/gen_state.py is re-run. -->
 
 ## Status
 | Area | Status |
 |---|---|
 | Architecture v1.1 | FROZEN |
-| Blueprint v1.0 / IVF v1.0 | Complete; editorial amendments queued (GO-S2) |
-| ADR register | ADR-001..010 |
-| Sprint 1 (Ledger core) | CLOSED — GO-S1 |
-| Sprint 2 (Instruments & calibration) | **CLOSED — GO-S2** (87 tests; VC rev3 GREEN on real XAUUSD; drill caught; DEVQ-005 ratified) |
-| Sprint 3 (Data plane) | INSTRUCTED — ARCH-003 open |
-| Journal | 83 records |
+| **Generation 1** | **CLOSED — GO-S10, 2026-07-26.** 4 hypotheses judged, 0 promoted; 21 findings tallied; Final Report: docs/reports/GENERATION_1_FINAL_REPORT.md |
+| ADR register | ADR-001..011 |
+| Journal | 83 records + freeze note |
+| Gen 2 planning | DRAFT awaiting Owner ratification — docs/planning/GEN2_EXECUTION_ROADMAP.md + GEN2_VV_ACCEPTANCE_PLAN.md (8 sprints, S1 Ratify & Speak first) |
+| NeelPrajna integration track | PROPOSED (parallel track) — docs/planning/NP_INTEGRATION_EXECUTION_ROADMAP.md, NP_INTEGRATION_VV_ACCEPTANCE_PLAN.md, NP_JOINT_AUTOMATION_PLAN.md; sprint instruction ARCH-NP-001 (DRAFT) in coordination/instructions/ |
+| Known doc drift | README.md and CHANGELOG.md still describe ~Sprint 2 (Vol III §7 finding); work order open to fold both into gen_state.py |
 | Remote/backup | GitHub private; main = post-S2 merge |
-| Sprints 4–8 | Specified in Blueprint §7 |
 | Test suite | 853 passed, 1 warning in 124.17s (0:02:04) (green) |
 | Git branch | claude/arch-010-t0-execution-1ab7e3 (1d5abd9) |
 
 ## Roles (ADR-008)
 Owner: Girish · Architect: Fable (Claude chat) · Developer: Claude Code
-(boot via CLAUDE.md) · Verifier: IVF + Owner.
+(boot via CLAUDE.md) · Verifier: IVF + Owner. Constitution v2.0 (DRAFT,
+awaiting ratification) adds two relay-only voices: Independent Reviewer
+(ChatGPT) and Data & Research Analyst (DeepSeek).
 
 ## Frozen — do not change without an ADR
 Architecture v1.1 · Blueprint §1 record schema · kernel firewall ·
@@ -29,26 +33,31 @@ IVF independence rules · window/burn semantics · one-direction rule ·
 DEVQ-005 DOW contract · OBS-4 close-time adapter contract.
 
 ## Current objective
-Developer executes ARCH-003 (T0 GO-S2 note, BulkStore+manifests,
-mt5_csv adapter with OBS-4 normalization, WindowLedger, gapped-feed
-calibration case, hand_audit rename). Architect in parallel: IVF S3
-checks + Drill S3.
+Owner ratification round: (1) Constitution/Scientific Model/Platform &
+Integration Architecture v2.0 (NeelPrajna estate), (2) Gen-2 planning
+pair, (3) the four ARCH-NP-001 preconditions (H-07 window designation,
+neelprajna α-budget, cost-model name, standing Auto-Adopt ruling). On
+ratification: one shared write window boots Gen-2 S1 and NP-S1 in
+parallel (NP-S1/S2 consume only Gen-1-certified machinery).
 
 ## Open questions
-Architecture Ch.15 (none block S3). Inbox: empty (DEVQ-001..005 CLOSED).
+The ratification checklist above. Inbox: empty (DEVQ-001..005 CLOSED).
 
 ## Read these first (in order)
 1. docs/coordination/PROTOCOL.md
 2. docs/handover/AI_PROJECT_STATE.md (this file)
-3. docs/coordination/instructions/ARCH-003_Sprint3_Data_Plane.md
-4. docs/coordination/reviews/GO-S2.md, REV-S2.md
-5. docs/implementation/Implementation_Blueprint_v1.0.md
-6. docs/adr/ (all)
+3. docs/reports/GENERATION_1_FINAL_REPORT.md
+4. docs/planning/GEN2_EXECUTION_ROADMAP.md + GEN2_VV_ACCEPTANCE_PLAN.md
+5. docs/planning/NP_INTEGRATION_EXECUTION_ROADMAP.md + NP_INTEGRATION_VV_ACCEPTANCE_PLAN.md + NP_JOINT_AUTOMATION_PLAN.md
+6. docs/coordination/instructions/ARCH-NP-001_H07_Integration_Sprint.md (DRAFT)
+7. docs/adr/ (all)
 
 ## Next immediate task (hand-maintained)
-Owner: commit+push Architect writes ("ARCH:" prefix), then boot a FRESH
-Developer session: "Run your boot sequence from CLAUDE.md, then execute
-ARCH-003 completely, starting with T0."
+Owner: review the ratification round in Current objective; type the
+ARCH-NP-001 preconditions you approve; rule Auto-Adopt (NONE, or accept
+exposure on the record); then declare the shared S1/NP-S1 write window.
+Also: re-run scripts/gen_state.py so the DERIVED rows above refresh, and
+commit this window's Architect writes with the "ARCH:" prefix.
 Owner rhythm: push before talking to Developer; pull before talking to
 Architect; confirm (main) in the prompt before Architect writes.
 

@@ -1,0 +1,7 @@
+# Today's static strategy, same tool (usable by the EA immediately)
+name:  T1_B1B6
+kind:  STATIC
+rr:    2.0
+trail: on
+bias:  B1+B6
+trig:  T1

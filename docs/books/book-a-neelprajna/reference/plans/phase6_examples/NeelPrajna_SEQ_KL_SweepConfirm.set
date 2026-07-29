@@ -1,0 +1,83 @@
+; NeelPrajna_SEQ_KL_SweepConfirm.set
+; ============================================================
+; A DYNAMIC (sequential) strategy carried entirely inside a
+; standard MT5 preset — design doc v1.1 §11.2. Load via the F7
+; inputs dialog → Load, or select in the Strategy Tester.
+;
+; This ONE file fully defines the run: normal EA inputs first,
+; then the InpSeq_* block that IS the strategy (D13: Kind=SEQ
+; means the sequence overrides the per-gate enables for entry
+; logic; per-gate enables below still feed the compute mask).
+;
+; NOTE ON FORMAT: when MetaTrader itself saves a .set, numeric
+; and bool lines gain optimizer metadata suffixes in the form
+;   value||start||step||stop||Y
+; (shown on a few lines below as MT5 would write them). String
+; inputs never carry the suffix — which is exactly why the
+; sequence steps ride safely as strings.
+; STATUS: ILLUSTRATIVE — Phase 6a target; InpSeq_* inputs do
+; not exist in the EA yet.
+; ============================================================
+
+; ==== EA Settings ====
+InpDebugMode=false||false||0||true||N
+InpLogToFile=true||false||0||true||N
+InpMagicBase=26071100||26071100||1||26071100||N
+
+; ==== Money Management ====
+InpStartBalance=10000.0||10000.0||1000.0||100000.0||N
+InpLotBase=10000.0||10000.0||1000.0||100000.0||N
+InpAutoLot=true||false||0||true||N
+InpOverrideLot=0.01||0.01||0.01||1.0||N
+
+; ==== Risk / Reward ====
+InpMaxRiskPct=1.5||1.5||0.1||1.5||N
+InpEnableTP=true||false||0||true||N
+InpRRRatio=2.0||2.0||0.5||4.0||N
+InpUseCandleSL=true||false||0||true||N
+InpSLMinPoints=0||0||10||500||N
+
+; ==== Trade Filters ====
+InpMaxSpreadPoints=0||0||10||500||N
+InpAutoSpreadMult=3.0||3.0||0.5||6.0||N
+InpMaxPositions=1||1||1||3||N
+
+; ==== Breakeven & Trailing ====
+InpEnableBE=true||false||0||true||N
+InpEnableTrail=true||false||0||true||N
+
+; ==== Group Stop Loss ====
+InpEnableGroupSL=true||false||0||true||N
+
+; ==== Panel ====
+InpDashX=15||15||5||50||N
+InpDashY=15||15||5||50||N
+
+; ---- per-gate enables: still present, still honoured for the
+; ---- COMPUTE MASK (which gates run), but NOT for entry logic
+; ---- while Kind=SEQ (design doc D13). The sequence below only
+; ---- references B1 B3 B6 T1 T3 T8, so only those must be on.
+InpB1_Enabled=true||false||0||true||N
+InpB2_Enabled=false||false||0||true||N
+InpB3_Enabled=true||false||0||true||N
+InpB4_Enabled=false||false||0||true||N
+InpB6_Enabled=true||false||0||true||N
+InpT1_Enabled=true||false||0||true||N
+InpT2_Enabled=false||false||0||true||N
+InpT3_Enabled=true||false||0||true||N
+InpT4_Enabled=false||false||0||true||N
+InpT5_Enabled=false||false||0||true||N
+InpT7_Enabled=false||false||0||true||N
+InpT8_Enabled=true||false||0||true||N
+InpT9_Enabled=false||false||0||true||N
+
+; ==== Sequential Strategy (Phase 6, NEW) ====
+; The strategy itself. Strings — no optimizer suffix.
+InpSeq_Kind=SEQ
+InpSeq_Name=KL_SweepConfirm
+InpSeq_RR=2.0||2.0||0.5||4.0||N
+InpSeq_Trail=true||false||0||true||N
+InpSeq_Step1=GUARD:B3+B6 ADV:T3 WIN:0 INV:NONE
+InpSeq_Step2=GUARD:B6 ADV:T1|T8 WIN:6 INV:B1
+InpSeq_Step3=
+InpSeq_Step4=

@@ -1,0 +1,14 @@
+# KL_SweepConfirm.seq — the motivating Phase-6 case (design doc §1.3)
+#
+# Trade idea: price is sitting at a key level in a quality trend channel.
+# A liquidity sweep + FVG (T3) INITIATES the chase; a candlestick pattern
+# (T1) or CMH pattern (T8) must CONFIRM within 6 bars while channel
+# quality (B6) still holds. If the Nexis MA bias (B1) flips against the
+# chase at any point, the setup is dead — reset to idle.
+#
+# Grammar: design doc v1.1 §4 / §11. Masks use the EG_BIT_* vocabulary.
+# STATUS: ILLUSTRATIVE — Phase 6a target format; not yet parsed.
+
+KIND=SEQ NAME=KL_SweepConfirm RR=2.0 TRAIL=on
+STEP1 = GUARD:B3+B6 ADV:T3     WIN:0  INV:NONE
+STEP2 = GUARD:B6    ADV:T1|T8  WIN:6  INV:B1

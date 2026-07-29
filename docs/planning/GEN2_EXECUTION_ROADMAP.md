@@ -49,3 +49,5 @@ With the black box passed: whether Gate-A evidence has begun accumulating (verdi
 
 ---
 *Anchor: **the dry dock proved the design; the black box proves the instrument; only the market proves the science.***
+
+> **Cross-track note — appended 2026-07-29 (Architect, Owner-declared write window).** A parallel NeelPrajna-integration track now exists in this directory: NP_INTEGRATION_EXECUTION_ROADMAP.md, NP_INTEGRATION_VV_ACCEPTANCE_PLAN.md, NP_JOINT_AUTOMATION_PLAN.md, with its sprint instruction ARCH-NP-001 (DRAFT) in coordination/instructions/. NP-S1/NP-S2 consume only Generation-1-certified machinery and may run in parallel with S2–S4 above; the shared boot is this roadmap's S1 ratification window. ARCH numbering for that track is namespaced ARCH-NP-### because this roadmap reserves ARCH-011 — a collision the Architect committed and tallied before namespacing was adopted. Synchronization table: NP roadmap §4.

@@ -1,0 +1,18 @@
+# StructBreak_Retest3.seq — a THREE-step chase (K=3, the D2 cap is 4)
+#
+# Trade idea: SMC structure (B4) holds → a trendline break (T4) fires
+# the initiation → then a sweep+FVG (T3) marks the retest within 10
+# bars → finally a CMH or CCC pattern (T8|T9) confirms within 6 bars.
+# The structure gate (B4) is BOTH the Step-1 guard and the standing
+# invalidator from Step 2 on: if structure flips mid-chase, everything
+# resets — a retest of broken structure that then re-breaks the other
+# way is exactly the trap this avoids.
+#
+# Demonstrates: GUARD:NONE on the final step (structure protection is
+# carried by INV, so the last confirm needs no fresh static guard).
+# STATUS: ILLUSTRATIVE — Phase 6a target format; not yet parsed.
+
+KIND=SEQ NAME=StructBreak_Retest3 RR=1.8 TRAIL=off
+STEP1 = GUARD:B4    ADV:T4     WIN:0  INV:NONE
+STEP2 = GUARD:NONE  ADV:T3     WIN:10 INV:B4
+STEP3 = GUARD:NONE  ADV:T8|T9  WIN:6  INV:B4
