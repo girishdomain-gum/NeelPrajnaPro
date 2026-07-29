@@ -1,0 +1,56 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730005623
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-027_place_reports_docx.ps1
+Process ID: 14384
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-027_place_reports_docx.log
+=== T-027 place Reports docx twin === 2026-07-30T00:56:23.3654175+05:30
+--- [1] fetch from Downloads ---
+placed docs\reports\NeelPrajnaPro_Reports-v1.0.docx
+--- [2] verify twin invariant ---
+basenames: NeelPrajnaPro_Reports-v1.0
+files: NeelPrajnaPro_Reports-v1.0.docx, NeelPrajnaPro_Reports-v1.0.md
+--- [3] commit docs + ops together ---
+git : warning: in the working copy of 'ops/runlogs/T-025_place_decisions_docx.log', CRLF will be replaced by LF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-027_place_reports_docx.ps1:37 char:1
++ git add docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'ops/runlogs/T-026_place_research_docx.log', CRLF will be replaced by LF the next time Git touches it
+[main c8a3f78] T-027: Reports docx twin placed (whiteboard render, 3 diagrams)
+ 3 files changed, 28 insertions(+)
+ create mode 100644 docs/reports/NeelPrajnaPro_Reports-v1.0.docx
+ create mode 100644 ops/runlogs/T-026_place_research_docx.log
+ create mode 100644 ops/runlogs/T-027_place_reports_docx.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-027_place_reports_docx.ps1:42 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   624ce8f..c8a3f78  main -> main
+c8a3f78 T-027: Reports docx twin placed (whiteboard render, 3 diagrams)
+624ce8f T-025: attach run log
+5430f29 T-025: Decisions docx twin placed (whiteboard render, 3 diagrams)
+
+RESULT: OK
+**********************
+Windows PowerShell transcript end
+End time: 20260730005627
+**********************
