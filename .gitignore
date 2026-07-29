@@ -38,3 +38,6 @@ experiments/
 *.ipynb_checkpoints/
 
 # NOTE: uv.lock is intentionally NOT ignored — it must be committed.
+
+# ops scratch area - never tracked (F-19 standing rule)
+ops/incoming/
