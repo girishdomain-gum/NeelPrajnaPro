@@ -48,7 +48,7 @@
 
 **NP-D-007 · Single home + pause.** F:\NeelPrajnaPro authoritative for everything; F:\QRF frozen archive; F:\NeelPrajna paused, execution-only, scoped unpause per need.
 
-**NP-D-008 · Vision ruling.** The two-organ destination architecture is this cycle's TARGET, evidence-gated box by box (VISION.md); the Chief Scientist wall is permanent.
+**NP-D-008 · Vision ruling.** The two-organ destination architecture is this cycle's TARGET, evidence-gated box by box (the docs\vision\ master); the Chief Scientist wall is permanent.
 
 **NP-D-009 · One document per thing.** Versions live inside documents and in git; folders hold one current master; superseded versions auto-archive; a second changelog anywhere is a finding.
 

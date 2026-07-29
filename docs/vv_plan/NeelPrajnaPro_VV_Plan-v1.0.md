@@ -1,7 +1,7 @@
 # NeelPrajna × QRF Integration — Verification, Validation & Acceptance Plan
 *Four levels of assurance for the neelprajna concept family: unit testing · verification · validation · black-box acceptance*
 
-Status: DRAFT, conditional on ratification. Companion: NP_INTEGRATION_EXECUTION_ROADMAP.md (sprint mapping lives there). Presentation copy: NP_INTEGRATION_VV_ACCEPTANCE_PLAN.docx.
+Status: DRAFT, conditional on ratification. Companion: the docs\execution_plan\ master (sprint mapping lives there). Presentation copy: to be built (see docs\architecture\ for the twin pattern).
 
 **Governing rule, from Volume 0 and the Gen-1 record:** trust follows demonstration — for claims, for instruments, for the platform, and now for a migrated family. Origin grants no shortcuts: NeelPrajna's hypotheses being "already tested" by the bespoke stack earns them nothing here; the bespoke results are treated as *predictions to compare against*, never as evidence. Every pass threshold is sealed before any test runs. Every failure is a tallied finding: root cause, fix, re-run from a clean state — never explained away.
 
@@ -58,7 +58,7 @@ Status: DRAFT, conditional on ratification. Companion: NP_INTEGRATION_EXECUTION_
 
 ## 5. Level 4 — Black-Box Acceptance (NP-S4)
 
-The examiner (Architect, with the Owner holding answer keys) feeds the family blinded inputs and grades outputs only.
+The examiner (Architect, with the Owner holding answer keys) feeds the family blinded inputs and grades outputs only. **Six** drill classes, not five — NB-6 added 2026-07-29.
 
 **NB-1 · Blinded planted-sweep trial (sensitivity).** Synthetic exports, format-indistinguishable from real MT5 CSVs, with injected sweep-reversal structure at certified strengths, interleaved with empty sets. Detection → registration → Battery → verdict, operator blind. Pass: plants ESTABLISHED/PASS at the predicted rate.
 
@@ -70,10 +70,12 @@ The examiner (Architect, with the Owner holding answer keys) feeds the family bl
 
 **NB-5 · Tamper & boundary drills (integrity).** In a sacrificial copy: an edited NP record; a registration whose hash post-dates its data access; a detector run touching one bar of the R6 withheld window; a second cost-model definition slipped under the frozen name; one evidentiary invocation of the retired bespoke stack. Pass: chain verification, seal-order audit, WindowLedger, the venues loader, and the tripwire in Roadmap §1 each catch their plant; the untampered control raises nothing.
 
+**NB-6 · Interpretation-Lock (ontological discipline).** *(Added 2026-07-29 — adopted from the DeepSeek IVF document's BB-6, a clean non-conflicting fit.)* A human-led sweep of every NP record and verdict for explanatory drift: no classical-pattern names smuggled in outside a declared alias registry, no mechanism claimed before it's earned, every verdict scoped to exactly the operationalization that was registered — never a broader claim than the sealed definition supports. Pass: zero violations found; any violation found is corrected by an appended record (never an edit), tallied as a finding, and the sweep re-run after the fix.
+
 ### 5.1 Grading and the acceptance decision
 1. Each drill class passes or fails against criteria sealed before the campaign begins.
 2. Any failure: tallied finding → root cause → fix → full re-run of the failed class from a clean state.
-3. The neelprajna family is ACCEPTED only when all five classes pass in one unbroken campaign. Only then do the console unblock and any runtime-consumption design conversation begin (Roadmap §3) — and arming anything that touches the real account remains, at every level, the Owner's typed decision alone.
+3. The neelprajna family is ACCEPTED only when all **six** classes pass in one unbroken campaign. Only then do the console unblock and any runtime-consumption design conversation begin (Roadmap §3) — and arming anything that touches the real account remains, at every level, the Owner's typed decision alone.
 
 ---
 *Anchor: **a migrated family earns trust the way everything here earns trust — planted frauds first, clean control mandatory, and the old judge's opinion is a prediction, not a verdict.***

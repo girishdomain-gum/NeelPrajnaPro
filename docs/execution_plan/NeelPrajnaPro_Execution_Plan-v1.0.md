@@ -4,7 +4,7 @@
 ---
 
 ## 0. CURRENT STATE (rewritten at every sprint boundary — this is the handover)
-**As of 2026-07-29 evening:** Repo bootstrapped, full Gen-1 history on GitHub (commit 3609350+). Estate RATIFIED (Owner memo in JOURNAL). H-07 definition SEALED (§3 below). Rulings in force: Auto-Adopt DISABLE pending hysteresis · cost model `xauusd_retail_h07` · claim form E2 · vision ruling (VISION.md). Legacy repos paused. **Blocking items, all Owner, all typed lines: (1) H-07 window designation, (2) neelprajna α-budget, (3) Go/No-Go on Sprint NP-S1.** On Go: Developer boots per §2 boot sequence.
+**As of 2026-07-29 evening:** Repo bootstrapped, full Gen-1 history on GitHub (commit 3609350+). Estate RATIFIED (Owner memo in the journal master). H-07 definition SEALED (§3 below). Rulings in force: Auto-Adopt DISABLE pending hysteresis · cost model `xauusd_retail_h07` · claim form E2 · vision ruling (the docs\vision\ master). Legacy repos paused. **Blocking items, all Owner, all typed lines: (1) H-07 window designation, (2) neelprajna α-budget, (3) Go/No-Go on Sprint NP-S1.** On Go: Developer boots per §2 boot sequence.
 
 ## 1. The phase ladder
 ```
