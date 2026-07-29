@@ -1,5 +1,7 @@
 # Phase 6 examples — Sequential Strategy Engine (design doc v1.1)
 
+> **Relocation note (2026-07-29):** originally shipped under `docs\books\book-a-neelprajna\reference\plans\phase6_examples\` (per the "kept in docs/, not NPSU_Strategies/" rationale below, from the Book-A design doc). Moved here under `qrf\trading\concepts\neelprajna\reference_configs\` per the NeelPrajnaPro docs-structure law (docs\ holds documentation only; these are code-adjacent config/strategy artifacts the Developer will want at hand for the H-07 detector work). The original "why docs/ not NPSU_Strategies/" reasoning below is Book-A's own design intent and is left untouched (provenance); the seqgen.py path is Book-A's own tool at F:\NeelPrajna (paused) and is unaffected by this move.
+
 Illustrative artifacts for the SSE design. NOTHING here is parsed by
 the EA yet — the InpSeq_* inputs and the SeqCodex parser arrive with
 stage 6a. Kept in docs/ (not NPSU_Strategies/) on purpose.
