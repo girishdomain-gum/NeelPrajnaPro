@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Version** | 2.0 (supersedes DeepSeek Platform Architecture v1.0 and the DeepSeek Research Architecture; absorbs Volume IV as the frozen basis per REV F-3) |
-| **Date** | 2026-07-29 · **Status** | DRAFT — awaiting Owner ratification · **Layer** | Charter (normative); §8 is ASPIRATIONAL |
+| **Date** | 2026-07-29 · **Status** | **RATIFIED by the Owner, 2026-07-29** (with §4.5 Knowledge Publication Boundary expansion incorporated per the ratification memo) · **Layer** | Charter (normative); §8 is ASPIRATIONAL |
 | **Predecessors** | Constitution v2.0 · Scientific Model v2.0 · **Successor** | ARCH-NP-001 (first sprint) |
 
 ---
@@ -57,6 +57,17 @@
 
 4.4 Publication semantics are **batch release, not tick-time heartbeat**. Freshness is a release date, and the runtime shall treat a stale release as stale knowledge, never extrapolate it.
 
+4.5 **The Knowledge Publication Boundary, expanded (Owner ruling, 2026-07-29).** QRF publishes *what it knows*, never *how it knows*. The boundary in one table:
+
+| QRF publishes (across Contract v2) | QRF keeps internal (never crosses) |
+|---|---|
+| Pattern ID, applicability scope, regime conditioning | Internal belief state and belief-update mechanics |
+| Verdict-sealed statistics — win rate, expectancy, confidence — **computed inside the sealed evidence of the verdict and frozen at the release date** | Raw observations, event streams, calibration and drill state |
+| Recommendations (advisory objects; never orders) | The decision-making process that produced them |
+| Knowledge (validated: Battery-verdicted, versioned, dated) | Knowledge-in-progress: candidates, screener output, unsealed analyses |
+
+Two clarifying rules so this table and §§3.3–3.4 of the Constitution can never be read against each other: (a) any statistic in a published object is the **frozen, sealed-verdict** figure — a published "win rate" is the one inside the verdict's evidence at release, never a rolling or live figure; (b) the boundary protects both organs symmetrically — the runtime cannot reach into Kernel internals, and the Kernel cannot see runtime internals beyond the Execution-Feedback and Performance observation objects the contract defines.
+
 ## 5. What Stays Separate, On Purpose
 
 | Stays with NeelPrajna (NP-ADR-005 governance; lives at F:\NeelPrajna) | Moves to / lives in the Kernel (this repository) |
@@ -87,9 +98,9 @@
 
 7.3 Every sprint follows the ratified rhythm: ARCH → Developer sessions → IVF (drill first) → HC → REV → Owner Go/No-Go → GO + retro → handover rewrite.
 
-## 8. ASPIRATIONAL Tier (recorded intent; not binding)
+## 8. TARGET Tier (re-tiered from ASPIRATIONAL by the Owner's vision ruling, 2026-07-29 — see VISION.md)
 
-The living-organism framing; a continuous shared heartbeat; a populated Knowledge Graph acting as research collaborator; the Research Console's KNOWLEDGE/EVIDENCE lenses bound to live NeelPrajna beliefs (DESIGNED — unblocked only after migration per Console spec v1.3's stated precondition); SEA application books beyond markets. None of these may be cited as authority for any build decision.
+The two-organ destination architecture — Pattern Learning, Knowledge Graph, Pattern Evolution, Continuous (event-driven) Communication, the Research Console's KNOWLEDGE/EVIDENCE lenses, SEA application books — is the TARGET of this development cycle: each element becomes real only through the sealed sprints VISION.md maps it to, and none may be cited as existing before its verdict-bearing artifact does. Tick-time streaming of unsealed statistics remains excluded permanently (§4.3–§4.5).
 
 ## 9. Change Record (v1.0 → v2.0)
 

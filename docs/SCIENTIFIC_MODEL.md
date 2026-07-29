@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Version** | 2.0 (supersedes DeepSeek draft v1.0; retains its strongest content per REV §"what to retain") |
-| **Date** | 2026-07-29 · **Status** | DRAFT — awaiting Owner ratification · **Layer** | Charter (normative) |
+| **Date** | 2026-07-29 · **Status** | **RATIFIED by the Owner, 2026-07-29** · **Layer** | Charter (normative) |
 | **Predecessor** | NEELPRAJNA_CONSTITUTION_v2.0.md · **Successor** | PLATFORM_INTEGRATION_ARCHITECTURE_v2.0.md |
 
 ---

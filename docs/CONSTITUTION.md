@@ -6,7 +6,7 @@
 | **Document** | NeelPrajna Constitution |
 | **Version** | 2.0 (supersedes DeepSeek draft v1.0 — see Change Record, §9) |
 | **Date** | 2026-07-29 |
-| **Status** | DRAFT — awaiting Owner ratification |
+| **Status** | **RATIFIED by the Owner, 2026-07-29** (Knowledge Publication Boundary expanded in Architecture §4.5 per the same memo) |
 | **Layer** | Charter (three-layer rule: this document carries shall/must/may only; reasoning lives in ADRs and the REV record; teaching lives in the Whiteboard tier) |
 | **Governing standards** | ROLES_COMMUNICATION_EXPRESSION.md (as amended, §5 below) · TEACHING_AND_KNOWLEDGE_TRANSFER_STANDARD-v5.md |
 

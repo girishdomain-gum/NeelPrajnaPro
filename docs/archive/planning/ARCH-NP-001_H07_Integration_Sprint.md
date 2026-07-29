@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Type** | Sprint instruction (Architect → Developer) · **Status** | DRAFT — sealed on Owner Go |
+| **Type** | Sprint instruction (Architect → Developer) · **Status** | RATIFIED 2026-07-29 pending seal — seals on Owner Go with H07_SEALED_MECHANICAL_DEFINITION_v1.0.md (same directory) incorporated by reference |
 | **Date** | 2026-07-29 · **Author** | Fable (Architect) |
 | **Governed by** | Constitution v2.0 · Scientific Model v2.0 · Platform & Integration Architecture v2.0 |
 | **Sprint rhythm** | ARCH → Developer sessions (fresh session, worktree) → IVF (drill first) → HC → REV → Owner Go/No-Go → GO + retro → handover rewrite |
@@ -11,17 +11,18 @@
 
 - [ ] **Owner:** window designation typed for the market time underlying H-07's 324-trade population (TRAINING or EXPLORATION; it is seen data and cannot be VIRGIN).
 - [ ] **Owner:** α-budget ceiling set for the `neelprajna` family.
-- [ ] **Owner ruling (REV F-13):** Auto-Adopt confirmed `NONE` on the real account, or exposure accepted on the record. (Out of this sprint's scope but a standing safety ruling; recorded in GO.)
-- [ ] **Architect+Owner:** cost-model reconciliation ruled — one `configs/venues.yaml` entry (proposed name: `xauusd_retail_np_v1`) reconciling QRF's $0.47/oz round-trip with NeelPrajna's 26-tick figure; definition frozen once cited.
+- [x] **Owner ruling (REV F-13), RULED 2026-07-29:** Auto-Adopt **DISABLE pending hysteresis** — `InpADV_AutoAdopt = NONE` default; Advisor remains advisory-only; re-enable per strategy only after ECF survival + Battery-passed pre-registered hypothesis + explicit Owner arming. Recorded in OWNER_RULINGS; the EA-side default change is queued for the first lab unpause (legacy repo paused).
+- [x] **Architect+Owner, RULED 2026-07-29:** cost model named **`xauusd_retail_h07`** (Owner's name, superseding the Architect's proposed `xauusd_retail_np_v1`) — one `configs/venues.yaml` entry reconciling QRF's $0.47/oz round-trip with NeelPrajna's 26-tick figure; FROZEN once cited by any ledger record; changes require a new name.
+- [x] **Architect, DELIVERED 2026-07-29:** H-07 sealed mechanical definition v1.0 (per Owner requirement) — events, frozen parameters from `T3_SweepFVGGate.mqh` source, Observation Space, claim form **E2** per Owner ruling, null design **N2** with rationale.
 
 ## 1. Scope (H-07 only)
 
 Port **H-07 (equal-high/low sweep reversal)** — NeelPrajna's most evidence-rich hypothesis (324 trades; Stage-3 feature stability PASS on record) — into the real Kernel and judge it with the real EvidenceBattery.
 
 **Deliverables**
-1. `qrf/trading/concepts/neelprajna/liquidity_sweep.py` — detector implementing the standard Detector contract (EventFrame column spec; anti-hindsight invariant property-tested), ported from `LiquiditySweepGate.mqh` semantics via `np_feature_service.py` as reference only (it is not normative).
+1. `qrf/trading/concepts/neelprajna/liquidity_sweep.py` — detector implementing the standard Detector contract (EventFrame column spec; anti-hindsight invariant property-tested), implementing **exactly the sealed definition's §1 events and §2 frozen parameters**, ported from `T3_SweepFVGGate.mqh` pool-engine semantics (`np_feature_service.py` as reference only; neither is normative — the sealed definition is).
 2. `planted_cases()` — planted-truth and clean-control calibration cases for the detector (Architecture §7.1). The detector must catch every planted fraud and stay silent on clean data before step 4 runs.
-3. `configs/hypotheses/h007_np_liquidity_sweep.yaml` — sealed registration: claim, scope (full 12-layer Observation Space), n-floor, success criteria, placebo type, cost model name. Registration spends the attempt (TrialCountLedger).
+3. `configs/hypotheses/h007_np_liquidity_sweep.yaml` — sealed registration: claim, scope (full 12-layer Observation Space per the sealed definition §3), n-floor, success criteria, placebo type, cost model **`xauusd_retail_h07`**. Registration spends the attempt (TrialCountLedger). Per the sealed definition §4, TWO registrations are entered: (a) the **prediction claim** judged this sprint by the real Battery (random-timing placebo), and (b) the **E2 existence claim** (N2 nulls) — registered and counted now, judged when the null machinery certifies; registering it this sprint prices the attempt honestly at birth.
 4. One real `EvidenceBattery.run()` over the designated window against the same trade population NeelPrajna's bespoke B1–B7 battery already judged (its recorded result: FAIL on cost sensitivity).
 5. Comparison report: the real Battery's nine steps vs the bespoke B1–B7 result, gate by gate, divergences named.
 6. Founding-set trial accounting: register the remaining 17 founding hypotheses as counted attempts (no detectors, no runs — ledger entries only), per Scientific Model §8.

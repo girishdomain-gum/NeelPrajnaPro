@@ -1,0 +1,139 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260729171243
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-007_finish_placement.ps1
+Process ID: 5276
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-007_finish_placement.log
+=== T-007 finish placement + F-19 fix === 2026-07-29T17:12:43.4617691+05:30
+--- [1] fetch current planning docx zip ---
+placed docs\planning\NP_INTEGRATION_EXECUTION_ROADMAP.docx
+placed docs\planning\NP_INTEGRATION_VV_ACCEPTANCE_PLAN.docx
+placed docs\planning\NP_JOINT_AUTOMATION_PLAN.docx
+--- [2] F-19 fix: untrack scratch, ignore forever ---
+rm 'ops/incoming/NeelPrajna_QRF_Working_Set_v2.zip'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/00_START_HERE/MANIFEST.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/00_START_HERE/README_ESTATE_v2.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/01_estate_v2_normative/ARCH-011_H07_Integration_Sprint.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/01_estate_v2_normative/NEELPRAJNA_CONSTITUTION_v2.0.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/01_estate_v2_normative/NEELPRAJNA_PLATFORM_INTEGRATION_ARCHITECTURE_v2.0.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/01_estate_v2_normative/NEELPRAJNA_SCIENTIFIC_MODEL_v2.0.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/02_reviews/REV-DeepSeek-Estate_Fable_2026-07-29.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/02_reviews/REV-Full-Backup-Corpus_Fable_2026-07-29.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/CORRECTIONS_LOG_2026-07-29.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/CORRECTIONS_LOG_ADDENDUM_2026-07-29.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/HOW_THIS_DOC_WAS_BUILT.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/ROLES_COMMUNICATION_EXPRESSION.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/TEACHING_AND_KNOWLEDGE_TRANSFER_STANDARD-v5.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/NeelPrajna_Architecture_Diagrams_CORRECTED.docx'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/NeelPrajna_Auto_Adopt_Deep_Audit.docx'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/NeelPrajna_Existing_Implementation_Diagrams.docx'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/QRF_Architecture_Diagrams.docx'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/Volume_III_QRF_Generation1_Deep_Analysis.docx'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/Volume_II_Vision_to_Verified_System_CORRECTED.docx'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/Volume_IV_NeelPrajna_QRF_Integration_Path.docx'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/Volume_I_QRF_NeelPrajna_Research_Architecture_CORRECTED.docx'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/NeelPrajna_Live_Advisor_Detail_spec_v1.0.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/QRF_Research_Console_spec_v1.3-amended.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_book_a/neelprajna_advisor_detail_mockup.html'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_book_a/neelprajna_live_univ_mockup.html'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_console_corrected/qrf_research_console_mockup.html'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_console_corrected/qrf_research_console_mockup_v1.1.html'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_console_corrected/qrf_research_console_mockup_v1.2.html'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/DOCUMENTATION_ARCHITECTURE.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/INDEX.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/adr/ADR-008-kernel-trading-plugin-split.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/books/book-a-neelprajna/README.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/core/COMMUNICATION_CONTRACT.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/core/EPISTEMIC_RULES.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/core/KERNEL_OVERVIEW.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/governance/AUTONOMY_LADDER.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/registers/DECISION_REGISTER.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/registers/LESSON_REGISTER.md'
+rm 'ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/roadmap/MIGRATION_PLAN.md'
+(files remain on disk; only tracking removed)
+--- [3] commit + push ---
+git : warning: in the working copy of '.gitignore', CRLF will be replaced by LF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-007_finish_placement.ps1:48 char:1
++ git add .gitignore docs/planning ops/runlogs 2>&1 | Out-String | Writ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'ops/runlogs/T-006_place_estate_from_zip.log', CRLF will be replaced by LF the next time Git touches it
+[main 3609350] T-007: current NP planning docx placed; F-19 fix - ops/incoming scratch untracked and gitignored (stale ARCH-011 extract removed from tracking)
+ 46 files changed, 133 insertions(+), 5555 deletions(-)
+ create mode 100644 docs/planning/NP_INTEGRATION_EXECUTION_ROADMAP.docx
+ create mode 100644 docs/planning/NP_INTEGRATION_VV_ACCEPTANCE_PLAN.docx
+ create mode 100644 docs/planning/NP_JOINT_AUTOMATION_PLAN.docx
+ delete mode 100644 ops/incoming/NeelPrajna_QRF_Working_Set_v2.zip
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/00_START_HERE/MANIFEST.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/00_START_HERE/README_ESTATE_v2.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/01_estate_v2_normative/ARCH-011_H07_Integration_Sprint.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/01_estate_v2_normative/NEELPRAJNA_CONSTITUTION_v2.0.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/01_estate_v2_normative/NEELPRAJNA_PLATFORM_INTEGRATION_ARCHITECTURE_v2.0.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/01_estate_v2_normative/NEELPRAJNA_SCIENTIFIC_MODEL_v2.0.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/02_reviews/REV-DeepSeek-Estate_Fable_2026-07-29.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/02_reviews/REV-Full-Backup-Corpus_Fable_2026-07-29.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/CORRECTIONS_LOG_2026-07-29.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/CORRECTIONS_LOG_ADDENDUM_2026-07-29.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/HOW_THIS_DOC_WAS_BUILT.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/ROLES_COMMUNICATION_EXPRESSION.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/03_governance_standards/TEACHING_AND_KNOWLEDGE_TRANSFER_STANDARD-v5.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/NeelPrajna_Architecture_Diagrams_CORRECTED.docx
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/NeelPrajna_Auto_Adopt_Deep_Audit.docx
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/NeelPrajna_Existing_Implementation_Diagrams.docx
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/QRF_Architecture_Diagrams.docx
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/Volume_III_QRF_Generation1_Deep_Analysis.docx
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/Volume_II_Vision_to_Verified_System_CORRECTED.docx
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/Volume_IV_NeelPrajna_QRF_Integration_Path.docx
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/04_reference_volumes/Volume_I_QRF_NeelPrajna_Research_Architecture_CORRECTED.docx
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/NeelPrajna_Live_Advisor_Detail_spec_v1.0.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/QRF_Research_Console_spec_v1.3-amended.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_book_a/neelprajna_advisor_detail_mockup.html
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_book_a/neelprajna_live_univ_mockup.html
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_console_corrected/qrf_research_console_mockup.html
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_console_corrected/qrf_research_console_mockup_v1.1.html
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/05_specs_and_ui/mockups_console_corrected/qrf_research_console_mockup_v1.2.html
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/DOCUMENTATION_ARCHITECTURE.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/INDEX.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/adr/ADR-008-kernel-trading-plugin-split.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/books/book-a-neelprajna/README.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/core/COMMUNICATION_CONTRACT.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/core/EPISTEMIC_RULES.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/core/KERNEL_OVERVIEW.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/governance/AUTONOMY_LADDER.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/registers/DECISION_REGISTER.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/registers/LESSON_REGISTER.md
+ delete mode 100644 ops/incoming/_extract/NeelPrajna_QRF_Working_Set_v2/06_docs_redesign_corrected/roadmap/MIGRATION_PLAN.md
+ create mode 100644 ops/runlogs/T-007_finish_placement.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-007_finish_placement.ps1:51 char:1
++ git push 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   7559650..3609350  main -> main
+3609350 T-007: current NP planning docx placed; F-19 fix - ops/incoming scratch untracked and gitignored (stale ARCH-011 extract removed from tracking)
+7559650 T-006: reference volumes, specs+corrected mockups, docs-redesign tree, docx presentation copies placed from verified working set
+ M ops/runlogs/T-007_finish_placement.log
+?? ops/T-007_finish_placement.ps1
+
+RESULT: OK
+**********************
+Windows PowerShell transcript end
+End time: 20260729171247
+**********************
