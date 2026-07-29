@@ -1,0 +1,55 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260729210151
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-010_folder_one_docs.ps1
+Process ID: 12312
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-010_folder_one_docs.log
+=== T-010 folder one-docs === 2026-07-29T21:01:52.1794827+05:30
+--- [1] verify the one-doc-per-folder invariant ---
+docs\architecture   files: 1 (must be 1)
+docs\decisions      files: 1 (must be 1)
+docs\research       files: 1 (must be 1)
+docs\reports        files: 1 (must be 1)
+docs\reference      files: 1 (must be 1)
+--- [1b] remove empty leftover directories ---
+removed empty docs\charter
+removed empty docs\governance
+removed empty docs\reviews
+--- [2] commit + push ---
+git : warning: in the working copy of 'ops/T-010_folder_one_docs.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-010_folder_one_docs.ps1:35 char:1
++ git add -A docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+[main c95c8b4] T-010: folder one-doc masters - Decisions v1.0 (13 ADRs + register + 9 NP decisions), Research v1.0 (RQ-001..015), Reports v1.0 (Gen-1 final + reserved sections), Reference Handbook v1.0
+ 3 files changed, 27 insertions(+), 2 deletions(-)
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-010_folder_one_docs.ps1:38 char:1
++ git push 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   2edad63..c95c8b4  main -> main
+c95c8b4 T-010: folder one-doc masters - Decisions v1.0 (13 ADRs + register + 9 NP decisions), Research v1.0 (RQ-001..015), Reports v1.0 (Gen-1 final + reserved sections), Reference Handbook v1.0
+2edad63 T-010: folder one-doc masters - Decisions v1.0 (13 ADRs + register + 9 NP decisions), Research v1.0 (RQ-001..015), Reports v1.0 (Gen-1 final + reserved sections), Reference Handbook v1.0
+
+RESULT: OK
+**********************
+Windows PowerShell transcript end
+End time: 20260729210157
+**********************
