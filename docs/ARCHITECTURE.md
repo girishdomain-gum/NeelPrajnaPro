@@ -1,9 +1,17 @@
-# NeelPrajna Platform & Integration Architecture v2.0
+# NeelPrajna Platform & Integration Architecture
+
+> **Twin rule (Owner-confirmed 2026-07-29):** this file is the machine-readable normative TEXT of the programme's one architecture document, `docs\architecture\NeelPrajnaPro_Architecture-v1.0.docx` (the human master, which additionally carries the eight rendered diagrams). They are one document in two forms and version in lockstep; any divergence between them is a finding. Machines (Developer sessions, IVF) read this file; humans read the docx.
+
+## Part A — The Destination (Owner vision ruling, 2026-07-29)
+
+The two-organ architecture is this development cycle's TARGET: Market → Observation Engine (one shared reality) → Core QRF Brain (domain-blind) ‖ Book-A NeelPrajna Runtime (trading plug-in) → Knowledge+Evidence / Orders+Execution-Feedback → event-driven communication. **The load-bearing wall, permanent: QRF never trades; NeelPrajna never learns on its own.** Box-by-box status and delivering sprint: EvidenceBattery/WindowLedger, Scientific Memory, Observation Engine (Kernel side), Statistics & Confidence — BUILT (Gen-1; NP records/feed from NP-S1). Pattern Learning — TARGET (ECF certification track; first NP existence judgment in the NP-S3 window). Knowledge Graph — TARGET (NP-S3/S4 + Gen-2 S7). Pattern Evolution — TARGET (Wave 2, post NP-S4; machine-proposed only after Gate A). Knowledge→runtime releases — TARGET (consumption design ruled at NP-S4; arming permanently human). Execution feedback→Core — TARGET (formalized NP-S2/R6). Continuous Communication — TARGET (event-driven releases, never tick-streaming of unsealed statistics; Contract v2; NP-S4 ruling). Full table: VISION.md and the docx Part A.
+
+## Part B — The Binding Architecture (ratified 2026-07-29)
 
 | | |
 |---|---|
 | **Version** | 2.0 (supersedes DeepSeek Platform Architecture v1.0 and the DeepSeek Research Architecture; absorbs Volume IV as the frozen basis per REV F-3) |
-| **Date** | 2026-07-29 · **Status** | **RATIFIED by the Owner, 2026-07-29** (with §4.5 Knowledge Publication Boundary expansion incorporated per the ratification memo) · **Layer** | Charter (normative); §8 is ASPIRATIONAL |
+| **Date** | 2026-07-29 · **Status** | **RATIFIED by the Owner, 2026-07-29** (with §4.5 Knowledge Publication Boundary expansion incorporated per the ratification memo) · **Layer** | Charter (normative); §8 is TARGET (evidence-gated) per the vision ruling |
 | **Predecessors** | Constitution v2.0 · Scientific Model v2.0 · **Successor** | ARCH-NP-001 (first sprint) |
 
 ---
@@ -102,9 +110,15 @@ Two clarifying rules so this table and §§3.3–3.4 of the Constitution can nev
 
 The two-organ destination architecture — Pattern Learning, Knowledge Graph, Pattern Evolution, Continuous (event-driven) Communication, the Research Console's KNOWLEDGE/EVIDENCE lenses, SEA application books — is the TARGET of this development cycle: each element becomes real only through the sealed sprints VISION.md maps it to, and none may be cited as existing before its verdict-bearing artifact does. Tick-time streaming of unsealed statistics remains excluded permanently (§4.3–§4.5).
 
+## Part C — The Visual Atlas (renders live in the docx master; captions and statuses are normative here)
+
+Diagram 1 programme top-down — the destination (Part A). · Diagram 2 Core Kernel components — BUILT (real module paths; exercised by the 853-test suite). · Diagram 3 Communication Contract — DESIGNED/TARGET (design sketch; implemented via Contract v2 + §4.5 boundary; consumption ruled NP-S4). · Diagram 4 Book-A four-layer MQL5 refactor — BUILT (live EA, paused at F:\NeelPrajna). · Diagram 5 NPSU shadow universes — BUILT (runtime-side; outputs are observations/candidates, never evidence). · Diagram 6 Supervisor/Runner trust split — BUILT (contract v1.1 owner-signed; live-verified HEALTHY 2026-07-29). · Diagram 7 evidence pipeline — BUILT core + TARGET null library. · Diagram 8 documentation-tree redesign — SUPERSEDED with honor by the one-doc-per-thing law; its Registers' spirit lives in JOURNAL.md.
+
 ## 9. Change Record (v1.0 → v2.0)
 
 Retained: Kernel/plug-in split, firewall, contract's six objects and two prohibitions, audited-engine pessimism, name immutability, extensibility principles. Changed: imagined Kernel replaced by the real one (F-3); learning loop routed through the Publication Boundary with rolling stats removed from the contract (F-2); heartbeat demoted to §8 (F-6); window/α-budget/cost-model preconditions made normative (F-10); real-account switching safety added (F-13/F-14); ADR references namespaced (F-12).
+
+**Unified-doc v1.0 (2026-07-29, later):** restructured as the text twin of NeelPrajnaPro_Architecture-v1.0.docx per the Owner-confirmed twin rule — Part A (destination) and Part C (atlas captions) added; Part B = the ratified v2.0 body unchanged; §8 re-tiered TARGET per the vision ruling. From here the two forms version in lockstep.
 
 ---
 *Anchor: **execution stays where the hands are; truth moves to where the judge is.***

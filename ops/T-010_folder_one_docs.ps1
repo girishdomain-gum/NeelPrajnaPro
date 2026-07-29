@@ -23,6 +23,14 @@ foreach ($f in @("architecture","decisions","research","reports","reference")) {
     if ($n -ne 1) { $failed = $true }
 }
 
+Write-Host "--- [1b] remove empty leftover directories ---"
+foreach ($d in @("charter","governance","reviews")) {
+    $p = "$repo\docs\$d"
+    if ((Test-Path $p) -and ((Get-ChildItem $p -Recurse -File | Measure-Object).Count -eq 0)) {
+        Remove-Item $p -Recurse -Force; Write-Host "removed empty docs\$d"
+    } elseif (Test-Path $p) { Write-Host "docs\$d NOT empty - left untouched" }
+}
+
 Write-Host "--- [2] commit + push ---"
 git add -A docs ops 2>&1 | Out-String | Write-Host
 git commit -m "T-010: folder one-doc masters - Decisions v1.0 (13 ADRs + register + 9 NP decisions), Research v1.0 (RQ-001..015), Reports v1.0 (Gen-1 final + reserved sections), Reference Handbook v1.0" 2>&1 | Out-String | Write-Host
