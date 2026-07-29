@@ -18,8 +18,8 @@ Estate v2.0 **RATIFIED as a whole**: Constitution, Scientific Model, Architectur
 ## J-005 · 2026-07-29 · Owner vision + structure rulings
 **Vision:** the corrected architecture diagram (two organs, one observation engine, event-driven communication; *QRF never trades, NeelPrajna never learns on its own*) is the **destination of this development cycle** → VISION.md v1.0; Pattern Learning / Knowledge Graph / Pattern Evolution / Continuous Communication re-tiered ASPIRATIONAL → **TARGET, evidence-gated**, mapped to sprints. **Structure:** ONE document per thing; versions inside the document + git; no parallel docs; superseded granular docs → docs\archive\. Executed same day: VISION.md, EXECUTION_PLAN.md (absorbs roadmap+ARCH-NP-001+definition+handover), JOURNAL.md (this file), docs\README.md index; restructure script T-008.
 
-## J-006 · 2026-07-29 · Touch T-008 (pending)
-Owner runs ops\T-008_restructure_docs.ps1 — git-mv renames (charter → root canonical names, history preserved), archive moves, commit+push. Status: READY.
+## J-006 · 2026-07-29 · Touch T-008 — DONE (commit fe39237, pushed)
+Restructure executed: all 12 canonical docs verified present; every rename history-preserving (git similarity 60–100%); granular docs archived; RESULT: OK computed honestly. Housekeeping for the next commit: a Word lock file (`docs/reference_volumes/~$elPrajna_...docx`, created because the volume was open in Word during the run) slipped into tracking — add `~$*` to .gitignore and untrack it; sweep `ops/*.ps1` as already noted. **End-of-day state: 8 touches, 0 routine ops outstanding, structure law in force. Blocking: the Owner's three typed lines (window designation · α-budget · Go).**
 
 ---
 *Append below this line only.*

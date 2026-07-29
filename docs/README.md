@@ -8,7 +8,7 @@
 | **VISION.md** | The destination architecture (the two-organ diagram) and its evidence-gated path |
 | **CONSTITUTION.md** | Identity, the twelve principles, publication boundary, permanently-human powers, amendment law |
 | **SCIENTIFIC_MODEL.md** | How claims become knowledge: ECF, Observation Space, MML, lifecycle, trial accounting |
-| **ARCHITECTURE.md** | The system as built and integrated: Kernel, concept families, Contract v2, switching safety |
+| **ARCHITECTURE.md** | The system as built and integrated — the machine-readable normative text; its human master is docs\architecture\NeelPrajnaPro_Architecture-vX.Y.docx (one file in that folder, current version only; divergence between the two is a finding) |
 | **EXECUTION_PLAN.md** | Phases, sprints, sealed instructions, sealed definitions, AND their outputs — the living plan+record; its §0 is the handover |
 | **VV_PLAN.md** | Assurance: L1–L4 and the acceptance drills |
 | **AUTOMATION.md** | The automation estate, learnings, touch budget, work orders, ops-channel protocol |
@@ -17,6 +17,7 @@
 | **JOURNAL.md** | The ONE append-only log: rulings, ratifications, findings, corrections, human touches |
 
 ## The shelves (non-normative; never cited as authority)
+- `architecture\` — exactly ONE file: the current NeelPrajnaPro_Architecture-vX.Y.docx (Owner ruling 2026-07-29); prior versions auto-archive on supersession
 - `reference_volumes\` — the analysis volumes and diagram companions (provenance shelf)
 - `specs\` — UI specs and mockups (DESIGNED tier)
 - `books\book-a-neelprajna\` — the paused EA repo's documentation, read-only reference

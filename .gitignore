@@ -41,3 +41,7 @@ experiments/
 
 # ops scratch area - never tracked (F-19 standing rule)
 ops/incoming/
+
+# Word lock files
+~$*
+docs/**/~$*

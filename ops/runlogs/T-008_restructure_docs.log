@@ -1,0 +1,95 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260729180427
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-008_restructure_docs.ps1
+Process ID: 15048
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-008_restructure_docs.log
+=== T-008 docs restructure === 2026-07-29T18:04:28.0672156+05:30
+--- [1] canonical renames (charter -> root) ---
+--- [2] archive superseded granular docs (absorbed by EXECUTION_PLAN / JOURNAL) ---
+--- [3] verify canonical set present ---
+OK  docs\THE_ONE_PAGE.md
+OK  docs\VISION.md
+OK  docs\CONSTITUTION.md
+OK  docs\SCIENTIFIC_MODEL.md
+OK  docs\ARCHITECTURE.md
+OK  docs\EXECUTION_PLAN.md
+OK  docs\VV_PLAN.md
+OK  docs\AUTOMATION.md
+OK  docs\ROLES_AND_COMMUNICATION.md
+OK  docs\WRITING_STANDARD.md
+OK  docs\JOURNAL.md
+OK  docs\README.md
+--- [4] commit + push ---
+git : warning: in the working copy of 'ops/runlogs/T-007_finish_placement.log', CRLF will be replaced by LF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-008_restructure_docs.ps1:61 char:1
++ git add -A docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'ops/T-007_finish_placement.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ops/T-008_restructure_docs.ps1', LF will be replaced by CRLF the next time Git touches it
+[main fe39237] T-008: one-doc-per-thing restructure (Owner ruling) - canonical set at docs root, granular docs archived, git history preserved via mv
+ 33 files changed, 596 insertions(+), 14 deletions(-)
+ rename docs/{charter/NEELPRAJNA_PLATFORM_INTEGRATION_ARCHITECTURE_v2.0.md => ARCHITECTURE.md} (78%)
+ rename docs/{planning/NP_JOINT_AUTOMATION_PLAN.md => AUTOMATION.md} (100%)
+ rename docs/{charter/NEELPRAJNA_CONSTITUTION_v2.0.md => CONSTITUTION.md} (98%)
+ create mode 100644 docs/EXECUTION_PLAN.md
+ create mode 100644 docs/JOURNAL.md
+ create mode 100644 docs/README.md
+ rename docs/{governance/ROLES_COMMUNICATION_EXPRESSION.md => ROLES_AND_COMMUNICATION.md} (100%)
+ rename docs/{charter/NEELPRAJNA_SCIENTIFIC_MODEL_v2.0.md => SCIENTIFIC_MODEL.md} (98%)
+ create mode 100644 docs/THE_ONE_PAGE.md
+ create mode 100644 docs/VISION.md
+ rename docs/{planning/NP_INTEGRATION_VV_ACCEPTANCE_PLAN.md => VV_PLAN.md} (100%)
+ rename docs/{governance/TEACHING_AND_KNOWLEDGE_TRANSFER_STANDARD-v5.md => WRITING_STANDARD.md} (100%)
+ rename docs/{ => archive}/charter/README_ESTATE_v2.md (100%)
+ create mode 100644 docs/archive/governance/ARCHITECT_HANDOVER_NP.md
+ rename docs/{ => archive}/governance/CORRECTIONS_LOG_2026-07-29.md (100%)
+ rename docs/{ => archive}/governance/CORRECTIONS_LOG_ADDENDUM_2026-07-29.md (100%)
+ rename docs/{ => archive}/governance/HOW_THIS_DOC_WAS_BUILT.md (100%)
+ rename docs/{ => archive}/governance/HUMAN_TOUCH_LOG.md (60%)
+ rename docs/{ => archive}/governance/OWNER_RULINGS_2026-07-29.md (100%)
+ create mode 100644 docs/archive/governance/RATIFICATION_RECORD_2026-07-29.md
+ rename docs/{ => archive}/planning/ARCH-NP-001_H07_Integration_Sprint.md (69%)
+ create mode 100644 docs/archive/planning/H07_SEALED_MECHANICAL_DEFINITION_v1.0.md
+ rename docs/{ => archive}/planning/NP_INTEGRATION_EXECUTION_ROADMAP.docx (100%)
+ rename docs/{ => archive}/planning/NP_INTEGRATION_EXECUTION_ROADMAP.md (100%)
+ rename docs/{ => archive}/planning/NP_INTEGRATION_VV_ACCEPTANCE_PLAN.docx (100%)
+ rename docs/{ => archive}/planning/NP_JOINT_AUTOMATION_PLAN.docx (100%)
+ rename docs/{ => archive}/reviews/REV-DeepSeek-Estate_Fable_2026-07-29.md (100%)
+ rename docs/{ => archive}/reviews/REV-Full-Backup-Corpus_Fable_2026-07-29.md (100%)
+ create mode 100644 docs/reference_volumes/~$elPrajna_Architecture_Diagrams_CORRECTED.docx
+ create mode 100644 ops/T-007_finish_placement.ps1
+ create mode 100644 ops/T-008_restructure_docs.ps1
+ create mode 100644 ops/runlogs/T-008_restructure_docs.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-008_restructure_docs.ps1:64 char:1
++ git push 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   3609350..fe39237  main -> main
+fe39237 T-008: one-doc-per-thing restructure (Owner ruling) - canonical set at docs root, granular docs archived, git history preserved via mv
+3609350 T-007: current NP planning docx placed; F-19 fix - ops/incoming scratch untracked and gitignored (stale ARCH-011 extract removed from tracking)
+
+RESULT: OK
+**********************
+Windows PowerShell transcript end
+End time: 20260729180432
+**********************
