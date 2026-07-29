@@ -17,7 +17,7 @@
 | **JOURNAL.md** | The ONE append-only log: rulings, ratifications, findings, corrections, human touches |
 
 ## The shelves (non-normative; never cited as authority)
-- `architecture\` — exactly ONE file: the current NeelPrajnaPro_Architecture-vX.Y.docx (Owner ruling 2026-07-29); prior versions auto-archive on supersession
+- **One-doc folders (the architecture pattern, Owner ruling):** `architecture\` · `decisions\` · `research\` · `reports\` · `reference\` — each holds exactly ONE current master (NeelPrajnaPro_<Thing>-vX.Y); originals live under archive\ as provenance; prior versions auto-archive on supersession
 - `reference_volumes\` — the analysis volumes and diagram companions (provenance shelf)
 - `specs\` — UI specs and mockups (DESIGNED tier)
 - `books\book-a-neelprajna\` — the paused EA repo's documentation, read-only reference
