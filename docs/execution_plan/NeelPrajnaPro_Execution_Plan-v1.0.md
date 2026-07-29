@@ -30,7 +30,7 @@ Cadence: quality gates, not clocks. Per-sprint rhythm (Gen-1's, proven): instruc
 **Acceptance criteria (sealed):** AC-1 all plants caught, zero events on clean · AC-2 anti-hindsight property test passes (no retroactive emissions) · AC-3 exactly one verdict + one burn, atomic, on the designated window · AC-4 comparison report exists, every divergence named with cause; agreement is corroboration, divergence is the sprint's most valuable output; the drilled instrument's verdict stands, never averaged · AC-5 family trial count ≥ 18 · AC-6 IVF re-derives the verdict from normative texts after its own planted-fraud drill.
 **Non-goals (violations are findings):** no live-execution/TradeManager/NPSU changes; no hypotheses beyond H-07 (registrations excepted); no console work; no edits to `ivf/**`, ledger internals, or normative docs.
 **DEVQ triggers:** MQL5→Python semantic ambiguity; unfillable EventFrame fields; export/adapter mismatch; window-vs-population disagreement; anything the cost ruling leaves undefined; §3's parameter-mismatch trigger. Silence binds no one.
-**Developer boot sequence (on Go):** read docs\CONSTITUTION.md → SCIENTIFIC_MODEL.md → ARCHITECTURE.md → this §2+§3 → VV_PLAN.md §§1–3; fresh worktree; first commit sweeps `ops/*.ps1`.
+**Developer boot sequence (on Go):** read docs\constitution\, docs\scientific_model\, docs\architecture\ (the .md twin) masters in that order → this document's §2+§3 → docs\vv_plan\ master §§1–3; fresh worktree; DEVQ at every ambiguity (the definition's §3 names one explicit trigger); the sealed definition is normative — MQL5 and `np_feature_service.py` are reference only; first commit sweeps `ops/*.ps1`.
 
 ## 3. H-07 SEALED MECHANICAL DEFINITION v1.0 (frozen; changes = v1.1 by NP-ADR, never edits)
 *Source: `F:\NeelPrajna\repo\Gates\Triggers\T3_SweepFVGGate.mqh` v2.1 pool engine, read from source 2026-07-29. Owner rulings: claim form E2; cost model `xauusd_retail_h07`.*
@@ -52,7 +52,7 @@ Opens with the Owner's ruling on the 17 (informed by AC-4's report): subset, pri
 ## 6. SPRINT NP-S4 — Acceptance & gate
 Blinded campaign NB-1..NB-5 per VV_PLAN (Owner holds answer keys; negative-control instrument; tamper drills; stranger audit). Then Wave-1 review and Owner boundary rulings: console unblock · runtime-consumption design (Contract v2; arming stays permanently human) · Wave 2 / close / revise. Exit: the integration is an accepted instrument, or the campaign says precisely why not.
 
-## 7. Pre/parallel work orders (details: AUTOMATION.md §6)
+## 7. Pre/parallel work orders (details: docs\automation\ master §6)
 WO-A doc truth pass · WO-B A4.0 tester-screenshot spike (gates NP-S3/S4 visuals; needs lab unpause) · WO-C cross-repo evidence linkage · WO-D windows-register consistency check.
 
 ## 8. SPRINT OUTPUTS (appended at each close — empty is honest)

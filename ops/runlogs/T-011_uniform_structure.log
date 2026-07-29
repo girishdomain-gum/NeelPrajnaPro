@@ -1,0 +1,195 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260729211913
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1
+Process ID: 10388
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-011_uniform_structure.log
+=== T-011 uniform structure === 2026-07-29T21:19:13.7825851+05:30
+--- [1] twins united: architecture ---
+--- [2] canonical roots -> thing-folders, synced names ---
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:34 char:1
++ MV "docs/VISION.md"                  "docs/vision/NeelPrajnaPro_Visio ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\VISION.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:34 char:1
++ MV "docs/VISION.md"                  "docs/vision/NeelPrajnaPro_Visio ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\VISION.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:35 char:1
++ MV "docs/CONSTITUTION.md"            "docs/constitution/NeelPrajnaPro ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\CONSTITUTION.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:35 char:1
++ MV "docs/CONSTITUTION.md"            "docs/constitution/NeelPrajnaPro ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\CONSTITUTION.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:36 char:1
++ MV "docs/SCIENTIFIC_MODEL.md"        "docs/scientific_model/NeelPrajn ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPr...NTIFIC_MODEL.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:36 char:1
++ MV "docs/SCIENTIFIC_MODEL.md"        "docs/scientific_model/NeelPrajn ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPr...NTIFIC_MODEL.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:37 char:1
++ MV "docs/EXECUTION_PLAN.md"          "docs/execution_plan/NeelPrajnaP ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\EXECUTION_PLAN.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:37 char:1
++ MV "docs/EXECUTION_PLAN.md"          "docs/execution_plan/NeelPrajnaP ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\EXECUTION_PLAN.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:38 char:1
++ MV "docs/VV_PLAN.md"                 "docs/vv_plan/NeelPrajnaPro_VV_P ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\VV_PLAN.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:38 char:1
++ MV "docs/VV_PLAN.md"                 "docs/vv_plan/NeelPrajnaPro_VV_P ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\VV_PLAN.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:39 char:1
++ MV "docs/AUTOMATION.md"              "docs/automation/NeelPrajnaPro_A ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\AUTOMATION.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:39 char:1
++ MV "docs/AUTOMATION.md"              "docs/automation/NeelPrajnaPro_A ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\AUTOMATION.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:40 char:1
++ MV "docs/ROLES_AND_COMMUNICATION.md" "docs/roles/NeelPrajnaPro_Roles_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPr...OMMUNICATION.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:40 char:1
++ MV "docs/ROLES_AND_COMMUNICATION.md" "docs/roles/NeelPrajnaPro_Roles_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPr...OMMUNICATION.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:41 char:1
++ MV "docs/WRITING_STANDARD.md"        "docs/writing_standard/NeelPrajn ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPr...ING_STANDARD.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:41 char:1
++ MV "docs/WRITING_STANDARD.md"        "docs/writing_standard/NeelPrajn ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPr...ING_STANDARD.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:42 char:1
++ MV "docs/JOURNAL.md"                 "docs/journal/NeelPrajnaPro_Jour ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\JOURNAL.md:FileInfo) [Move-Item], 
+DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+MV : Could not find a part of the path.
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:42 char:1
++ MV "docs/JOURNAL.md"                 "docs/journal/NeelPrajnaPro_Jour ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : WriteError: (F:\NeelPrajnaPro\docs\JOURNAL.md:FileInfo) [Move-Item], DirectoryNotFoundException
+    + FullyQualifiedErrorId : MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand
+
+--- [3] verify: root holds only README + THE_ONE_PAGE; every thing-folder = one basename ---
+root files: AUTOMATION.md, CONSTITUTION.md, EXECUTION_PLAN.md, JOURNAL.md, README.md, ROLES_AND_COMMUNICATION.md, SCIENTIFIC_MODEL.md, THE_ONE_PAGE.md, VISION.md, VV_PLAN.md, WRITING_STANDARD.md
+UNEXPECTED root files
+docs\vision            basenames: 0 (must be 1)
+docs\constitution      basenames: 0 (must be 1)
+docs\scientific_model  basenames: 0 (must be 1)
+docs\architecture      basenames: 1 (must be 1)
+docs\execution_plan    basenames: 0 (must be 1)
+docs\vv_plan           basenames: 0 (must be 1)
+docs\automation        basenames: 0 (must be 1)
+docs\roles             basenames: 0 (must be 1)
+docs\writing_standard  basenames: 0 (must be 1)
+docs\journal           basenames: 0 (must be 1)
+docs\decisions         basenames: 1 (must be 1)
+docs\research          basenames: 1 (must be 1)
+docs\reports           basenames: 1 (must be 1)
+docs\reference         basenames: 1 (must be 1)
+--- [4] commit + push ---
+git : warning: in the working copy of 'ops/runlogs/T-010_folder_one_docs.log', CRLF will be replaced by LF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:56 char:1
++ git add -A docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'ops/T-011_uniform_structure.ps1', LF will be replaced by CRLF the next time Git touches it
+[main 5aedad1] T-011: uniform structure law v2.0 - one folder per thing, synced md/docx twin basenames, history preserved via git mv
+ 6 files changed, 151 insertions(+), 22 deletions(-)
+ rename docs/{ARCHITECTURE.md => architecture/NeelPrajnaPro_Architecture-v1.0.md} (100%)
+ create mode 100644 ops/T-011_uniform_structure.ps1
+ create mode 100644 ops/runlogs/T-011_uniform_structure.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-011_uniform_structure.ps1:59 char:1
++ git push 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   c95c8b4..5aedad1  main -> main
+5aedad1 T-011: uniform structure law v2.0 - one folder per thing, synced md/docx twin basenames, history preserved via git mv
+c95c8b4 T-010: folder one-doc masters - Decisions v1.0 (13 ADRs + register + 9 NP decisions), Research v1.0 (RQ-001..015), Reports v1.0 (Gen-1 final + reserved sections), Reference Handbook v1.0
+
+RESULT: FAILED - see sections above
+**********************
+Windows PowerShell transcript end
+End time: 20260729211917
+**********************
