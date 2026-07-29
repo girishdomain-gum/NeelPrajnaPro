@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeelPrajna — LIVE &amp; VIRT UNIV Deep Views (v1.5 Amendment)</title>
+<style>
+  :root{
+    --bg:#0C0E12; --surface:#12151C; --surface2:#171B24; --hair:#262C3A; --rowrule:#161A22;
+    --text:#C6CEDC; --muted:#66718A; --label:#49536B;
+    --accent:#46C8C0; --accent2:#508CFF; --green:#4FC98F; --red:#E06060; --gold:#D9A93E; --meta:#A582C8;
+    --greenbg:#0E2A1D; --redbg:#2E1414; --goldbg:#2E240E;
+    --bd-green:#1E4A34; --bd-red:#4A2424; --bd-gold:#4A3A16;
+    --canvas:#07080B;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--canvas);color:var(--text);font-family:"Segoe UI",-apple-system,sans-serif;padding:34px 28px 90px}
+  .mono{font-family:Consolas,"IBM Plex Mono","Cascadia Mono",monospace}
+  .wrap{max-width:1560px;margin:0 auto}
+  .intro h1{font-size:15px;font-weight:700;letter-spacing:.1em;color:var(--text)}
+  .intro h1 b{color:var(--accent)}
+  .intro p{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;max-width:1100px}
+  .tag{display:inline-block;font-size:9.5px;letter-spacing:.1em;color:var(--gold);border:1px solid var(--bd-gold);background:var(--goldbg);padding:2px 8px;margin-top:10px;margin-right:6px}
+  .tag.b{color:var(--accent);border-color:#1c4a46;background:#0d1f1e}
+  .tag.r{color:var(--red);border-color:var(--bd-red);background:var(--redbg)}
+
+  .sechead{display:flex;align-items:baseline;gap:12px;margin:38px 0 6px;padding-top:16px;border-top:1px solid var(--hair)}
+  .sechead .idx{font-family:Consolas,monospace;font-size:18px;color:var(--label)}
+  .sechead h2{font-size:12.5px;letter-spacing:.08em;color:var(--text)}
+  .secnote{font-size:11px;color:var(--muted);max-width:1100px;line-height:1.6;margin-bottom:14px}
+  .srcnote{font-size:9px;color:var(--label);font-family:Consolas,monospace;margin-bottom:12px}
+  .srcnote b{color:var(--muted)}
+
+  .board{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .col{width:378px}
+  .caption{font-size:9.5px;color:var(--label);letter-spacing:.02em;margin:8px 2px 0;line-height:1.6;font-family:"Segoe UI",sans-serif}
+  .caption b{color:var(--muted);font-weight:600}
+
+  .panel{width:378px;border:1px solid var(--hair);background:var(--bg)}
+  .tabs{display:flex;background:var(--bg);border-bottom:1px solid var(--hair)}
+  .tab{flex:1;text-align:center;font-size:9.5px;letter-spacing:.06em;color:var(--muted);padding:7px 0;font-family:Consolas,monospace}
+  .tab.on{color:var(--accent);border-bottom:2px solid var(--accent);background:var(--surface)}
+  .body2{padding:10px}
+
+  .rule{display:flex;align-items:center;gap:8px;margin:11px 0 6px}
+  .rule:first-child{margin-top:0}
+  .rule .lbl{font-size:8px;letter-spacing:.1em;color:var(--label);text-transform:uppercase;white-space:nowrap}
+  .rule .line{flex:1;height:1px;background:var(--hair)}
+
+  .stratbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .stratbar .name{font-size:11px;color:var(--text);font-weight:700}
+  .chip{font-size:8px;border:1px solid var(--bd-green);color:var(--green);background:var(--greenbg);padding:1px 6px}
+  .chip.off{border-color:var(--hair);color:var(--muted);background:none}
+
+  .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--hair)}
+  .kpi .cell{background:var(--surface);padding:6px 7px}
+  .kpi .cell .l{font-size:6.5px;letter-spacing:.04em;color:var(--label);text-transform:uppercase}
+  .kpi .cell .v{font-family:Consolas,monospace;font-size:11px;color:var(--text);margin-top:2px}
+  .kpi .v.green{color:var(--green)} .kpi .v.red{color:var(--red)} .kpi .v.gold{color:var(--gold)}
+
+  .pipeline{font-family:Consolas,monospace;font-size:9.5px;padding:6px 0}
+  .piperow{display:flex;gap:6px;align-items:center;padding:3px 0}
+  .rail2{width:3px;height:14px;background:var(--hair)}
+  .rail2.gold{background:var(--gold)} .rail2.green{background:var(--green)}
+  .disclose{font-size:8.5px;color:var(--accent2);font-family:Consolas,monospace;margin-top:6px;cursor:default}
+  .histrow{display:flex;justify-content:space-between;font-size:8.5px;color:var(--muted);font-family:Consolas,monospace;padding:2px 0;border-bottom:1px solid var(--rowrule)}
+  .refgrid{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;font-size:8px;font-family:Consolas,monospace;margin-top:6px;color:var(--muted)}
+  .refgrid b{color:var(--text)}
+
+  .riskcard{background:var(--surface);border:1px solid var(--hair);padding:8px 9px;margin-top:6px}
+  .riskcard .line{display:flex;justify-content:space-between;font-family:Consolas,monospace;font-size:9.5px;padding:2px 0}
+  .riskcard .line .k{color:var(--label)}
+  .clampnote{font-size:8.5px;color:var(--gold);font-family:Consolas,monospace;margin-top:6px}
+  .progwrap{height:8px;background:var(--surface2);border:1px solid var(--hair);margin-top:6px;position:relative}
+  .progwrap .fill{height:100%;background:var(--gold)}
+  .progwrap .mark{position:absolute;top:-3px;height:14px;width:1px;background:var(--red)}
+
+  table{width:100%;border-collapse:collapse;font-family:Consolas,monospace;font-size:9.5px}
+  th{font-size:7px;letter-spacing:.04em;color:var(--label);text-transform:uppercase;text-align:right;padding:3px 4px;border-bottom:1px solid var(--hair)}
+  th:first-child,td:first-child{text-align:left}
+  td{padding:4px 4px;text-align:right;border-bottom:1px solid var(--rowrule);color:var(--text)}
+  tr.applied td:first-child{color:var(--accent)} tr.applied td:first-child::before{content:"▶ "}
+  tr.advisor td:first-child::after{content:" ★"}
+  tr.meta td:first-child{color:var(--meta)}
+  tr.corrupt td{color:var(--label);opacity:.6}
+  .g{color:var(--green)} .r{color:var(--red)} .gd{color:var(--gold)}
+  .hash{color:var(--label)}
+
+  .miniact{display:inline-block;font-size:8px;border:1px solid var(--hair);padding:1px 5px;color:var(--muted);margin-left:3px}
+  .actrow{display:flex;gap:6px;margin-top:8px}
+  .actbtn2{flex:1;text-align:center;font-size:9px;padding:5px 0;border:1px solid var(--hair);color:var(--text);font-family:Consolas,monospace}
+  .actbtn2.buy{border-color:var(--bd-green);color:var(--green)}
+  .actbtn2.sell{border-color:var(--bd-red);color:var(--red)}
+  .actbtn2.close{border-color:var(--bd-gold);color:var(--gold)}
+
+  .footnote{font-size:8px;color:var(--label);font-style:italic;margin-top:4px;line-height:1.5}
+  .legend{font-size:8px;color:var(--muted);font-family:Consolas,monospace;line-height:1.8;margin-top:6px}
+  .rosterhealth{font-size:8.5px;color:var(--muted);font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="intro">
+  <h1>NEELPRAJNA — <b>LIVE &amp; VIRT UNIV DEEP VIEWS (v1.5 AMENDMENT)</b></h1>
+  <p>Closes the remaining gap from the architecture diagram's six labels — Live Execution, Risk
+     Management, Order Handling, Dashboard, Position Management, Live Decisions — by covering the two
+     tabs not yet touched: LIVE and VIRT UNIV. Grounded in <span class="mono">LiveTab.mqh</span>,
+     <span class="mono">MoneyManager.mqh</span>, <span class="mono">TwoPCRule.mqh</span>, and
+     <span class="mono">UnivTab.mqh</span> exactly as shipped.</p>
+  <span class="tag">STATUS: PROPOSAL — extends dashboard_spec.md v1.3.2</span>
+  <span class="tag b">SURFACE: Book A on-chart panel (LIVE + VIRT UNIV) — not QRF</span>
+  <span class="tag r">CORRECTION INSIDE: "2% Rule" is profit auto-close, NOT per-trade risk sizing</span>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">M.1</span><h2 class="mono">LIVE — LIVE EXECUTION &amp; DECISIONS (PIPELINE DETAIL)</h2></div>
+<div class="secnote">The existing two-line pipeline readout gains a blocker-history disclosure and a
+  plain-language reference for every real blocker enum value — never a code someone has to go look up.</div>
+<div class="srcnote">SOURCE: <b>LiveTab.mqh</b> §1.3 · <b>Config.mqh</b> BLK_* enum</div>
+
+<div class="board">
+  <div class="col">
+    <div class="panel">
+      <div class="tabs mono"><div class="tab on">LIVE</div><div class="tab">VIRT UNIV</div><div class="tab">SCOPE</div><div class="tab">CTRL</div></div>
+      <div class="body2">
+        <div class="stratbar"><span class="name mono">STRATEGY T1_B1B6</span><span class="chip">AUTO ON</span></div>
+        <div class="pipeline">
+          <div class="piperow"><div class="rail2 gold"></div>BUY ▲ | T1 pulsing | <span class="gd">blocked: BLK_SPREAD</span></div>
+          <div class="piperow"><div class="rail2"></div>SELL ▼ | — | OK → FIRE</div>
+        </div>
+        <div class="disclose">BLOCKER HISTORY (last 5) ▸</div>
+        <div class="histrow"><span>14:31:52</span><span>BLK_SPREAD</span></div>
+        <div class="histrow"><span>14:28:07</span><span>BLK_NONE (fired)</span></div>
+        <div class="histrow"><span>14:11:40</span><span>BLK_RETRY_COOLDOWN</span></div>
+        <div class="footnote">answers "why hasn't this fired in 20 minutes?" without waiting for the next transition</div>
+
+        <div class="rule"><span class="lbl">Blocker reference</span><span class="line"></span></div>
+        <div class="refgrid">
+          <div><b>BLK_SPREAD</b> spread too wide</div>
+          <div><b>BLK_MARGIN</b> margin level too low</div>
+          <div><b>BLK_MAX_POS</b> position cap reached</div>
+          <div><b>BLK_SESSION</b> outside allowed hours</div>
+          <div><b>BLK_AUTO_OFF</b> AUTO switch is off</div>
+          <div><b>BLK_NO_STRATEGY</b> nothing applied</div>
+          <div><b>BLK_RETRY_COOLDOWN</b> just closed, waiting</div>
+          <div><b>BLK_MANUAL_REFUSED</b> manual fire declined</div>
+          <div><b>BLK_TWO_PC_ARMED</b> 2% rule armed+near</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>Real enum, not paraphrase.</b> Every value shown is the actual
+      <span class="mono">BLK_*</span> constant — a person reading the panel and a person reading
+      <span class="mono">Config.mqh</span> see the same nine words.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">M.2 / M.3</span><h2 class="mono">LIVE — RISK MANAGEMENT (TWO SEPARATE MECHANISMS)</h2></div>
+<div class="secnote">Per-trade risk sizing (MoneyManager) and the 2% profit auto-close (TwoPCRule) are two
+  different mechanisms that happen to both be percentage-of-balance rules. Kept in visibly separate
+  cards so they are never read as one "risk" feature.</div>
+<div class="srcnote">SOURCE: <b>MoneyManager.mqh</b> MM_RiskLimitLot/CFG_MaxRiskPct · <b>TwoPCRule.mqh</b> InpTwoPCThreshold</div>
+
+<div class="board">
+  <div class="col">
+    <div class="panel">
+      <div class="tabs mono"><div class="tab on">LIVE</div><div class="tab">VIRT UNIV</div><div class="tab">SCOPE</div><div class="tab">CTRL</div></div>
+      <div class="body2">
+        <div class="rule"><span class="lbl">M.2 — Per-trade risk sizing</span><span class="line"></span></div>
+        <div class="riskcard">
+          <div class="line"><span class="k">Effective lot</span><span>0.12</span></div>
+          <div class="line"><span class="k">Risk cap</span><span>2.0% of balance</span></div>
+          <div class="line"><span class="k">Risk in $</span><span>$24.80 of $1,240.00</span></div>
+          <div class="clampnote">lot reduced from 0.15 → 0.12 to stay inside the 2.0% cap</div>
+        </div>
+        <div class="footnote">if even the broker's minimum lot would exceed the cap, MM_RiskLimitLot
+          refuses the trade — that refusal surfaces on the status line, never a silently skipped signal.</div>
+
+        <div class="rule"><span class="lbl">M.3 — 2% profit auto-close (separate mechanism)</span><span class="line"></span></div>
+        <div class="riskcard">
+          <div class="line"><span class="k">Armed</span><span class="g">YES</span></div>
+          <div class="line"><span class="k">Threshold</span><span>2.0% of balance</span></div>
+          <div class="line"><span class="k">Current floating</span><span class="gd">1.4%</span></div>
+          <div class="progwrap"><div class="fill" style="width:70%"></div><div class="mark" style="left:100%"></div></div>
+        </div>
+        <div class="footnote">this closes ALL EA positions on profit, unrelated to how any single
+          trade's lot was sized — the progress bar is new; the ON/OFF chip alone didn't show "how close."</div>
+      </div>
+    </div>
+    <div class="caption"><b>Two cards, on purpose.</b> The correction in this amendment's own §L exists
+      because these two are easy to merge in the UI the same way they're easy to merge in conversation.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">M.4</span><h2 class="mono">LIVE — ORDER HANDLING &amp; POSITION MANAGEMENT</h2></div>
+<div class="secnote">OPEN rows gain a derived trail-state field (display-only, no new StateHub coupling) and
+  an explicit overflow row instead of silently dropping a 5th position.</div>
+<div class="srcnote">SOURCE: <b>LiveTab.mqh</b> §1.4 · LT_MAX_OPEN=4 (REAL is single-strategy radio, ADR-001 §2.6)</div>
+
+<div class="board">
+  <div class="col">
+    <div class="panel">
+      <div class="tabs mono"><div class="tab on">LIVE</div><div class="tab">VIRT UNIV</div><div class="tab">SCOPE</div><div class="tab">CTRL</div></div>
+      <div class="body2">
+        <div class="rule"><span class="lbl">Open positions</span><span class="line"></span></div>
+        <table>
+          <tr><th>Dir/Lots</th><th>Entry</th><th>SL</th><th>R</th><th>Trail</th><th></th></tr>
+          <tr><td class="g">BUY 0.12</td><td>2411.30</td><td>2409.10</td><td class="g">+0.6</td>
+              <td class="mono" style="font-size:8px;color:var(--accent2)">TRAILING</td>
+              <td><span class="miniact">BE</span><span class="miniact">1/2</span></td></tr>
+          <tr><td class="r">SELL 0.10</td><td>2413.80</td><td>2413.80</td><td>0.0</td>
+              <td class="mono" style="font-size:8px;color:var(--gold)">AT BE</td>
+              <td><span class="miniact">BE</span><span class="miniact">1/2</span></td></tr>
+        </table>
+        <div class="histrow" style="opacity:.6"><span>+1 more (not shown)</span><span>see VIRT UNIV for full research view</span></div>
+        <div class="footnote">"1/2" ships as ASCII permanently (owner ruling, P4-2 review) — not a
+          placeholder for a future ½ glyph.</div>
+
+        <div class="actrow">
+          <div class="actbtn2 buy">BUY</div><div class="actbtn2 sell">SELL</div><div class="actbtn2 close">CLOSE</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>Trail state is derived, not stored.</b> Comparing current SL to entry price
+      needs no new engine field — display logic only, per the parent spec's data-binding discipline.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">N</span><h2 class="mono">VIRT UNIV — FULL ROSTER, SORT, PAGER, HEALTH</h2></div>
+<div class="secnote">The roster table exactly as coded — real sort keys in real cycle order, real pinning rule,
+  plus a roster-health indicator and an unabridged legend.</div>
+<div class="srcnote">SOURCE: <b>UnivTab.mqh</b> §2.1-2.5 — UV_SORT_* keys, U0/applied/advisor pinning</div>
+
+<div class="board">
+  <div class="col">
+    <div class="panel">
+      <div class="tabs mono"><div class="tab">LIVE</div><div class="tab on">VIRT UNIV</div><div class="tab">SCOPE</div><div class="tab">CTRL</div></div>
+      <div class="body2">
+        <div class="stratbar">
+          <span class="mono" style="font-size:10px">ROSTER R6 · 15+3M</span>
+          <span class="rosterhealth">14 active · 3 meta · <span class="gd">1 corrupt</span></span>
+        </div>
+        <div class="mono" style="font-size:8.5px;color:var(--muted);margin-bottom:6px">SORT: NET R ▾ (cycles TRD→WIN%→PF→MAXDD→NET R) · page 1/2</div>
+        <table>
+          <tr><th>#</th><th>Strategy</th><th>Trd</th><th>Net R</th><th>Win%</th><th>PF</th><th>DD</th></tr>
+          <tr><td>0</td><td class="mono">U0 MIRROR</td><td>17</td><td class="g">+5.57</td><td>65%</td><td>1.44</td><td>2.1</td></tr>
+          <tr class="applied advisor"><td>1</td><td class="mono hash">T1_B1B6 #a3f9</td><td>11</td><td class="g">+3.74</td><td>64%</td><td>1.61</td><td>1.2</td></tr>
+          <tr><td>2</td><td class="mono hash">T1_B6B2B4 #d217</td><td>5</td><td class="g">+4.85</td><td>60%</td><td>1.9</td><td>0.9</td></tr>
+          <tr class="meta"><td>15</td><td class="mono">M_EQUITY</td><td>28</td><td class="g">+5.10</td><td>61%</td><td>1.5</td><td>1.8</td></tr>
+          <tr class="corrupt"><td>!</td><td class="mono">T9_broken (parse error)</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        </table>
+        <div class="legend">
+          ★ advisor pick &nbsp;·&nbsp; ▶ applied to real &nbsp;·&nbsp; M_ meta-switcher (violet, no hash) &nbsp;·&nbsp;
+          ! corrupt file (see CTRL for fix suggestion) &nbsp;·&nbsp; dbl-click → bind SCOPE
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>Corrupt-file visibility moved here too.</b> A person looking at this table
+      right now should not need to switch to CTRL to learn why a row can't be selected.</div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="tabs mono"><div class="tab">LIVE</div><div class="tab on">VIRT UNIV</div><div class="tab">SCOPE</div><div class="tab">CTRL</div></div>
+      <div class="body2">
+        <div class="rule"><span class="lbl">Meta-switcher row, double-clicked</span><span class="line"></span></div>
+        <div class="riskcard">
+          <div style="font-size:10px;color:var(--meta)" class="mono">M_EQUITY</div>
+          <div class="footnote" style="margin-top:6px">M_EQUITY currently holds T1_B6B2B4 — see that
+            universe's own SCOPE for entry/exit criteria. Metas have no DSL definition of their own.</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption"><b>SCOPE doesn't pretend a meta has criteria.</b> Double-clicking a meta row
+      explains the redirection instead of opening an empty or wrong criteria panel.</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

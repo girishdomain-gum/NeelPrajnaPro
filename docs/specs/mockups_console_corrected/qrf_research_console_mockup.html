@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRF Research Console v1.0 — Future Work Proposal</title>
+<style>
+  /* ================= TOKENS — inherited verbatim from neelprajna_dashboard_v5_2_mockup.html =================
+     Same palette as the on-chart EA panel, so the two consoles read as one product family.
+     Unlike the EA panel, this is a real browser surface: no MT5 object-budget or Consolas-only constraint,
+     so headline type may use a system sans for hierarchy while data stays monospace (tabular numerics). */
+  :root{
+    --bg:#0C0E12; --surface:#12151C; --surface2:#171B24; --hair:#262C3A; --rowrule:#161A22;
+    --text:#C6CEDC; --muted:#66718A; --label:#49536B;
+    --accent:#46C8C0; --green:#4FC98F; --red:#E06060; --gold:#D9A93E; --meta:#A582C8;
+    --greenbg:#0E2A1D; --redbg:#2E1414; --goldbg:#2E240E;
+    --bd-green:#1E4A34; --bd-red:#4A2424; --bd-gold:#4A3A16;
+    --canvas:#07080B;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--canvas);color:var(--text);
+       font-family:"Segoe UI",-apple-system,sans-serif;
+       padding:34px 28px 70px}
+  .mono{font-family:Consolas,"IBM Plex Mono","Cascadia Mono",monospace}
+  .intro{max-width:1680px;margin:0 auto 28px}
+  .intro h1{font-size:15px;font-weight:700;letter-spacing:.1em;color:var(--text)}
+  .intro h1 b{color:var(--accent)}
+  .intro p{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;max-width:980px}
+  .intro .tag{display:inline-block;font-size:9.5px;letter-spacing:.1em;color:var(--gold);
+              border:1px solid var(--bd-gold);background:var(--goldbg);padding:2px 8px;margin-top:10px}
+
+  /* ---------- shell chrome ---------- */
+  .shell{max-width:1680px;margin:0 auto;border:1px solid var(--hair);background:var(--bg)}
+  .topbar{display:flex;align-items:center;gap:18px;padding:10px 16px;border-bottom:1px solid var(--hair)}
+  .topbar .title{font-size:11px;letter-spacing:.12em;color:var(--muted)}
+  .topbar .title b{color:var(--text)}
+  .booksel{font-size:11px;padding:4px 10px;border:1px solid var(--hair);background:var(--surface);color:var(--text)}
+  .booksel .car{color:var(--label);margin-left:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px}
+  .healthchip{font-size:10px;color:var(--muted);margin-left:auto;display:flex;align-items:center}
+  .clock{font-size:10px;color:var(--label);margin-left:18px}
+
+  .body{display:flex}
+  .navrail{width:132px;border-right:1px solid var(--hair);padding:14px 0;flex-shrink:0}
+  .navitem{font-size:10.5px;letter-spacing:.08em;color:var(--muted);padding:10px 16px;border-left:2px solid transparent;cursor:default}
+  .navitem.on{color:var(--accent);border-left:2px solid var(--accent);background:var(--surface)}
+  .navitem .n{display:block;color:var(--label);font-size:8.5px;margin-top:2px}
+
+  .board{display:flex;gap:22px;flex-wrap:wrap;padding:22px;flex:1}
+  .col{width:400px}
+  .caption{font-size:10px;color:var(--label);letter-spacing:.06em;margin:10px 2px 0;line-height:1.7;font-family:"Segoe UI",sans-serif}
+  .caption b{color:var(--muted);font-weight:600}
+
+  .panel{border:1px solid var(--hair);background:var(--bg)}
+  .ph{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--hair);background:var(--surface)}
+  .ph .h{font-size:10.5px;letter-spacing:.1em;color:var(--text);font-weight:700}
+  .ph .h b{color:var(--accent)}
+  .pbody{padding:12px}
+
+  .rule{display:flex;align-items:center;gap:8px;margin:14px 0 7px}
+  .rule .lbl{font-size:8.5px;letter-spacing:.12em;color:var(--label);text-transform:uppercase;white-space:nowrap}
+  .rule .line{flex:1;height:1px;background:var(--hair)}
+  .rule.danger .lbl{color:var(--red)}
+  .rule.danger .line{background:var(--bd-red)}
+
+  /* KPI lattice */
+  .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--hair)}
+  .kpi .cell{background:var(--surface);padding:8px 10px}
+  .kpi .cell .l{font-size:7.5px;letter-spacing:.08em;color:var(--label);text-transform:uppercase}
+  .kpi .cell .v{font-family:Consolas,monospace;font-size:13px;color:var(--text);margin-top:3px}
+  .kpi .v.green{color:var(--green)} .kpi .v.red{color:var(--red)} .kpi .v.gold{color:var(--gold)}
+
+  /* table grammar */
+  table{width:100%;border-collapse:collapse;font-family:Consolas,monospace;font-size:10.5px}
+  th{font-size:8px;letter-spacing:.08em;color:var(--label);text-transform:uppercase;text-align:left;
+     padding:5px 6px;border-bottom:1px solid var(--hair)}
+  th.num,td.num{text-align:right}
+  td{padding:6px 6px;border-bottom:1px solid var(--rowrule);color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  .scopechip{font-size:8.5px;color:var(--muted);border:1px solid var(--hair);padding:1px 5px;white-space:nowrap}
+  .hash{color:var(--label)}
+  .meta{color:var(--meta)}
+  .g{color:var(--green)} .r{color:var(--red)} .gd{color:var(--gold)} .ac{color:var(--accent)}
+
+  /* status pill */
+  .pill{display:inline-block;font-size:8.5px;letter-spacing:.06em;padding:2px 7px;border:1px solid var(--hair)}
+  .pill.pass{color:var(--green);border-color:var(--bd-green);background:var(--greenbg)}
+  .pill.fail{color:var(--red);border-color:var(--bd-red);background:var(--redbg)}
+  .pill.insuf{color:var(--gold);border-color:var(--bd-gold);background:var(--goldbg)}
+  .pill.run{color:var(--muted)}
+
+  /* banners */
+  .banner{font-size:9.5px;letter-spacing:.05em;padding:7px 10px;border:1px solid var(--bd-gold);
+          background:var(--goldbg);color:var(--gold);margin-bottom:10px}
+  .banner.red{border-color:var(--bd-red);background:var(--redbg);color:var(--red)}
+  .banner b{letter-spacing:.1em}
+
+  /* signal / feed rows */
+  .feedrow{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--rowrule);font-size:10px}
+  .feedrow:last-child{border-bottom:none}
+  .feedrow .rail{width:3px;align-self:stretch;background:var(--hair)}
+  .feedrow .rail.gold{background:var(--gold)}
+  .feedrow .rail.green{background:var(--green)}
+  .feedrow .txt{flex:1;color:var(--text)}
+  .feedrow .meta2{color:var(--label);font-size:8.5px;margin-top:2px}
+  .actbtn{font-size:8.5px;color:var(--accent);border:1px solid var(--hair);padding:2px 6px;white-space:nowrap;height:fit-content}
+
+  /* ladder */
+  .ladder{display:flex;gap:4px;margin:6px 0 10px}
+  .ladder .seg{flex:1;height:20px;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;
+               font-size:9px;color:var(--label);background:var(--surface)}
+  .ladder .seg.lit{color:var(--bg);background:var(--accent);border-color:var(--accent);font-weight:700}
+
+  .touchgrid{display:flex;gap:1px;background:var(--hair);margin-top:8px}
+  .touchgrid .t{flex:1;background:var(--surface);padding:10px;text-align:center}
+  .touchgrid .t .num{font-family:Consolas,monospace;font-size:20px;color:var(--text)}
+  .touchgrid .t .num.z{color:var(--green)}
+  .touchgrid .t .lbl{font-size:8px;color:var(--label);letter-spacing:.08em;margin-top:3px}
+
+  .footerline{font-size:9px;color:var(--label);margin-top:8px;line-height:1.6;font-family:Consolas,monospace}
+  .hatch{background-image:repeating-linear-gradient(135deg,var(--hair),var(--hair) 3px,transparent 3px,transparent 7px)}
+</style>
+</head>
+<body>
+<div style="margin:0 0 18px 0;padding:12px 16px;border:1.5px solid #b8860b;background:#211a08;color:#e6c96a;font-family:Consolas,monospace;font-size:13px;line-height:1.55;border-radius:6px;">
+<b style="color:#ffd75e;">NOTE — 2026-07-29.</b> This mockup uses only illustrative placeholder data (e.g. fictional pattern
+IDs); no factual claim in it was wrong. Context has changed since it was drawn: the QRF Kernel it sketches a console for is
+now known to be <b>real</b> — a ten-sprint, Generation-1-closed repository (F:\QRF). The design shell remains reasonable;
+the eventual data binding should be the real Kernel's (<code>RecordStore</code>, <code>battery.py</code>,
+<code>WindowLedger</code>, <code>TrialCountLedger</code>), per <code>QRF_Research_Console_spec_v1.0.md</code> &sect;v1.3
+Amendment. Preserved unedited beneath this note.
+</div>
+
+
+<div class="intro">
+  <h1>QRF RESEARCH CONSOLE — <b>v1.0 FUTURE WORK PROPOSAL</b></h1>
+  <p>Companion to <b>Platform Architecture v1.0</b> and <b>ADR-008</b>. Browser-based, not an MT5 on-chart
+     panel — the Kernel is domain-blind and multi-Book by construction, so its console lives separately from
+     NeelPrajna's own LIVE/VIRT&nbsp;UNIV/SCOPE/CTRL panel (unchanged, still on-chart). Design tokens below are
+     inherited verbatim from <span class="mono">neelprajna_dashboard_v5.2_mockup.html</span> for visual
+     continuity across the two consoles. Five lenses shown below as a review board, matching the existing
+     mockup's convention of showing every screen at once for sign-off.</p>
+  <span class="tag">STATUS: PROPOSAL — NOT YET IMPLEMENTED</span>
+</div>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="title mono">QRF RESEARCH CONSOLE</div>
+    <div class="booksel mono">Book A: NeelPrajna <span class="car">▾</span></div>
+    <div class="healthchip mono"><span class="dot"></span>KERNEL HEALTHY · bus updated 0.4s ago</div>
+    <div class="clock mono">14:32:07 UTC</div>
+  </div>
+  <div class="body">
+    <div class="navrail">
+      <div class="navitem on">OBSERVE<span class="n">engine health</span></div>
+      <div class="navitem">KNOWLEDGE<span class="n">patterns / graph</span></div>
+      <div class="navitem">DISCOVER<span class="n">candidates only</span></div>
+      <div class="navitem">EVIDENCE<span class="n">verdicts</span></div>
+      <div class="navitem">GOVERNANCE<span class="n">autonomy</span></div>
+    </div>
+
+    <div class="board">
+
+      <!-- ============ OBSERVE ============ -->
+      <div class="col">
+        <div class="panel">
+          <div class="ph"><div class="h mono">OBSERVE</div><div class="mono" style="font-size:9px;color:var(--label)">Book A</div></div>
+          <div class="pbody">
+            <div class="rule"><span class="lbl">Feed status</span><span class="line"></span></div>
+            <table>
+              <tr><th>Instrument</th><th>Source</th><th class="num">Lag</th><th class="num">Obs/min</th></tr>
+              <tr><td>XAUUSDm</td><td class="mono" style="color:var(--muted)">MT5 tick</td><td class="num g">0.2s</td><td class="num">1,840</td></tr>
+              <tr><td>BTCUSDm</td><td class="mono" style="color:var(--muted)">MT5 tick</td><td class="num gd">4.1s</td><td class="num">612</td></tr>
+            </table>
+
+            <div class="rule"><span class="lbl">Anti-hindsight tripwire</span><span class="line"></span></div>
+            <div class="footerline g">ANTI-HINDSIGHT: 48,220 checks today · 0 violations</div>
+
+            <div class="rule"><span class="lbl">Throughput (1h)</span><span class="line"></span></div>
+            <svg viewBox="0 0 380 60" width="100%" height="60">
+              <polyline points="0,40 40,36 80,30 120,32 160,22 200,26 240,18 280,20 320,14 360,16 380,12"
+                        fill="none" stroke="#46C8C0" stroke-width="1.5"/>
+            </svg>
+
+            <div class="rule"><span class="lbl">Ledger health</span><span class="line"></span></div>
+            <div class="kpi">
+              <div class="cell"><div class="l">RecordStore chain</div><div class="v green">PASS</div></div>
+              <div class="cell"><div class="l">Newest bulk manifest</div><div class="v">2m ago</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><b>OBSERVE.</b> Answers "is the Kernel actually seeing the market right now?"
+          before anything downstream is trusted. The anti-hindsight strip surfaces a Kernel invariant as UI,
+          not a UI-level check — §2.2.</div>
+      </div>
+
+      <!-- ============ KNOWLEDGE ============ -->
+      <div class="col">
+        <div class="panel">
+          <div class="ph"><div class="h mono">KNOWLEDGE</div><div class="mono" style="font-size:9px;color:var(--label)">Book A</div></div>
+          <div class="pbody">
+            <div class="banner">1 CONTRADICTION — review before citing</div>
+            <div class="rule"><span class="lbl">Pattern library</span><span class="line"></span></div>
+            <table>
+              <tr><th>Pattern</th><th class="num">Win%</th><th class="num">Conf.</th><th>Scope</th></tr>
+              <tr><td>Liquidity Sweep <span class="hash">#a3f9</span></td><td class="num g">63%</td><td class="num">0.87</td>
+                  <td><span class="scopechip">XAUUSD·M5·London·trend</span></td></tr>
+              <tr><td>VWAP Compression <span class="hash">#c112</span></td><td class="num g">58%</td><td class="num">0.71</td>
+                  <td><span class="scopechip">XAUUSD·M1·NY·range</span></td></tr>
+              <tr><td>Tue 09:45 Anomaly <span class="hash">#f004</span></td><td class="num r">44%</td><td class="num">0.39</td>
+                  <td><span class="scopechip">XAUUSD·M15·all·all</span></td></tr>
+            </table>
+
+            <div class="rule"><span class="lbl">Graph inspector — #a3f9</span><span class="line"></span></div>
+            <svg viewBox="0 0 380 130" width="100%" height="130">
+              <circle cx="190" cy="65" r="20" fill="#171B24" stroke="#46C8C0" stroke-width="1.5"/>
+              <text x="190" y="69" font-size="8" fill="#C6CEDC" text-anchor="middle" font-family="Consolas">a3f9</text>
+              <circle cx="70" cy="25" r="14" fill="#171B24" stroke="#4FC98F" stroke-width="1.2"/>
+              <text x="70" y="28" font-size="7" fill="#8fa" text-anchor="middle" font-family="Consolas">evid.</text>
+              <line x1="88" y1="34" x2="172" y2="55" stroke="#1E4A34" stroke-width="1.5"/>
+              <circle cx="70" cy="105" r="14" fill="#171B24" stroke="#E06060" stroke-width="1.2"/>
+              <text x="70" y="108" font-size="7" fill="#faa" text-anchor="middle" font-family="Consolas">contra.</text>
+              <line x1="88" y1="97" x2="172" y2="75" stroke="#4A2424" stroke-width="1.5"/>
+              <circle cx="320" cy="65" r="14" fill="#171B24" stroke="#262C3A" stroke-width="1.2" stroke-dasharray="3,2"/>
+              <text x="320" y="68" font-size="7" fill="#66718A" text-anchor="middle" font-family="Consolas">missing</text>
+              <line x1="210" y1="65" x2="304" y2="65" stroke="#262C3A" stroke-width="1.2" stroke-dasharray="3,2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="caption"><b>KNOWLEDGE.</b> Single-pattern focus view, not an all-patterns force-directed
+          graph (§9 — parked). Contradiction banner is always-on within this lens, exempt from the
+          active-lens-only render rule, same convention as the EA panel's visual-source badge.</div>
+      </div>
+
+      <!-- ============ DISCOVER ============ -->
+      <div class="col">
+        <div class="panel">
+          <div class="ph"><div class="h mono">DISCOVER</div><div class="mono" style="font-size:9px;color:var(--label)">Book A</div></div>
+          <div class="pbody">
+            <div class="banner"><b>NO VERDICT LIVES ON THIS SCREEN</b></div>
+            <div class="rule"><span class="lbl">Screener shortlist</span><span class="line"></span></div>
+            <table>
+              <tr><th>Candidate</th><th class="num">trials</th><th></th></tr>
+              <tr><td>Spread↓ + Tick↑ + Vol↓ + VWAP-near</td><td class="num">1,204</td>
+                  <td><span class="actbtn">PROMOTE →</span></td></tr>
+              <tr><td>Session-open gap fade</td><td class="num">318</td>
+                  <td><span class="actbtn">PROMOTE →</span></td></tr>
+            </table>
+
+            <div class="rule"><span class="lbl">Observatory questions</span><span class="line"></span></div>
+            <div class="feedrow"><div class="rail gold"></div>
+              <div class="txt">Gold behaves differently every Tuesday 09:45–10:20<div class="meta2">raised 2h ago · anomaly_scan #7741</div></div>
+              <span class="actbtn">PROMOTE →</span>
+            </div>
+            <div class="feedrow"><div class="rail"></div>
+              <div class="txt">Spread compresses ahead of London fix on 4 of last 5 Fridays<div class="meta2">raised 1d ago · anomaly_scan #7690</div></div>
+              <span class="actbtn">PROMOTE →</span>
+            </div>
+
+            <div class="rule"><span class="lbl">Trial count</span><span class="line"></span></div>
+            <div class="kpi"><div class="cell" style="grid-column:span 2"><div class="l">TrialCountLedger running total</div><div class="v">4,812</div></div></div>
+          </div>
+        </div>
+        <div class="caption"><b>DISCOVER.</b> The mandatory header cannot be hidden or dismissed — it is the
+          console-level enforcement of the Contract's rule that Screener/Observatory output carries no
+          evidentiary weight (§4.1). "Promote" only creates a Hypothesis; it does not create a Verdict.</div>
+      </div>
+
+      <!-- ============ EVIDENCE ============ -->
+      <div class="col">
+        <div class="panel">
+          <div class="ph"><div class="h mono">EVIDENCE</div><div class="mono" style="font-size:9px;color:var(--label)">Book A</div></div>
+          <div class="pbody">
+            <div class="rule"><span class="lbl">Hypothesis queue</span><span class="line"></span></div>
+            <table>
+              <tr><th>Hypothesis</th><th>Source</th><th>Status</th></tr>
+              <tr><td>Spread↓+Tick↑+Vol↓+VWAP</td><td class="mono" style="color:var(--muted)">screener</td>
+                  <td><span class="pill run">RUNNING</span></td></tr>
+              <tr><td>Tue 09:45 gold anomaly</td><td class="mono" style="color:var(--muted)">observatory</td>
+                  <td><span class="pill insuf">INSUFFICIENT</span></td></tr>
+              <tr><td>B6 as B1-replacement</td><td class="mono" style="color:var(--muted)">human</td>
+                  <td><span class="pill fail">FAIL</span></td></tr>
+              <tr><td>B6 as addition (T1_B1B6)</td><td class="mono" style="color:var(--muted)">human</td>
+                  <td><span class="pill pass">PASS</span></td></tr>
+            </table>
+
+            <div class="rule"><span class="lbl">Window ledger</span><span class="line"></span></div>
+            <div class="footerline">WINDOW w-2026-07a · designated Jul 01 · <span class="g">VIRGIN</span></div>
+            <div class="footerline hatch" style="padding:3px 4px">WINDOW w-2026-06c · designated Jun 14 · <span class="r">BURNED</span></div>
+
+            <div class="rule"><span class="lbl">Belief update — T1_B1B6</span><span class="line"></span></div>
+            <div class="kpi">
+              <div class="cell"><div class="l">Confidence before</div><div class="v">0.52</div></div>
+              <div class="cell"><div class="l">Confidence after</div><div class="v green">0.71 ▲</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="caption"><b>EVIDENCE.</b> The only lens that can show a Verdict — status pills are the
+          one filled-color element outside the EA panel's own NUKE convention, deliberately weighted as
+          heavily as an irreversible action (§5.1).</div>
+      </div>
+
+      <!-- ============ GOVERNANCE ============ -->
+      <div class="col">
+        <div class="panel">
+          <div class="ph"><div class="h mono">GOVERNANCE</div><div class="mono" style="font-size:9px;color:var(--label)">Programme-wide</div></div>
+          <div class="pbody">
+            <div class="rule"><span class="lbl">Autonomy ladder</span><span class="line"></span></div>
+            <div class="ladder mono">
+              <div class="seg">L0</div><div class="seg">L1</div><div class="seg lit">L2</div><div class="seg">L3</div>
+            </div>
+            <div class="footerline">Capped at L2 for recovery — Windows auto-login deliberately disabled (owner ruling, 2026-07-27).</div>
+
+            <div class="rule"><span class="lbl">Supervisor / Runner</span><span class="line"></span></div>
+            <div class="kpi">
+              <div class="cell"><div class="l">Supervisor</div><div class="v green">HEALTHY</div></div>
+              <div class="cell"><div class="l">Runner</div><div class="v green">HEALTHY</div></div>
+            </div>
+
+            <div class="rule"><span class="lbl">Touch counters (this week)</span><span class="line"></span></div>
+            <div class="touchgrid mono">
+              <div class="t"><div class="num z">0</div><div class="lbl">ROUTINE</div></div>
+              <div class="t"><div class="num gd" style="color:var(--gold)">1</div><div class="lbl">EXCEPTION</div></div>
+            </div>
+
+            <div class="rule danger"><span class="lbl">Freeze criterion</span><span class="line"></span></div>
+            <div class="footerline gd" style="color:var(--gold)">"No feature may require a Supervisor code change — configuration only."</div>
+          </div>
+        </div>
+        <div class="caption"><b>GOVERNANCE.</b> The two-counter design from ADR-005 §2 gets its own home
+          here rather than staying buried in a log — routine touches target zero; exception touches are
+          counted, never excused (§6.3).</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
