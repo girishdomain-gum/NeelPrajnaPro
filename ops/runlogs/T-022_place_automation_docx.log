@@ -1,0 +1,46 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730003435
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-022_place_automation_docx.ps1
+Process ID: 2784
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-022_place_automation_docx.log
+=== T-022 place Automation docx twin === 2026-07-30T00:34:35.3562981+05:30
+--- [1] fetch from Downloads ---
+placed docs\automation\NeelPrajnaPro_Automation-v1.0.docx
+--- [2] verify twin invariant ---
+basenames: NeelPrajnaPro_Automation-v1.0
+files: NeelPrajnaPro_Automation-v1.0.docx, NeelPrajnaPro_Automation-v1.0.md
+--- [3] commit + push ---
+
+[main c209a36] T-022: Automation docx twin placed (whiteboard render, 3 diagrams, per HOW_THIS_DOC_WAS_BUILT.md)
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 docs/automation/NeelPrajnaPro_Automation-v1.0.docx
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-022_place_automation_docx.ps1:41 char:1
++ git push 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   4ec7e2a..c209a36  main -> main
+c209a36 T-022: Automation docx twin placed (whiteboard render, 3 diagrams, per HOW_THIS_DOC_WAS_BUILT.md)
+4ec7e2a T-021: attach run log
+
+RESULT: OK
+**********************
+Windows PowerShell transcript end
+End time: 20260730003438
+**********************
