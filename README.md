@@ -1,31 +1,18 @@
-# QRF — Quantitative Research Framework
+# NeelPrajnaPro
 
-A machine for finding out what is actually true about markets — built so
-it cannot fool the person using it.
+The single home of the NeelPrajna × QRF programme: a live trading system (Book A, paused at F:\NeelPrajna) being transformed into a scientific research platform by integration with the QRF Kernel — ten sprints of drilled evidence machinery, carried forward here with full history.
 
-## Orientation (read in this order)
-1. `docs/handover/AI_PROJECT_STATE.md` — where the project stands right now
-2. `docs/implementation/Implementation_Blueprint_v1.0.md` — how to build it
-3. `docs/implementation/Verification_Framework_v1.0.md` — how we prove it correct
-4. `docs/architecture/` — what the system is and why (v1.1, FROZEN)
-5. `docs/adr/` — every major decision, with reasons (10 minutes)
-6. `CONTRIBUTING.md` — the executable constitution
+**The wall this repository is built around:** *QRF never trades. NeelPrajna never learns on its own.*
 
-## Layout
-```
-qrf/kernel/     domain-blind core: records, instruments, battery, belief...
-qrf/trading/    the domain plug-in: adapters, simulator, costs, 17 concept families
-ivf/            Independent Verification Framework (never imports qrf/)
-tests/          mirrors qrf/; includes the kernel firewall test
-configs/        venues, datasets, priors (YAML)
-hypotheses/     pre-registered H-*.yaml (hashed into the ledger)
-datastore/      journal/ (THE ledger) · bulk/ (parquet) · index/ (derived)
-dashboard/      read-only Streamlit views
-scripts/        gen_state.py, backup, utilities
-docs/           architecture · implementation · adr · handover · reference
-```
+## Start here
+- **Owner:** `docs\THE_ONE_PAGE.md` — what we're building, the proof, your job, your protections.
+- **Anyone:** `docs\README.md` — the structure law: one folder per thing, one document per folder, versions inside.
+- **Current state & next sprint:** `docs\execution_plan\` master, §0.
+- **Everything that ever happened:** `docs\journal\` master.
 
-## Status
-Documentation complete and frozen per ADR-001. Next: Sprint 1 (ledger core).
+## Working here
+- Python core: `qrf/` (Kernel — domain-blind, firewalled) · `ivf/` (independent verification) · `tests/` (853+) · `configs/` · `hypotheses/` · `datastore/` (the ledger — append-only, hash-chained).
+- Ops channel: `ops\README_OPS.md` — scripts in, logs out; the Architect reads `ops\runlogs\` directly.
+- Gen-1 provenance: `docs\archive\gen1\` — ADRs, sprint records, reports, artifacts. Never edited, always citable.
 
-*Evidence before execution — concepts are temporary; knowledge is permanent.*
+*Predecessors: F:\QRF (archived 2026-07-29) · F:\NeelPrajna (paused; live execution home). Bootstrap record: docs\archive\governance\REPO_BOOTSTRAP.md.*
