@@ -1,0 +1,58 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260729235010
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-015_bridge_deepseek_gap.ps1
+Process ID: 8836
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-015_bridge_deepseek_gap.log
+=== T-015 bridge DeepSeek gap === 2026-07-29T23:50:10.7392994+05:30
+--- [1] spot-check the changes landed ---
+MISSING in docs\decisions\NeelPrajnaPro_Decisions-v1.0.md: docs\\vision\\ master
+OK: docs\execution_plan\NeelPrajnaPro_Execution_Plan-v1.0.md contains 'journal master'
+MISSING in docs\reference\NeelPrajnaPro_Reference-v1.0.md: docs\\scientific_model\\ master
+OK: docs\vv_plan\NeelPrajnaPro_VV_Plan-v1.0.md contains 'NB-6'
+OK: docs\architecture\NeelPrajnaPro_Architecture-v1.0.md contains 'Failure asymmetry'
+OK: docs\journal\NeelPrajnaPro_Journal.md contains 'J-015'
+--- [2] commit + push ---
+git : warning: in the working copy of 'ops/runlogs/T-013_root_cleanup.log', CRLF will be replaced by LF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-015_bridge_deepseek_gap.ps1:43 char:1
++ git add docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'ops/T-014_commit_relocation.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ops/T-015_bridge_deepseek_gap.ps1', LF will be replaced by CRLF the next time Git touches it
+[main fff752a] T-015: bridge DeepSeek 6-doc review - NB-6 Interpretation-Lock added, failure-asymmetry framing added, 7 stale cross-refs fixed; full-component-absorption roadmap held for Owner ruling (not adopted)
+ 10 files changed, 169 insertions(+), 11 deletions(-)
+ create mode 100644 ops/T-014_commit_relocation.ps1
+ create mode 100644 ops/T-015_bridge_deepseek_gap.ps1
+ create mode 100644 ops/runlogs/T-015_bridge_deepseek_gap.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-015_bridge_deepseek_gap.ps1:46 char:1
++ git push 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   ee8d650..fff752a  main -> main
+fff752a T-015: bridge DeepSeek 6-doc review - NB-6 Interpretation-Lock added, failure-asymmetry framing added, 7 stale cross-refs fixed; full-component-absorption roadmap held for Owner ruling (not adopted)
+ee8d650 T-014: attach run log
+
+RESULT: FAILED - see sections above
+**********************
+Windows PowerShell transcript end
+End time: 20260729235014
+**********************
