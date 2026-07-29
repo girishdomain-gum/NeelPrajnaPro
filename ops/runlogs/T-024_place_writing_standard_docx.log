@@ -1,0 +1,48 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730003817
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-024_place_writing_standard_docx.ps1
+Process ID: 2732
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-024_place_writing_standard_docx.log
+=== T-024 place Writing Standard docx twin === 2026-07-30T00:38:18.0007004+05:30
+--- [1] fetch from Downloads ---
+placed docs\writing_standard\NeelPrajnaPro_Writing_Standard-v1.0.docx
+--- [2] verify twin invariant ---
+basenames: NeelPrajnaPro_Writing_Standard-v1.0
+files: NeelPrajnaPro_Writing_Standard-v1.0.docx, NeelPrajnaPro_Writing_Standard-v1.0.md
+--- [3] commit docs AND ops together (F-22 fix: this script commits itself too) ---
+
+[main 476898d] T-024: Writing Standard docx twin placed (whiteboard render, 4 diagrams) + ops scripts swept per F-22 fix
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 docs/writing_standard/NeelPrajnaPro_Writing_Standard-v1.0.docx
+ create mode 100644 ops/runlogs/T-024_place_writing_standard_docx.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-024_place_writing_standard_docx.ps1:44 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   21d0c2e..476898d  main -> main
+476898d T-024: Writing Standard docx twin placed (whiteboard render, 4 diagrams) + ops scripts swept per F-22 fix
+21d0c2e T-023: attach run log
+de755b1 T-023: sweep untracked ops scripts (F-22 fix) - T-016..T-022 placement scripts committed; template updated so future scripts stage ops+docs together
+
+RESULT: OK
+**********************
+Windows PowerShell transcript end
+End time: 20260730003821
+**********************
