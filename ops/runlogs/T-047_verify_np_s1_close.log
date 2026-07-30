@@ -1,0 +1,78 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730210724
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-047_verify_np_s1_close.ps1
+Process ID: 11816
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-047_verify_np_s1_close.log
+=== T-047 VERIFY NP-S1 CLOSE (corrected) === 2026-07-30T21:07:24.8087554+05:30
+--- [1] SS12 sprint-outputs entry - ASCII-safe substrings only ---
+OK: twice framed, once judged
+OK: GO record (Owner, verbatim)
+OK: The four discoveries worth more than the verdict
+OK: integrated verdicts 1
+--- [1b] the placeholder is gone ---
+OK: SS12 placeholder removed
+--- [2] SS0 handover, SS6 WO-P, decisions ---
+OK: CLOSED AND ACCEPTED
+OK: NP-S2 IS THE OPEN SPRINT
+OK: EXECUTION-MODEL PARITY
+OK: J-037
+OK: J-038
+OK: NP-D-011
+OK: NP-D-012
+--- [3] FROZEN GUARD: SS4 and SS5 still untouched ---
+OK: SS4 seal line and SS5 heading intact
+--- [4] T-046's own log is unedited (P5 - the FAILED line stands) ---
+OK: T-046 log preserved with its FAILED line - corrected by record, not by rewrite
+--- [5] the close commit is on origin ---
+
+6acbafe T-046: attach run log
+## main...origin/main
+ M docs/journal/NeelPrajnaPro_Journal.md
+?? ops/T-047_verify_np_s1_close.ps1
+?? ops/runlogs/T-047_verify_np_s1_close.log
+--- [6] stage docs + ops, commit, push ---
+git : warning: in the working copy of 'ops/T-047_verify_np_s1_close.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-047_verify_np_s1_close.ps1:58 char:1
++ git add docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+staged files:
+docs/journal/NeelPrajnaPro_Journal.md
+ops/T-047_verify_np_s1_close.ps1
+ops/runlogs/T-047_verify_np_s1_close.log
+[main efbb011] T-047: corrected re-verification of the NP-S1 close. T-046 reported RESULT: FAILED on a false negative - its check searched for an ASCII hyphen where the document carries an em-dash, so it missed an SS12 entry that was present, correct and committed at 39059c7. Journal J-038 records the finding against the Architect (F-18 species, and J-037 retro item (d) recurring inside the commit that recorded it). New standing rule: a verification pattern is copied from the artifact it verifies, never retyped; an ASCII-only script matches on an ASCII-safe substring. T-046's log stands unedited with its FAILED line - corrected by record, not by rewrite (P5). The sprint close itself is unaffected: NP-S1 is closed and accepted
+ 3 files changed, 88 insertions(+)
+ create mode 100644 ops/T-047_verify_np_s1_close.ps1
+ create mode 100644 ops/runlogs/T-047_verify_np_s1_close.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-047_verify_np_s1_close.ps1:64 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   6acbafe..efbb011  main -> main
+efbb011 T-047: corrected re-verification of the NP-S1 close. T-046 reported RESULT: FAILED on a false negative - its check searched for an ASCII hyphen where the document carries an em-dash, so it missed an SS12 entry that was present, correct and committed at 39059c7. Journal J-038 records the finding against the Architect (F-18 species, and J-037 retro item (d) recurring inside the commit that recorded it). New standing rule: a verification pattern is copied from the artifact it verifies, never retyped; an ASCII-only script matches on an ASCII-safe substring. T-046's log stands unedited with its FAILED line - corrected by record, not by rewrite (P5). The sprint close itself is unaffected: NP-S1 is closed and accepted
+6acbafe T-046: attach run log
+39059c7 T-046: SPRINT NP-S1 CLOSED AND ACCEPTED - the programme's first integrated verdict. Owner GO 2026-07-30 after Chief Scientist REV APPROVED 8.8/10. Integrated verdicts 0 -> 1: verdict 01KYSGQR3D8SYSVJFSF9M77CMY FAIL, 259 trades, p=0.0574 against a bar of p<0.00263, burn atomic, window spent. Robust to the sprint's own most contested arithmetic - p exceeds even the undeflated 0.05. Binding qualification carried into SS0 and the comparison report SS7: NP-S1 established NO equivalence between the bespoke and Battery execution strategies, only that each failed under its own execution model. NP-D-011 execution-model parity before further R6 collection (WO-P in SS6); NP-D-012 specification completeness standing rule. Journal J-037 with the retro; SS12 sprint outputs appended, previously empty by design. Findings permanent by Owner ruling and not softened. SS4 and SS5 remain frozen and unedited - every correction this sprint travelled as an appended record
+
+RESULT: OK - NP-S1's close verified correctly. T-046's FAILED line was a false negative, now recorded as J-038.
+**********************
+Windows PowerShell transcript end
+End time: 20260730210730
+**********************
