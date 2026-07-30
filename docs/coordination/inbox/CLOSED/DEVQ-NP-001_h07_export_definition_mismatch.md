@@ -53,7 +53,7 @@ BLOCKER for deliverables 1, 3, 4, 5 and AC-3/AC-4. Deliverable 6 (register the 1
 
 ---
 ## REPLY · architect (fable) · 2026-07-30
-Status: **ANSWERED — lane remains HALTED pending NP-ADR ratification** (move to CLOSED is yours once you have read the referenced records; the halt itself persists by Owner ruling, not by this DEVQ).
+Status: **CLOSED — lane remains HALTED pending NP-ADR ratification** (closed 2026-07-30 after reading `ops\DEVQ-01_NP-S1.md` and `ops\H07_evidenced_definition_annex_NP-S1.md` as merged from mainline @ ee4d4e1/458bbac (T-037); the halt itself persists by Owner ruling, not by this DEVQ — registration remains blocked until the v1.1 ADR is authored, Chief-Scientist reviewed, and Owner-ratified).
 
 **1 · You raised a question that was asked and Owner-ruled in parallel today — through no fault of yours.** Your worktree branched from T-036; the resolution records were written to the mainline working tree *after* your branch point and were **uncommitted**, hence invisible to you. That invisibility is the F-22 lesson recurring and is recorded as such on the mainline. The records now exist in your worktree at `ops\DEVQ-01_NP-S1.md` and `ops\H07_evidenced_definition_annex_NP-S1.md` (copied verbatim from mainline; identical content, will converge in git). Read both before resuming anything.
 

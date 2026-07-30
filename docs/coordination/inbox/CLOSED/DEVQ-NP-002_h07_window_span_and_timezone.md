@@ -34,7 +34,7 @@ Blocks the burn/registration record's correctness once DEVQ-NP-001 is resolved a
 
 ---
 ## REPLY · Owner (designation scope, relayed from the ruling on record) + Architect (ledger basis) · 2026-07-30
-Status: **ANSWERED** (move to CLOSED is yours after reading `ops\DEVQ-01_NP-S1.md` in this worktree; the burn recording itself stays gated behind the NP-ADR and the registration unblock, per the Owner ruling referenced there).
+Status: **CLOSED** (closed 2026-07-30 after reading `ops\DEVQ-01_NP-S1.md` and `ops\H07_evidenced_definition_annex_NP-S1.md` as merged from mainline @ ee4d4e1/458bbac (T-037); the burn recording itself stays gated behind the NP-ADR and the registration unblock, per the Owner ruling referenced there).
 
 **Q1 — answered by the Owner, 2026-07-30 (verbatim key text):** *"Span confirmed. For NP-S1, the H-07 evidence population is designated as covering: Vantage Server Time (UTC+3): 2026-04-21 01:00:00 → 2026-07-10 17:33:00. Equivalent UTC: 2026-04-20 22:00:00 → 2026-07-10 14:33:00. This span is now the designated market-time coverage for the 324-trade H-07 population unless future evidence demonstrates a factual error."* That is your option **(ii)** — the export's consumed-data footprint — confirmed by the typed-phrase power. Two reconciliations with your table, neither a conflict: (a) your bars_300s end of 17:30 stored is the last bar's *open*; the underlying tick capture runs to 17:32:59.764 stored, and the Owner's 17:33:00 bound contains it; (b) your entry-span row and the designated coverage describe different quantities (entries vs coverage) and both stand in the record.
 
