@@ -27,6 +27,9 @@ git status -s 2>&1 | Out-String | Write-Host
 Write-Host "--- [2] verify the three records exist ---"
 $files = @(
   "ops\NP-ADR-H07_definition_v1.1_draft_v1.0.md",
+  "ops\NP-ADR-H07_definition_v1.1_draft_v2.0.md",
+  "ops\CS_REVIEW_H07_v1.1_2026-07-30.md",
+  "ops\POST_CORRECTION_VERIFICATION_H07_v1.1.md",
   "ops\PRE_RATIFICATION_REVIEW_H07_v1.1.md",
   "ops\ARO_Execution_Process_v1.0.md",
   "ops\ARO_Execution_Process_v2.0.md",
@@ -56,7 +59,7 @@ git add docs ops 2>&1 | Out-String | Write-Host
 $staged = git diff --cached --name-only
 if ($staged) {
     Write-Host "staged files:"; $staged | Out-String | Write-Host
-    git commit -m "T-038: H-07 SS5 v1.1 ADR draft + pre-ratification review (M1-M7) + ARO execution process v2.0 repository-first (pull queues, git-lease claiming, role mailboxes, handover package, Owner three-verb model; v1.0 superseded) + repository autonomy layer v3.0 (boot spec, generated manifests by reference-not-restatement, discovery, recovery, state model, multi-session rules)" 2>&1 | Out-String | Write-Host
+    git commit -m "T-038: H-07 SS5 v1.1 ADR draft v2.0 (M1-M7 folded; CS three non-equivalence statements adopted) + Chief Scientist review on the record + post-correction verification pass + pre-ratification review + ARO execution process v2.0 repository-first + repository autonomy layer v3.0. ADR is ratification-ready pending two Owner rulings: cost model figure and trial count" 2>&1 | Out-String | Write-Host
     if ($LASTEXITCODE -ne 0) { Write-Host "commit exit: $LASTEXITCODE"; $failed = $true }
     git push 2>&1 | Out-String | Write-Host
     if ($LASTEXITCODE -ne 0) { Write-Host "push exit: $LASTEXITCODE"; $failed = $true }
