@@ -1,0 +1,184 @@
+# H-007 — neelprajna liquidity sweep, PREDICTION claim (NP-ADR-008 SS5 v1.1).
+# PRE-REGISTERED: every threshold fixed BEFORE the Battery run. One of TWO
+# sealed registrations for this lineage (Execution Plan SS4 deliverable 3) — the
+# companion E2 existence claim is a separate record
+# (h007_np_liquidity_sweep_v1_1_e2_existence.yaml). Editing any field below
+# re-registers as a NEW hypothesis id.
+#
+# =====================================================================
+# AC-4 SEALED INTERPRETATION TABLE — written and committed BEFORE
+# EvidenceBattery.run() (NP-ADR-008 SS4 M3/M4; NP-ADR-008 Appendix A.3,
+# Owner-accepted 2026-07-30 as a Constitution SS7.2 clarification). This is a
+# comment block only — no field VALUE below changes, so the already-registered
+# hypothesis record (its content_hash covers the resolved payload, not file
+# comments) stays exactly what it was when first registered in SNP-S1-03.
+#
+# --- (A) Mapping: 8 real Battery steps <-> 6 bespoke reported criteria + B2 ---
+# Real Battery step (battery.py)          | Bespoke counterpart                | Note
+# 1 require_audited_simulator (type gate) | (none)                             | Kernel-only safety gate, no bespoke analog
+# 2 selftest gate                         | (none)                             | no bespoke analog
+# 3 window checks (TRAINING, not burned)  | (none, implicit)                   | bespoke has no window ledger
+# 4 splits (walk-forward folds, embargo)  | B2 OOS=final 40%, evaluated once   | B2 is a PROCEDURE not a gate (NP-ADR-008 M4); real walk-forward != bespoke single 60/40 split -- different topology entirely
+# 5 engine per fold TEST range            | B1 sample floors >=100 IS/>=100 OOS| both are "enough trades," but engine RE-SIMULATES from bars+events (M6: different judged trade set by construction) and the TRADE RULE differs (see (C) below)
+# 6 statistics (pooled 1-sided t + boot)  | B3 bootstrap 10k, CI excl. 0 @97.5%| closest structural analog (both bootstrap a mean-net-R CI) but real correction is family-Bonferroni (19 trials) vs bespoke's fixed ALPHA_FAMILY=0.05/FAMILY_M=2
+# 7 tri-state at deflated alpha           | (bespoke's own overall FAIL)       | real deflation is family-wide (DEVQ-015, 19 trials); bespoke's is a fixed FAMILY_M=2, unrelated ledger
+# 8 append verdict + burn                 | (none)                             | bespoke report is a static JSON file -- no ledger, no burn concept
+# (no real-Battery step)                  | B4 4 seq folds, WFE late/early>=0.5| loosely echoed by steps 4/5's own folds, but WFE itself is NOT computed by the real Battery
+# (no real-Battery step)                  | B5 +/-10% perturbation grid, PF>=1  | no real-Battery analog -- no parameter-perturbation-robustness step exists in this Kernel
+# (no real-Battery step)                  | B6 1000 order-shuffles, p95 DD<=15R | no real-Battery analog -- no drawdown-shuffle step; entry_time_shuffle placebo tests random TIMING, not drawdown
+# (no real-Battery step)                  | B7 net expectancy>0 @1.5x costs OOS | no real-Battery analog -- cost is charged ONCE at the sealed cost_model_ref, no cost-multiplier sweep
+#
+# --- (B) The Gate 7/Gate 8 correction (NP-ADR-008 Appendix A, Owner-accepted) ---
+# T3_SweepFVGGate.mqh's own header states it "was Gate 8" (H-08: "1H sweep ->
+# MSS -> FVG tap sequence, NY open"), NOT Gate 7/H-07. SS5 v1.0 is a HYBRID:
+# its POOL_FORMED layer (avg-of-pivots level, pool_lookback/pivot_len/
+# min_touches/tol) is Gate 7's engine as absorbed into T3 -- genuinely H-07's.
+# Its REVERSAL_CONFIRMED/MSS stage, H1/M1 architecture, and gap-through
+# exclusion are T3's OWN mandatory machinery -- Gate 8, i.e. H-08. H-07 never
+# had an MSS stage. Consequently the annex's seven divergences are LARGELY
+# CROSS-HYPOTHESIS, not cross-version: divergence 6 (no REVERSAL_CONFIRMED) is
+# H-08 machinery H-07 never specified; divergences 1-2 (H1/M1, ATR tolerance)
+# are T3/H-08's anchor settings; only divergences 3-4 (pool level max/min vs
+# average; 200-bar window vs 500 H1 bars) are genuine MQL5-vs-Python
+# differences WITHIN H-07's own pool engine; 5 and 7 remain as recorded.
+# H-07's MQL5 original (LiquiditySweepGate.mqh) is deleted and predates this
+# repository's git history -- unrecoverable. THE EVIDENCED PYTHON IMPLEMENTS
+# H-07 AS H-07 WAS ALWAYS DEFINED (kb.json: "equal-high/low sweep + reclose
+# reverses (stop-hunt)", no MSS, parameters matching v1.1 exactly). v1.1 is
+# the best surviving expression of H-07, not a degraded version of a richer
+# original. A divergent VERDICT below (real Battery vs bespoke recorded FAIL)
+# therefore reads as "two independent implementations of H-07's OWN
+# definition disagree" -- never as "v1.1 diverged from a richer v1.0" --
+# because no richer H-07 v1.0 exists. §5 v1.0's mandatory-MSS text remains
+# frozen and unedited; it documents H-08, not H-07 (Appendix A.3).
+#
+# --- (C) A further divergence beyond M1-M7 (NOTE-NP-001) ---
+# The real EventEngine supports only a single FIXED stop_offset/target_offset
+# per hypothesis (bar-level intrabar check) -- it cannot express NP-ADR-008
+# SS3's per-trade-variable stop (penetration extreme +/-10 ticks) or 1.5R
+# target at 1-second resolution. This registration therefore tests direction +
+# timing ONLY (no stop, no target, time-stop at hold_bars=12 -- see the
+# execution block below and NOTE-NP-001 for the full reasoning). A real-Battery
+# verdict is a verdict on THIS trade rule, not NP-ADR-008 SS3's trade rule --
+# named here, sealed before the run, exactly as (B) is.
+#
+# --- (D) What AGREEMENT and DIVERGENCE each mean, sealed before data is examined ---
+# AGREEMENT (both FAIL, or both PASS): corroboration between two independent
+# implementations of H-07's OWN definition -- strengthens confidence in
+# whichever way it points. DIVERGENCE is this sprint's most valuable output
+# (per (B) and (C), read against the corrected cross-hypothesis/trade-rule
+# framing above, never as a v1.0-vs-v1.1 defect). B4/B5/B6/B7 have NO
+# real-Battery analog at all: a real-Battery PASS or FAIL says NOTHING about
+# walk-forward efficiency, parameter-perturbation robustness, drawdown-shuffle
+# robustness, or cost-sensitivity margin -- those four bespoke criteria are
+# simply UNJUDGED by the real Battery; their bespoke recorded values stand
+# un-corroborated and un-refuted by this run. Results are never averaged; the
+# drilled instrument's verdict stands.
+# =====================================================================
+#
+# Judged this sprint by the real EvidenceBattery vs the random-timing placebo
+# (entry_time_shuffle). No phenomenon is declared "established" by this
+# prediction-gate verdict alone (Scientific Model SS5.4 / NP-ADR-008 SS6) --
+# ESTABLISHED status is the E2 existence claim's question, deferred to when N2
+# null machinery certifies.
+#
+# TRADE RULE DIVERGENCE FROM NP-ADR-008 SS3 (see
+# docs/coordination/notes/NOTE-NP-001_engine_cannot_express_evidenced_stop_target.md):
+# the evidenced prediction layer specifies a PER-TRADE-VARIABLE stop
+# (penetration extreme +/-10 ticks) and a 1.5R target at 1-second mid
+# resolution. The real Kernel's audited EventEngine supports only a SINGLE
+# FIXED stop_offset/target_offset per hypothesis (bar-level intrabar
+# resolution) -- it cannot express a per-event variable level. Rather than
+# fabricate a fixed numeric stand-in that would misrepresent the evidenced
+# rule, this registration tests direction + timing ONLY: no stop, no target,
+# pure time-stop exit at hold_bars=12 (the evidenced 12-bar/1h time stop,
+# which the engine DOES express exactly), entering next-bar-open in the
+# event's own encoded direction. Direct precedent:
+# h001_fvg_follow_through.yaml uses the identical stop_offset:null /
+# target_offset:null pattern ("naive, no stop/target"). This is a genuine,
+# newly-discovered divergence for deliverable 5's comparison report -- beyond
+# M1-M7 -- and is sealed here, before the run.
+
+lineage: h007_np_liquidity_sweep_v1_1
+
+scope: xauusd_m5_vantage
+
+window: "01KYSEDSM6K5ZKWK0XRCC4SVZ7"  # TRAINING [2026-04-20T22:00:00Z, 2026-07-10T14:33:00Z) on xauusd_m5_vantage
+
+instruments:
+  - neelprajna.liquidity_sweep@1.1.0
+
+setup_dsl:
+  event: neelprajna.liquidity_sweep.sweep   # POOL_FORMED events are NOT trade signals -- filtered out by the run script
+  direction: follow_through                 # trade the event's own encoded direction (SELL on HIGH sweep / BUY on LOW sweep)
+  entry: next_open
+  claim_form: prediction
+
+execution:
+  hold_bars: 12         # NP-ADR-008 SS3: time stop 12 bars (1h on M5)
+  size: 1.0
+  strength_min: 0.0
+  stop_offset: null      # see divergence note above -- engine cannot express the evidenced variable stop
+  target_offset: null    # see divergence note above -- engine cannot express the evidenced 1.5R variable target
+  exit_rule: time_stop
+
+cost_model_ref: xauusd_retail_h07
+
+split_spec:
+  n_folds: 4
+  embargo_bars: 15       # >= hold_bars + 1 (= 13); margin per DEVQ-011 convention
+
+thresholds:
+  min_n: 100              # NP-ADR-008 SS4 M6: judged n will be materially smaller than 324 by construction (fold TEST-range re-simulation); precedent floor per h001
+  base_alpha: 0.05        # one-sided; deflated at judgment against the family's full 19-trial count (NP-ADR-008: p < 0.00263)
+  correction:
+    method: bonferroni    # vs the trial ledger for family xauusd/neelprajna at judging time
+
+# Sealed placebo null (the prediction claim's OWN test -- NOT N2; N2 is the
+# separate E2 existence claim's null, not yet machinery-supported, see the
+# companion registration).
+placebo_method: entry_time_shuffle
+
+# v2 pre-commitments -- written BEFORE running.
+thesis: >-
+  After a liquidity pool (equal-high or equal-low cluster, NP-ADR-008 SS5 v1.1)
+  is swept -- wick penetrates the frozen level by >=5 ticks and recloses within
+  the reclose window -- entering in the sweep's own direction (SELL on a
+  HIGH-pool sweep, BUY on a LOW-pool sweep) at the next bar's open and holding
+  12 M5 bars (1h) beats RANDOM entry timing, net of xauusd_retail_h07 costs, on
+  the designated TRAINING window. THREE NON-EQUIVALENCE STATEMENTS (NP-ADR-008
+  SS2.1, Chief Scientist, adopted verbatim -- must survive into every derived
+  artifact): (1) this v1.1 result is NOT equivalent to the original SS5 v1.0
+  hypothesis; (2) it is a NEW hypothesis bound to the documented v1.1 detector
+  lineage; (3) any future judgment of the original T3/MSS detector requires a
+  separate implementation and fresh out-of-sample evidence. No verdict under
+  v1.1 validates, corroborates, or speaks to the historical T3 gate.
+family: xauusd/neelprajna
+observatory_ancestry: []
+outcome_interpretations:
+  PASS: >-
+    The direction+timing rule beats random entry timing net of costs on this
+    TRAINING window (in-sample -- corroborative, never confirmatory; the
+    window is burned per J-030/NP-ADR-008). Licenses no trading conclusion and
+    no claim about the historical T3/MSS gate. THREE NON-EQUIVALENCE
+    STATEMENTS (verbatim, NP-ADR-008 SS2.1): v1.1 is not equivalent to the
+    original v1.0 hypothesis; it is a new hypothesis bound to the documented
+    v1.1 detector lineage; any future judgment of the original T3/MSS detector
+    requires a separate implementation and fresh out-of-sample evidence.
+  FAIL: >-
+    The direction+timing rule shows no edge over random entry timing net of
+    costs -- consistent with the recorded bespoke five-gate FAIL (B3-B7) on
+    the same 324-trade population (a different judged trade set, NP-ADR-008 SS4
+    M6). THREE NON-EQUIVALENCE STATEMENTS (verbatim, NP-ADR-008 SS2.1): v1.1 is
+    not equivalent to the original v1.0 hypothesis; it is a new hypothesis
+    bound to the documented v1.1 detector lineage; any future judgment of the
+    original T3/MSS detector requires a separate implementation and fresh
+    out-of-sample evidence.
+  INSUFFICIENT: >-
+    Too few surviving trades after fold TEST-range re-simulation (NP-ADR-008
+    SS4 M6: the judged n is materially smaller than 324 by construction) to
+    decide -- needs more data, never looser thresholds. THREE NON-EQUIVALENCE
+    STATEMENTS (verbatim, NP-ADR-008 SS2.1): v1.1 is not equivalent to the
+    original v1.0 hypothesis; it is a new hypothesis bound to the documented
+    v1.1 detector lineage; any future judgment of the original T3/MSS detector
+    requires a separate implementation and fresh out-of-sample evidence.
