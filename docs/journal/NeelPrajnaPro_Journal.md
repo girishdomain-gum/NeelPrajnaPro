@@ -148,3 +148,20 @@ Recorded as the designation ceremony under **P8** (reserves are inviolable and h
 **Standing rule created:** the architecture's §A.1 box column is the canonical spine. Vision and Execution Plan use its exact row numbers and box names. Any divergence between the three is a finding — which makes future drift checkable in seconds rather than by prose comparison.
 
 **Known consequence, flagged not hidden:** the Architecture docx twin now diverges from its md (Part A prose → table, §8 and Part C captions changed). Under the twin rule that is itself a finding until the docx is rebuilt. Recorded here so it is not discovered later as a surprise.
+
+## J-033 · 2026-07-30 · **OWNER GO — SPRINT NP-S1 SEALED AND IN FLIGHT**
+**Owner typed: "Go."**
+
+ARCH-NP-001 is sealed with the H-07 mechanical definition (Execution Plan §5) incorporated by reference. Execution Plan §4's instruction text is **frozen from this point** — any change now requires a new ARCH, not an edit.
+
+**All six preconditions were met and recorded before the GO:** Auto-Adopt DISABLE pending hysteresis (J-004) · cost model `xauusd_retail_h07` frozen (J-004) · H-07 definition sealed from source (J-004) · claim form E2 with null design N2 (J-004) · **α-budget 0.05** — per-claim bar p < 0.0028 at 18 trials (J-029) · **window designated TRAINING** by typed phrase (J-030). Architecture, Vision and Execution Plan aligned on one canonical box column immediately prior (J-032).
+
+**The Developer's blocking first obligation, restated here because it is the one thing that must not be skipped:** the window was designated by scope, not by dates. The Developer resolves the exact market-time span covered by the H-07 324-trade export and **presents it to the Owner for confirmation before anything registers, runs, or burns.** A scope-designated window is not sealed until the Owner has seen the concrete span. This is written into Execution Plan §0 and §4, and into the boot prompt at `ops\DEVELOPER_BOOT_NP-S1.md`, so a fresh session cannot miss it in three separate places.
+
+**Boot artifact created:** `ops\DEVELOPER_BOOT_NP-S1.md` — the paste-ready prompt for a fresh Claude Code session, carrying the reading order, the blocking first obligation, the sprint-specific binding rules (§5 normative over MQL5; the parameter re-seal trigger; two registrations not one; α-budget and cost-model constants; the non-goals), the DEVQ protocol, and AC-1..AC-6 as the definition of done. Also carries an Owner-facing section stating exactly what he will be asked for and when — and that being asked for anything *operational* is itself a finding.
+
+**Open findings carried into the sprint, neither blocking:** F-23 (Book A mockup vs the Auto-Adopt ruling — bites only at NP-S8; correction lives in §9's sprint text) · F-24's consequence (Architecture docx twin stale against its md — rebuild pending).
+
+**Programme state at GO:** 35 human touches logged, zero routine-ops outstanding · 14 documents with docx twins (one now stale) · 24 findings recorded, every one self-caught by the system's own instruments · zero integrated verdicts. *That last number is the one this sprint exists to change.*
+
+**The documentation phase of this programme ends here. What follows is evidence.**

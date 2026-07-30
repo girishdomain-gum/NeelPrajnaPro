@@ -4,7 +4,13 @@
 ---
 
 ## 0. CURRENT STATE (rewritten at every sprint boundary — this is the handover)
-**As of 2026-07-30:** Repo bootstrapped, full Gen-1 history on GitHub. Estate RATIFIED (Owner memo, journal J-004). H-07 definition SEALED (§5 below). Rulings in force: Auto-Adopt DISABLE pending hysteresis · cost model `xauusd_retail_h07` · claim form E2 · vision ruling · one-doc-per-thing law · **neelprajna family α-budget = 0.05 (Owner-typed 2026-07-30; per-claim bar at 18 registered trials = p < 0.0028)** · **H-07 window designated TRAINING (Owner-typed 2026-07-30)**. All 14 docs carry PDF-verified docx twins. Legacy repos paused. **ALL PRECONDITIONS MET. One item remains, the Owner's alone: Go / No-Go on Sprint NP-S1.** On Go: ARCH-NP-001 seals with the H-07 definition and the Developer boots per §4's boot sequence. **One step carries into the sprint:** under the Owner's chosen method (b), the Developer resolves the exact market-time span from the H-07 export at registration and echoes it back to the Owner for confirmation **before** the seal — a scope-designated window is not sealed until its resolved span has been seen and confirmed.
+**As of 2026-07-30 — SPRINT NP-S1 IS SEALED AND IN FLIGHT.** Owner GO given 2026-07-30. ARCH-NP-001 (§4) sealed with the H-07 mechanical definition (§5). All preconditions met and recorded: Auto-Adopt DISABLE pending hysteresis · cost model `xauusd_retail_h07` frozen · claim form E2 · null design N2 · **α-budget 0.05** (per-claim bar at 18 trials: p < 0.0028) · **H-07 window designated TRAINING**. Architecture / Vision / Execution Plan aligned on the §A.1 twelve-row box column. Legacy repos paused.
+
+**THE DEVELOPER'S FIRST OBLIGATION, before anything seals:** resolve the exact market-time span covered by the H-07 324-trade export, and **echo it back to the Owner for confirmation**. The window was designated by scope, not by dates (method (b)); a scope-designated window is not sealed until the Owner has seen and confirmed the concrete span it resolved to. Registration does not proceed until that confirmation is on the record.
+
+**Open findings carried into the sprint:** F-23 (Book A mockup vs Auto-Adopt ruling — bites only at NP-S8, correction written into §9) · F-24 consequence (Architecture docx twin stale relative to its md — rebuild pending, blocks nothing).
+
+**Next Owner action:** confirm the resolved span when the Developer presents it. After that, nothing until the sprint's Go/No-Go at close.
 
 ## 1. THE DESTINATION — what "NeelPrajna as per our architecture" concretely means
 
@@ -56,13 +62,15 @@ Cadence: quality gates, not clocks. Per-sprint rhythm (Gen-1's, proven): instruc
 
 ---
 
-## 4. SPRINT NP-S1 — H-07 twice judged *(SEALED — ratified 2026-07-29, unchanged from v1.0)*
+## 4. SPRINT NP-S1 — H-07 twice judged *(**SEALED 2026-07-30 by Owner GO** — instruction text frozen from this point; changes require a new ARCH)*
 
 **Architecture boxes delivered:** row 3 Observation Engine (NP feed, first detector) · row 2 Scientific Memory (first NP records)
 
+**GO RECORD:** Owner typed **"Go"**, 2026-07-30, after all six preconditions were met and recorded. ARCH-NP-001 is sealed with §5's H-07 definition incorporated by reference. The Developer session boots per the boot sequence below.
+
 **Preconditions — ALL MET as of 2026-07-30:** ☑ F-13 ruled (Auto-Adopt NONE) · ☑ cost model named `xauusd_retail_h07` (frozen once cited) · ☑ definition sealed (§5) · ☑ **α-budget ruled 0.05 (Owner-typed 2026-07-30) — per-claim bar at 18 trials: p < 0.0028; deflation recomputed against total family trials at every judgment** · ☑ **window designated TRAINING (Owner-typed 2026-07-30, verbatim): "The XAUUSD market time covered by the H-07 324-trade export is designated TRAINING."** — scope-based per method (b); **the Developer must resolve the exact span from the export and echo it back for Owner confirmation before the registration seals.** The designation BURNS that market time: no later claim may treat it as fresh, and H-07's verdict from it is in-sample — corroborative, never confirmatory.
 
-**Awaiting only: Owner Go / No-Go.**
+**Awaiting only: Owner Go / No-Go.** — ✅ **GIVEN 2026-07-30. Sprint is live.**
 
 **Deliverables:**
 1. `qrf/trading/concepts/neelprajna/liquidity_sweep.py` — standard Detector contract; implements exactly §5's events and frozen parameters; MQL5 gate + `np_feature_service.py` are reference only, §5 is normative.
