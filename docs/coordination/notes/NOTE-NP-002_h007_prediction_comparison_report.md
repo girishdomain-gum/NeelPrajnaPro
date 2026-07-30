@@ -53,3 +53,20 @@ The **E2 existence claim** (hypothesis `01KYSETR3VACRBCWN9QYRRX6DW`) is register
 
 ## 6. Conclusion
 **AC-4 satisfied.** Agreement (top-line FAIL) and divergence (five distinct, causally-named mechanical differences, plus one genuine within-H-007 definitional difference) are both present and both named. Per the boot doc's own framing, divergence is the more valuable output here: it shows that even where two independent instruments agree on the headline verdict, they arrive there through substantially different machinery, testing substantially non-overlapping criteria (B4–B7 remain entirely unaddressed by the real Battery) — a fact any future reader must know before treating "H-007: FAIL, corroborated twice" as a stronger claim than the evidence actually supports.
+
+---
+## 7. REV-MANDATED SCOPE NARROWING (appended 2026-07-30 — Chief Scientist REV, Owner-relayed; P5 append, §§1–6 unedited)
+
+The Chief Scientist approved NP-S1 at 8.8/10 **with one qualification that must remain explicit in all downstream documents**: this report must not imply that the two execution strategies were equivalent. The comparison is **same detector definition + different execution rules**, never same-detector-same-execution.
+
+**The canonical claim, to be quoted rather than paraphrased wherever this result is cited:**
+
+> **Under two independently implemented execution frameworks using different exit mechanics, neither framework produced statistically significant evidence supporting the hypothesis over the designated window.**
+
+**Preferred phrasing in place of "both instruments agree":**
+
+> **Both evaluation frameworks independently failed to reach their predefined acceptance criteria, although they differed materially in execution model and intermediate behavior.**
+
+**What this narrowing forbids:** any statement that NP-S1 established equivalence between the bespoke execution strategy and the Battery execution strategy. It did not. It established only that each framework, under its own execution model, failed to find statistically significant support for the registered hypothesis over the burned window — with opposite expectancy signs, different exit mechanics, and four bespoke criteria never evaluated at all.
+
+**Chief Scientist's added structural finding, recorded here and in the journal:** *executable implementation details were distributed across code rather than fully represented in normative specifications; future detector specifications should be sufficiently complete to enable an independent reimplementation without consulting source code.* Process finding, no individual fault — independently converged with Appendix B.9's proposed standing rule.
