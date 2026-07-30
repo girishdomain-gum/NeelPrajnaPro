@@ -128,3 +128,23 @@ Recorded as the designation ceremony under **P8** (reserves are inviolable and h
 `neelprajna_live_univ_mockup.html` checked and clean (no Auto-Adopt dependency). Console mockups unaffected (Kernel-side; their own v1.3 correction already handled their separate issue).
 
 **Disposition — recorded, not urgently fixed.** Mockups are DESIGNED-tier and non-normative; nothing builds from them until NP-S8, which is Phase 4. The real risk was the correction being forgotten across that distance, so it is written into NP-S8's own sprint text in the Execution Plan where the Developer cannot miss it, rather than left as a note here. **Standing rule created:** before any sprint builds from a mockup, that mockup is checked against the rulings in force, and any conflict is named in the sprint instruction.
+
+## J-032 · 2026-07-30 · F-24 (Architect) — Architecture / Vision / Execution Plan were out of sync; aligned to one canonical box column
+**Owner's check, before Go:** "is our architecture and execution plan both in sync?" **Answer: they were not.** Six divergences found by cross-reading all three documents.
+
+**Root cause, single and clean.** Architecture Part A and the Vision delivery table were both written 2026-07-29, when Execution Plan **v1.0 ended at NP-S4**. Under v1.0 everything past acceptance was framed as *"a ruling at the NP-S4 boundary"* rather than a scheduled build. Execution Plan v2.0 (2026-07-30) converted those rulings into real sprints NP-S5..NP-S9+, and the Architect did not back-propagate to the other two documents. Finding against the Architect.
+
+**The divergences:** Knowledge+Evidence→runtime and Continuous Communication — both said "ruled at NP-S4", plan builds them at **NP-S5** · Knowledge Graph — said NP-S3/S4, plan says **NP-S6** · Pattern Evolution — said vague "Wave 2, post NP-S4", plan says **NP-S9+** · Research Console — mentioned in Architecture §8 with no sprint, absent from Vision's table entirely, plan says **NP-S7** · Book A Dashboard — no delivery row in either document, plan says **NP-S8**. Also stale: Part C's Diagram-3 caption ("consumption ruled NP-S4").
+
+**Severity assessed honestly and reported before the fix:** this did **not** block Go. Every divergence concerned NP-S5 and later; NP-S1's preconditions, deliverables, acceptance criteria and the sealed H-07 definition were consistent across all three. And no *requirement* contradicted anything — the wall, the Publication Boundary, the separation table and the write-authority list were identical everywhere. Only sprint pointers had gone stale.
+
+**Owner ruling: "everything must be aligned with architecture box column."** Executed as a Constitution §7.2 clarification (Architect drafts → Owner reads → Owner OK), not a §7.3 amendment, because nothing the ratified architecture *requires* changed — only its references to a sprint plan the Owner had already approved.
+
+**What was done, in one pass across three documents:**
+- **Architecture §A.1 created** — Part A's prose replaced by a canonical 12-row box table (status + delivering sprint per row), declared the spine: *"a divergence between any of the three is a finding."* Rows 11–12 added for the two surfaces (Research Console, Book A Dashboard), which had previously been enumerated nowhere, with an honest note that surfaces are *views onto* the organs rather than organs — which is why they are absent from the two-organ diagram. §8 and Part C's Diagram-3 caption updated to cite rows and the corrected sprints.
+- **Vision's delivery table replaced** with the identical 12 rows, same numbering, same box names, same sprints.
+- **Execution Plan** — every "Architecture boxes delivered" line now cites its row number; NP-S7 and NP-S8 gained the box lines they lacked entirely; §1's acceptance test now reads against the row column.
+
+**Standing rule created:** the architecture's §A.1 box column is the canonical spine. Vision and Execution Plan use its exact row numbers and box names. Any divergence between the three is a finding — which makes future drift checkable in seconds rather than by prose comparison.
+
+**Known consequence, flagged not hidden:** the Architecture docx twin now diverges from its md (Part A prose → table, §8 and Part C captions changed). Under the twin rule that is itself a finding until the docx is rebuilt. Recorded here so it is not discovered later as a surprise.

@@ -17,7 +17,7 @@ When every sprint below has closed, this exists:
 - **Two surfaces**: the browser-based Research Console (Kernel side) and Book A's own on-chart dashboard (runtime side), both built to their existing specs.
 - **The wall intact, permanently**: *QRF never trades. NeelPrajna never learns on its own.*
 
-**Every sprint below names which architecture box it turns from TARGET to BUILT.** That mapping is the plan's own acceptance test: when no TARGET boxes remain, the architecture is built.
+**Every sprint below names which architecture box it turns from TARGET to BUILT** — by the row number in §A.1 of the docs\architecture\ master, which is the canonical box column. The docs\vision\ master uses the same rows. That mapping is the plan's own acceptance test: when no row still reads TARGET, the architecture is built.
 
 ## 2. THE COMPONENT MAP — what happens to each existing NeelPrajna component
 
@@ -58,7 +58,7 @@ Cadence: quality gates, not clocks. Per-sprint rhythm (Gen-1's, proven): instruc
 
 ## 4. SPRINT NP-S1 — H-07 twice judged *(SEALED — ratified 2026-07-29, unchanged from v1.0)*
 
-**Architecture boxes delivered:** Observation Engine (NP feed, first detector) · Scientific Memory (first NP records)
+**Architecture boxes delivered:** row 3 Observation Engine (NP feed, first detector) · row 2 Scientific Memory (first NP records)
 
 **Preconditions — ALL MET as of 2026-07-30:** ☑ F-13 ruled (Auto-Adopt NONE) · ☑ cost model named `xauusd_retail_h07` (frozen once cited) · ☑ definition sealed (§5) · ☑ **α-budget ruled 0.05 (Owner-typed 2026-07-30) — per-claim bar at 18 trials: p < 0.0028; deflation recomputed against total family trials at every judgment** · ☑ **window designated TRAINING (Owner-typed 2026-07-30, verbatim): "The XAUUSD market time covered by the H-07 324-trade export is designated TRAINING."** — scope-based per method (b); **the Developer must resolve the exact span from the export and echo it back for Owner confirmation before the registration seals.** The designation BURNS that market time: no later claim may treat it as fresh, and H-07's verdict from it is in-sample — corroborative, never confirmatory.
 
@@ -100,7 +100,7 @@ Cadence: quality gates, not clocks. Per-sprint rhythm (Gen-1's, proven): instruc
 
 ## 6. PHASE 1 (cont.) — SPRINT NP-S2: R6 long run + the Observation Engine's NP feed
 
-**Architecture boxes delivered:** Execution feedback → Core (TARGET → BUILT) · Observation Engine (widened)
+**Architecture boxes delivered:** row 5 Execution feedback → Core (TARGET → BUILT) · row 3 Observation Engine (widened)
 
 **Requires:** scoped lab unpause ruling (Owner) — the bridge must run.
 
@@ -111,7 +111,7 @@ Cadence: quality gates, not clocks. Per-sprint rhythm (Gen-1's, proven): instruc
 ## 7. PHASE 2 — THE FAMILY
 
 ### SPRINT NP-S3 — Family migration (the 17)
-**Architecture boxes delivered:** Pattern Learning (TARGET → BUILT, first NP existence judgments)
+**Architecture boxes delivered:** row 6 Pattern Learning (TARGET → BUILT, first NP existence judgments) · row 3 Observation Engine (widened further)
 
 Opens with the Owner's ruling on the 17, informed by NP-S1's comparison report: subset, priority, n-floors. Then: **EntryGate and SequenceEngine semantics ported as detectors** (each with planted cases; no shortcuts by origin), sealed registrations, Battery runs as designated data permits, E2 judgments as null machinery certifies, deferrals recorded and priced against the family α-budget. Where a hypothesis needs fresh EA-side evidence, the capture pass produces annotated, provenance-stamped, verdict-drawn PNGs (gated on WO-B).
 
@@ -127,7 +127,7 @@ Blinded campaign NB-1..NB-6 per VV_PLAN (Owner holds answer keys; negative-contr
 ## 8. PHASE 3 — THE NERVOUS SYSTEM *(the half the old plan was missing entirely)*
 
 ### SPRINT NP-S5 — Contract v2 goes live
-**Architecture boxes delivered:** Knowledge+Evidence → runtime (TARGET → BUILT) · Continuous Communication (TARGET → BUILT)
+**Architecture boxes delivered:** rows 7 Knowledge + Evidence → runtime and 8 Continuous Communication (both TARGET → BUILT)
 
 The six object types actually cross, for the first time. **Belief releases** — versioned, dated, verdict-sealed — are published from the BeliefLayer and consumed by the runtime. **AdvisorEngine is re-pointed**: it stops computing beliefs from its own rolling statistics and starts consuming sealed releases. Event-driven publication (a release is an event with a date), never tick-streaming of unsealed figures. The Contract Feed becomes observable for debugging.
 
@@ -136,7 +136,7 @@ The six object types actually cross, for the first time. **Belief releases** —
 **Exit:** a belief release, produced by a real verdict, consumed by the runtime, with the full chain of custody walkable in both directions and machine-checked in IVF.
 
 ### SPRINT NP-S6 — Knowledge Graph + Pattern Learning
-**Architecture boxes delivered:** Knowledge Graph (TARGET → BUILT) · Statistics & Confidence (enriched)
+**Architecture boxes delivered:** row 9 Knowledge Graph (TARGET → BUILT) · row 4 Statistics & Confidence (enriched)
 
 The beliefs atlas becomes real: per-phenomenon stances, scoped and linked; contradictions surfaced as data for a human to weigh (never auto-resolved); supporting/missing-evidence edges; the next-experiment recommendation. Candidate discovery (Screener/Observatory) formally wired as a question source that produces candidates only — never verdicts.
 
@@ -145,9 +145,13 @@ The beliefs atlas becomes real: per-phenomenon stances, scoped and linked; contr
 ## 9. PHASE 4 — THE SURFACES *(closes the gap found 2026-07-30: both dashboard specs were designed but unscheduled)*
 
 ### SPRINT NP-S7 — Research Console (Kernel side)
+**Architecture box delivered:** row 11 Surface — Research Console (TARGET → BUILT)
+
 Build to `docs\specs\QRF_Research_Console_spec_v1.3-amended.md`, read-only v1.0 scope: five lenses (OBSERVE / KNOWLEDGE / DISCOVER / EVIDENCE / GOVERNANCE) + CYCLE, bound to the **real Kernel** per that spec's own v1.3 correction — never to the retired bespoke stack. Its precondition is already satisfied by then: NP hypotheses exist in the real ledger from NP-S1 onward.
 
 ### SPRINT NP-S8 — Book A dashboard depth (runtime side)
+**Architecture box delivered:** row 12 Surface — Book A Dashboard (depth TARGET → BUILT)
+
 Build to `docs\specs\NeelPrajna_Live_Advisor_Detail_spec_v1.0.md` (v1.4/v1.5 amendments): Live Advisor card with hysteresis meter, Observation Space panel, Analysis Details grid, plain-language Entry/Exit criteria, Advisor Settings in CTRL, plus the LIVE and VIRT UNIV deep views. **Note:** this sprint touches only display logic over existing StateHub/NPSU fields — its exit check is a byte-identical tester deal list, proving trading was not affected.
 
 **MOCKUP CORRECTION REQUIRED BEFORE BUILD (finding 2026-07-30).** `docs\specs\mockups_book_a\neelprajna_advisor_detail_mockup.html` predates the F-13 Auto-Adopt ruling and depicts a state the Owner has since ruled against. Two places:
@@ -161,7 +165,7 @@ The second Book A mockup (`neelprajna_live_univ_mockup.html`) was checked and is
 *NP-S7 and NP-S8 are independent of each other and may run in either order or in parallel.*
 
 ## 10. PHASE 5 — KNOWLEDGE ACCUMULATION (NP-S9+)
-**Architecture boxes delivered:** Pattern Evolution (TARGET → BUILT)
+**Architecture box delivered:** row 10 Pattern Evolution (TARGET → BUILT)
 
 Additional concept families beyond `neelprajna`. Hypothesis refinement as new sealed, priced registrations. First mechanism investigations on established phenomena. Principles named only when cross-instrument and cross-regime survival earns them. Machine-proposed hypotheses only after Gate A, per the ratified generation ladder — never before.
 

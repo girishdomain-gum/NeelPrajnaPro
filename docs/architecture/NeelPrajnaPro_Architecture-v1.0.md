@@ -4,7 +4,30 @@
 
 ## Part A — The Destination (Owner vision ruling, 2026-07-29)
 
-The two-organ architecture is this development cycle's TARGET: Market → Observation Engine (one shared reality) → Core QRF Brain (domain-blind) ‖ Book-A NeelPrajna Runtime (trading plug-in) → Knowledge+Evidence / Orders+Execution-Feedback → event-driven communication. **The load-bearing wall, permanent: QRF never trades; NeelPrajna never learns on its own.** *(Failure asymmetry, added 2026-07-29 from cross-review: bad knowledge is filtered by review before it can act; a bad trade is bounded by the risk layer before it can compound — neither organ's failure mode can reach the other's blast radius.)* Box-by-box status and delivering sprint: EvidenceBattery/WindowLedger, Scientific Memory, Observation Engine (Kernel side), Statistics & Confidence — BUILT (Gen-1; NP records/feed from NP-S1). Pattern Learning — TARGET (ECF certification track; first NP existence judgment in the NP-S3 window). Knowledge Graph — TARGET (NP-S3/S4 + Gen-2 S7). Pattern Evolution — TARGET (Wave 2, post NP-S4; machine-proposed only after Gate A). Knowledge→runtime releases — TARGET (consumption design ruled at NP-S4; arming permanently human). Execution feedback→Core — TARGET (formalized NP-S2/R6). Continuous Communication — TARGET (event-driven releases, never tick-streaming of unsealed statistics; Contract v2; NP-S4 ruling). Full table: the docs\vision\ master and the docx Part A.
+The two-organ architecture is this development cycle's TARGET: Market → Observation Engine (one shared reality) → Core QRF Brain (domain-blind) ‖ Book-A NeelPrajna Runtime (trading plug-in) → Knowledge+Evidence / Orders+Execution-Feedback → event-driven communication. **The load-bearing wall, permanent: QRF never trades; NeelPrajna never learns on its own.** *(Failure asymmetry, added 2026-07-29 from cross-review: bad knowledge is filtered by review before it can act; a bad trade is bounded by the risk layer before it can compound — neither organ's failure mode can reach the other's blast radius.)*
+
+### A.1 The box column — canonical (aligned to Execution Plan v2.0, 2026-07-30)
+
+**This table is the spine.** The docs\vision\ master and the docs\execution_plan\ master use these exact box names and this exact sprint mapping. A divergence between any of the three is a finding.
+
+| # | Architecture box | Status | Delivered by |
+|---|---|---|---|
+| 1 | EvidenceBattery / WindowLedger | BUILT | Gen-1 (closed) |
+| 2 | Scientific Memory | BUILT | Gen-1; NP records begin **NP-S1** |
+| 3 | Observation Engine | BUILT (Kernel side) | NP feed **NP-S1**; widened **NP-S2**, **NP-S3** |
+| 4 | Statistics & Confidence | BUILT (core) | enriched every verdict; further at **NP-S6** |
+| 5 | Execution feedback → Core | TARGET | **NP-S2** (R6 pipeline + RecordStore migration) |
+| 6 | Pattern Learning | TARGET | **NP-S3** (first NP existence judgments; ECF nulls certify on the Gen-2 track) |
+| 7 | Knowledge + Evidence → runtime | TARGET | **NP-S5** — Contract v2 goes live (built, not merely ruled) |
+| 8 | Continuous Communication | TARGET | **NP-S5** — event-driven belief releases; never tick-streaming of unsealed statistics |
+| 9 | Knowledge Graph | TARGET | **NP-S6** (+ Gen-2 S7 synthesis) |
+| 10 | Pattern Evolution | TARGET | **NP-S9+** (Phase 5; machine-proposed only after Gate A) |
+| 11 | Surface — Research Console (Core side) | TARGET | **NP-S7** (spec v1.3, five lenses + CYCLE) |
+| 12 | Surface — Book A Dashboard (Runtime side) | BUILT (basic); depth TARGET | **NP-S8** (spec v1.4/v1.5) |
+
+**On rows 11–12:** the two surfaces are *views onto* the organs, not organs themselves — which is why they do not appear as boxes in the two-organ diagram. They are enumerated here so that every sprint in the Execution Plan maps to a row, and no delivered work sits outside the box column. Arming anything real remains permanently human at every row (Constitution §6).
+
+**The plan's acceptance test:** when no row still reads TARGET, the architecture is built.
 
 ## Part B — The Binding Architecture (ratified 2026-07-29)
 
@@ -108,17 +131,19 @@ Two clarifying rules so this table and §§3.3–3.4 of the Constitution can nev
 
 ## 8. TARGET Tier (re-tiered from ASPIRATIONAL by the Owner's vision ruling, 2026-07-29 — see the docs\vision\ master)
 
-The two-organ destination architecture — Pattern Learning, Knowledge Graph, Pattern Evolution, Continuous (event-driven) Communication, the Research Console's KNOWLEDGE/EVIDENCE lenses, SEA application books — is the TARGET of this development cycle: each element becomes real only through the sealed sprints the vision master maps it to, and none may be cited as existing before its verdict-bearing artifact does. Tick-time streaming of unsealed statistics remains excluded permanently (§4.3–§4.5).
+The two-organ destination architecture — Pattern Learning (row 6), Knowledge Graph (row 9), Pattern Evolution (row 10), Continuous (event-driven) Communication (row 8), the Research Console including its KNOWLEDGE/EVIDENCE lenses (row 11, **NP-S7**), the Book A dashboard's designed depth (row 12, **NP-S8**), SEA application books — is the TARGET of this development cycle: each element becomes real only through the sealed sprint named against its row in §A.1, and none may be cited as existing before its verdict-bearing artifact does. Tick-time streaming of unsealed statistics remains excluded permanently (§4.3–§4.5).
 
 ## Part C — The Visual Atlas (renders live in the docx master; captions and statuses are normative here)
 
-Diagram 1 programme top-down — the destination (Part A). · Diagram 2 Core Kernel components — BUILT (real module paths; exercised by the 853-test suite). · Diagram 3 Communication Contract — DESIGNED/TARGET (design sketch; implemented via Contract v2 + §4.5 boundary; consumption ruled NP-S4). · Diagram 4 Book-A four-layer MQL5 refactor — BUILT (live EA, paused at F:\NeelPrajna). · Diagram 5 NPSU shadow universes — BUILT (runtime-side; outputs are observations/candidates, never evidence). · Diagram 6 Supervisor/Runner trust split — BUILT (contract v1.1 owner-signed; live-verified HEALTHY 2026-07-29). · Diagram 7 evidence pipeline — BUILT core + TARGET null library. · Diagram 8 documentation-tree redesign — SUPERSEDED with honor by the one-doc-per-thing law; its Registers' spirit lives in the journal master.
+Diagram 1 programme top-down — the destination (Part A). · Diagram 2 Core Kernel components — BUILT (real module paths; exercised by the 853-test suite). · Diagram 3 Communication Contract — TARGET (design sketch; **implemented at NP-S5** via Contract v2 + §4.5 boundary — rows 7–8 of §A.1). · Diagram 4 Book-A four-layer MQL5 refactor — BUILT (live EA, paused at F:\NeelPrajna). · Diagram 5 NPSU shadow universes — BUILT (runtime-side; outputs are observations/candidates, never evidence). · Diagram 6 Supervisor/Runner trust split — BUILT (contract v1.1 owner-signed; live-verified HEALTHY 2026-07-29). · Diagram 7 evidence pipeline — BUILT core + TARGET null library. · Diagram 8 documentation-tree redesign — SUPERSEDED with honor by the one-doc-per-thing law; its Registers' spirit lives in the journal master.
 
 ## 9. Change Record (v1.0 → v2.0)
 
 Retained: Kernel/plug-in split, firewall, contract's six objects and two prohibitions, audited-engine pessimism, name immutability, extensibility principles. Changed: imagined Kernel replaced by the real one (F-3); learning loop routed through the Publication Boundary with rolling stats removed from the contract (F-2); heartbeat demoted to §8 (F-6); window/α-budget/cost-model preconditions made normative (F-10); real-account switching safety added (F-13/F-14); ADR references namespaced (F-12).
 
 **Unified-doc v1.0 (2026-07-29, later):** restructured as the text twin of NeelPrajnaPro_Architecture-v1.0.docx per the Owner-confirmed twin rule — Part A (destination) and Part C (atlas captions) added; Part B = the ratified v2.0 body unchanged; §8 re-tiered TARGET per the vision ruling. From here the two forms version in lockstep.
+
+**Alignment correction (2026-07-30, Constitution §7.2 clarification — Owner-approved).** Finding F-24: Part A's box-to-sprint mapping was written when Execution Plan v1.0 ended at NP-S4, so it described Contract v2 consumption, Continuous Communication, the Knowledge Graph, and Pattern Evolution as *rulings at the NP-S4 boundary* rather than scheduled builds. Execution Plan v2.0 (2026-07-30) schedules them as real sprints, and Part A had not been back-propagated. **Corrected here:** Part A's prose replaced by the canonical box table §A.1 (12 rows) matching v2.0 exactly — rows 7–8 at NP-S5, row 9 at NP-S6, row 10 at NP-S9+, and rows 11–12 added for the two surfaces (Research Console NP-S7, Book A dashboard NP-S8), which were previously enumerated nowhere. §8 and Part C's Diagram-3 caption updated to match. **No requirement changed** — the wall, the Publication Boundary, the separation table, and the write-authority list are untouched; only stale sprint pointers were corrected against a plan the Owner had already approved. Recorded as a clarification, not an amendment, per §7.2.
 
 ---
 *Anchor: **execution stays where the hands are; truth moves to where the judge is.***
