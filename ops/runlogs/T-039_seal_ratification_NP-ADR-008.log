@@ -1,0 +1,108 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730163940
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-039_seal_ratification_NP-ADR-008.ps1
+Process ID: 17288
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-039_seal_ratification_NP-ADR-008.log
+=== T-039 SEAL RATIFICATION - NP-ADR-008 (H-07 SS5 v1.1) === 2026-07-30T16:39:40.1556407+05:30
+--- [1] outstanding before commit ---
+ M configs/venues.yaml
+ M docs/decisions/NeelPrajnaPro_Decisions-v1.0.md
+ M docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
+ M docs/journal/NeelPrajnaPro_Journal.md
+ M ops/NP-ADR-H07_definition_v1.1_draft_v2.0.md
+?? ops/DEVELOPER_BOOT_NP-S1_RESUME.md
+?? ops/T-039_seal_ratification_NP-ADR-008.ps1
+?? ops/runlogs/T-039_seal_ratification_NP-ADR-008.log
+--- [2] the ratification is recorded in all four places ---
+OK: journal J-034
+OK: decisions NP-D-010
+OK: execution plan SS0 handover rewritten
+OK: cost model present in venues.yaml
+--- [3] the binding constants appear in the handover ---
+OK: h007_np_liquidity_sweep_v1_1
+OK: xauusd/neelprajna
+OK: xauusd_m5_vantage
+OK: p < 0.00263
+--- [4] FROZEN GUARD: SS4 and SS5 of the Execution Plan must be unchanged ---
+OK: SS4 seal line and SS5 heading intact
+diff of the execution plan (inspect: only SS0 lines should appear):
+
+--- a/docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
++++ b/docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
+-**As of 2026-07-30 ΓÇö SPRINT NP-S1 IS SEALED AND IN FLIGHT.** Owner GO given 2026-07-30. ARCH-NP-001 (┬º4) sealed with the H-07 mechanical definition (┬º5). All preconditions met and recorded: Auto-Adopt DISABLE pending hysteresis ┬╖ cost model `xauusd_retail_h07` 
+frozen ┬╖ claim form E2 ┬╖ null design N2 ┬╖ **╬▒-budget 0.05** (per-claim bar at 18 trials: p < 0.0028) ┬╖ **H-07 window designated TRAINING**. Architecture / Vision / Execution Plan aligned on the ┬ºA.1 twelve-row box column. Legacy repos paused.
++**As of 2026-07-30 ΓÇö SPRINT NP-S1 IS SEALED, IN FLIGHT, AND REGISTRATION IS NOW UNBLOCKED.** Owner GO given 2026-07-30. **NP-ADR-008 ratified 2026-07-30 (J-034): H-07 detector definition ┬º5 v1.1 sealed; ┬º5 v1.0 remains frozen and unedited.** The blocking first 
+obligation is discharged: the H-07 export was identified, its span resolved and **Owner-confirmed** (UTC half-open `[2026-04-20T22:00:00Z, 2026-07-10T14:33:00Z)`, TRAINING, burned), and the ┬º5 parameter trigger that fired was resolved through the ADR process rather 
+than silently adjusted.
+-**THE DEVELOPER'S FIRST OBLIGATION, before anything seals:** resolve the exact market-time span covered by the H-07 324-trade export, and **echo it back to the Owner for confirmation**. The window was designated by scope, not by dates (method (b)); a scope-designated 
+window is not sealed until the Owner has seen and confirmed the concrete span it resolved to. Registration does not proceed until that confirmation is on the record.
++**Binding constants for every NP-S1 registration** (from NP-ADR-008; a registration that misses any of these is wrong by construction): lineage `h007_np_liquidity_sweep_v1_1` ┬╖ detector `neelprajna.liquidity_sweep@1.1.0` ┬╖ **family `xauusd/neelprajna`, identical 
+across all 19 registrations** (sibling family strings do not match in `deflation.py`, so a per-detector family would silently void the ╬▒-budget) ┬╖ scope `xauusd_m5_vantage` ┬╖ cost model **`xauusd_retail_h07` at $0.41/oz** (now in `configs/venues.yaml`; name 
+immutability applies) ┬╖ **19 family trials ΓåÆ per-claim bar p < 0.00263** (supersedes J-029's 18) ┬╖ claim form E2 restated as the POOLΓåÆSWEEP arrangement claim, null design N2.
+-**Open findings carried into the sprint:** F-23 (Book A mockup vs Auto-Adopt ruling ΓÇö bites only at NP-S8, correction written into ┬º9) ┬╖ F-24 consequence (Architecture docx twin stale relative to its md ΓÇö rebuild pending, blocks nothing).
++**Three statements that must survive into every derived artifact** (Chief Scientist, adopted verbatim, ADR ┬º2.1): E2-v1.1 is not equivalent to the v1.0 hypothesis ┬╖ it is a new hypothesis bound to the v1.1 lineage ┬╖ judging the original T3/MSS detector requires a 
+separate implementation and fresh out-of-sample evidence. **No verdict under v1.1 speaks for the historical T3 gate.**
+-**Next Owner action:** confirm the resolved span when the Developer presents it. After that, nothing until the sprint's Go/No-Go at close.
++**Corrections carried into the sprint (documentation vs implementation, all verified against code):** the Battery has **eight** pipeline steps, not nine (`battery.py`, ARCH-006 ┬º3) ┬╖ the bespoke report has **six** reported criteria, not seven (B2 is procedural) and 
+its verdict is a **five-gate FAIL**, not "FAIL on cost sensitivity" ┬╖ the Battery **re-simulates from bars and events over fold TEST ranges only**, so it does not judge the 324 trades ΓÇö same window, same definition, same trade rule, **different judged trade set by 
+construction**, and the judged n will be materially smaller ┬╖ no M5 scope or ingestion path existed, and Architecture ┬º3.2's stated adapter path does not apply to this population (ticks ΓåÆ M5 mid bars ΓåÆ BulkStore instead). ┬º4's frozen instruction text is **not 
+edited**; these corrections live in NP-ADR-008 and in the sealed AC-4 interpretation table.
++
++**Open findings carried into the sprint:** F-23 (Book A mockup vs Auto-Adopt ruling ΓÇö bites only at NP-S8) ┬╖ F-24 consequence (Architecture docx twin stale) ┬╖ queued non-frozen documentation fixes (Architecture ┬º2 and V&V ┬º3.4 "nine steps"; Architecture ┬º3.2 
+adapter path) ┬╖ attribution corrections pending on four ops/DEVQ artifacts.
++
++**Next Owner action:** none until the sprint's Go/No-Go at close. The Developer resumes at ┬º4 deliverable 1 against v1.1.
+--- [5] stage docs + ops + configs, commit, push ---
+git : warning: in the working copy of 'ops/T-039_seal_ratification_NP-ADR-008.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-039_seal_ratification_NP-ADR-008.ps1:60 char:1
++ git add docs ops configs 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+staged files:
+configs/venues.yaml
+docs/decisions/NeelPrajnaPro_Decisions-v1.0.md
+docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
+docs/journal/NeelPrajnaPro_Journal.md
+ops/DEVELOPER_BOOT_NP-S1_RESUME.md
+ops/NP-ADR-H07_definition_v1.1_draft_v2.0.md
+ops/T-039_seal_ratification_NP-ADR-008.ps1
+ops/runlogs/T-039_seal_ratification_NP-ADR-008.log
+[main 43fc355] T-039: OWNER RATIFICATION - NP-ADR-008 seals H-07 SS5 v1.1; SS5 v1.0 remains frozen. Journal J-034, decision NP-D-010, SS0 handover rewritten, cost model xauusd_retail_h07 at 0.41 USD/oz written to venues.yaml. Binding constants: lineage h007_np_liquidity_sweep_v1_1, family xauusd/neelprajna across all 19 registrations, scope xauusd_m5_vantage, 19 trials p<0.00263. Chief Scientist review filed and accepted; M1-M7 corrections applied and independently re-verified. NP-S1 REGISTRATION UNBLOCKED - nothing has yet registered, run or burned
+ 8 files changed, 221 insertions(+), 10 deletions(-)
+ create mode 100644 ops/DEVELOPER_BOOT_NP-S1_RESUME.md
+ create mode 100644 ops/T-039_seal_ratification_NP-ADR-008.ps1
+ create mode 100644 ops/runlogs/T-039_seal_ratification_NP-ADR-008.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-039_seal_ratification_NP-ADR-008.ps1:66 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   9a51977..43fc355  main -> main
+43fc355 T-039: OWNER RATIFICATION - NP-ADR-008 seals H-07 SS5 v1.1; SS5 v1.0 remains frozen. Journal J-034, decision NP-D-010, SS0 handover rewritten, cost model xauusd_retail_h07 at 0.41 USD/oz written to venues.yaml. Binding constants: lineage h007_np_liquidity_sweep_v1_1, family xauusd/neelprajna across all 19 registrations, scope xauusd_m5_vantage, 19 trials p<0.00263. Chief Scientist review filed and accepted; M1-M7 corrections applied and independently re-verified. NP-S1 REGISTRATION UNBLOCKED - nothing has yet registered, run or burned
+9a51977 T-038: attach run log
+0861b7c T-038: H-07 SS5 v1.1 ADR draft v2.0 (M1-M7 folded; CS three non-equivalence statements adopted) + Chief Scientist review on the record + post-correction verification pass + pre-ratification review + ARO execution process v2.0 repository-first + repository autonomy layer v3.0. ADR is ratification-ready pending two Owner rulings: cost model figure and trial count
+--- [6] tree state after commit ---
+ M ops/runlogs/T-039_seal_ratification_NP-ADR-008.log
+
+RESULT: OK - NP-ADR-008 ratified and sealed in the repository. The Developer may resume.
+**********************
+Windows PowerShell transcript end
+End time: 20260730163943
+**********************
