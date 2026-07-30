@@ -1,0 +1,58 @@
+{
+  "check": "np_s1_ac6",
+  "rev": 1,
+  "run_utc": 1785420373,
+  "verdict_id": "01KYSGQR3D8SYSVJFSF9M77CMY",
+  "trades_file_sha256": "1cf638a2a7fc35e3cc9321595dc6c86bc84c05bee46c6b631705a191c24f4db3",
+  "counts": {
+    "journal_records": 112,
+    "trial_counts": 27,
+    "family_recount": 19
+  },
+  "pass": [
+    "J.hash_chain: PASS (all 112 records chain intact, genesis-to-tail)",
+    "A.family_m: PASS (19 == recorded 19)",
+    "A.effective_alpha: PASS (0.0026315789 == recorded 0.0026315789)",
+    "B.thresholds: PASS (byte-equal, canonical JSON)",
+    "C.burn: PASS (exactly 1 burn 01KYSGQR6K1HHRT66R78BV6Z8Y, consumed_by/parents/window_ref atomic)",
+    "K.file_sha256: PASS (1cf638a2a7fc35e3cc9321595dc6c86bc84c05bee46c6b631705a191c24f4db3)",
+    "K.row_count: PASS (259)",
+    "D.n_trades: PASS (259)",
+    "D.net_mean: PASS (1.5195945945945766)",
+    "D.gross_mean: PASS (1.9295945945945765)",
+    "D.t_stat: PASS (1.5821919583845476)",
+    "D.p_one_sided: PASS (0.057415412388292036)",
+    "D.ci_low: PASS (-0.3067311776062075)",
+    "D.ci_high: PASS (3.389103764478732)",
+    "D.fold1.n: PASS (64)",
+    "D.fold1.mean: PASS (3.1896093750000145)",
+    "D.fold2.n: PASS (70)",
+    "D.fold2.mean: PASS (3.7879285714285915)",
+    "D.fold3.n: PASS (63)",
+    "D.fold3.mean: PASS (0.49150793650790897)",
+    "D.fold4.n: PASS (62)",
+    "D.fold4.mean: PASS (-1.7206451612904068)",
+    "E.tristate: PASS (derived FAIL)",
+    "F.per_trade_cost: PASS (every trade gross-net == 0.41)",
+    "F.venues_formula: PASS (0.24 + 2*(0.05+0.035) = 0.41)",
+    "G.designation: PASS (TRAINING)",
+    "G.bounds: PASS ([2026-04-20T22:00:00+00:00, 2026-07-10T14:33:00+00:00) matches ratified interval)",
+    "H.embargo: PASS (15 >= 13)",
+    "I.selftest_seed: PASS (20260725)",
+    "I.seed_reproducible: PASS (seeds.for_run(01KYSETR2C85MRRVWZCM8V0GMC,01KYSEDSM6K5ZKWK0XRCC4SVZ7)=2702931253379642539)"
+  ],
+  "amber": [],
+  "red": [],
+  "verdict": "GREEN",
+  "section3_pass": [
+    "L.undeflated_alpha: PASS (p=0.057415412388292036 > base_alpha=0.05; FAIL survives even without deflation -- the 19-vs-18 ruling could not have changed the outcome)"
+  ],
+  "section3_red": [
+    "M.prediction.statement1: NOT byte-verbatim in 01KYSETR2C85MRRVWZCM8V0GMC's outcome_interpretations/thesis -- ADR text: 'E2-v1.1 is not equivalent to the original v1.0 hypothesis.'",
+    "M.prediction.statement2: NOT byte-verbatim in 01KYSETR2C85MRRVWZCM8V0GMC's outcome_interpretations/thesis -- ADR text: 'It is a new hypothesis bound to the documented v1.1 detector lineage.'",
+    "M.prediction.statement3: NOT byte-verbatim in 01KYSETR2C85MRRVWZCM8V0GMC's outcome_interpretations/thesis -- ADR text: 'Any future judgment of the original T3/MSS detector requires a separate implementation and fresh out-of-sample evidence.'",
+    "M.E2_existence.statement1: NOT byte-verbatim in 01KYSETR3VACRBCWN9QYRRX6DW's outcome_interpretations/thesis -- ADR text: 'E2-v1.1 is not equivalent to the original v1.0 hypothesis.'",
+    "M.E2_existence.statement2: NOT byte-verbatim in 01KYSETR3VACRBCWN9QYRRX6DW's outcome_interpretations/thesis -- ADR text: 'It is a new hypothesis bound to the documented v1.1 detector lineage.'",
+    "M.E2_existence.statement3: NOT byte-verbatim in 01KYSETR3VACRBCWN9QYRRX6DW's outcome_interpretations/thesis -- ADR text: 'Any future judgment of the original T3/MSS detector requires a separate implementation and fresh out-of-sample evidence.'"
+  ]
+}
