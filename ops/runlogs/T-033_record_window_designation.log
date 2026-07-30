@@ -1,0 +1,72 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730101852
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-033_record_window_designation.ps1
+Process ID: 10384
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-033_record_window_designation.log
+=== T-033 record H-07 window designation === 2026-07-30T10:18:52.4528723+05:30
+--- [1] outstanding before the sweep ---
+ M docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
+ M docs/journal/NeelPrajnaPro_Journal.md
+?? ops/T-033_record_window_designation.ps1
+?? ops/T-034_record_mockup_finding.ps1
+?? ops/runlogs/T-033_record_window_designation.log
+ .../NeelPrajnaPro_Execution_Plan-v2.0.md           | 14 ++++++++++--
+ docs/journal/NeelPrajnaPro_Journal.md              | 26 ++++++++++++++++++++++
+ 2 files changed, 38 insertions(+), 2 deletions(-)
+--- [2] verify the designation text is on disk in both places ---
+OK: execution plan carries the designation
+OK: journal carries J-030
+OK: preconditions marked all-met
+--- [3] commit + push ---
+git : warning: in the working copy of 'ops/T-033_record_window_designation.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-033_record_window_designation.ps1:36 char:1
++ git add docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'ops/T-034_record_mockup_finding.ps1', LF will be replaced by CRLF the next time Git touches it
+staged files:
+docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
+docs/journal/NeelPrajnaPro_Journal.md
+ops/T-033_record_window_designation.ps1
+ops/T-034_record_mockup_finding.ps1
+ops/runlogs/T-033_record_window_designation.log
+[main 597fe1e] T-033: OWNER RULING recorded - H-07 window designated TRAINING (typed-phrase power, P8 / Constitution S6); scope-based per method (b), Developer must echo resolved span for confirmation before seal; ALL NP-S1 preconditions now met - awaiting only Go/No-Go
+ 5 files changed, 158 insertions(+), 2 deletions(-)
+ create mode 100644 ops/T-033_record_window_designation.ps1
+ create mode 100644 ops/T-034_record_mockup_finding.ps1
+ create mode 100644 ops/runlogs/T-033_record_window_designation.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-033_record_window_designation.ps1:42 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   fe794f6..597fe1e  main -> main
+597fe1e T-033: OWNER RULING recorded - H-07 window designated TRAINING (typed-phrase power, P8 / Constitution S6); scope-based per method (b), Developer must echo resolved span for confirmation before seal; ALL NP-S1 preconditions now met - awaiting only Go/No-Go
+fe794f6 T-032: attach run log
+b1a53b0 T-032: record Owner ruling - neelprajna family alpha-budget = 0.05 (per-claim bar at 18 trials: p < 0.0028); window-designation method (b) selected, designation line still open; journal J-029
+--- [4] confirm clean tree ---
+ M ops/runlogs/T-033_record_window_designation.log
+
+RESULT: OK - all NP-S1 preconditions met
+**********************
+Windows PowerShell transcript end
+End time: 20260730101856
+**********************
