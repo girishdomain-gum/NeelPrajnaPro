@@ -1,16 +1,20 @@
 {
   "check": "ac6_sweep_recount",
-  "rev": 1,
-  "run_utc": 1785420375,
+  "rev": 2,
+  "run_utc": 1785421942,
   "n_bars": 16029,
   "n_pivots": 3099,
-  "n_pools_formed": 476,
-  "n_sweeps": 331,
-  "reported_historical": 325,
-  "agrees_with_325": false,
-  "assumptions": [
-    "pivot test: strict-max/min fractal over [i-3, i+3], unique extremum",
-    "pool clustering: star/anchor on the newest confirmed pivot, not full pairwise",
-    "near-active same-side pool suppresses new pool formation entirely (no merge)"
-  ]
+  "n_pools_formed": 465,
+  "n_sweeps": 325,
+  "expected": {
+    "pivots": 3099,
+    "pools": 465,
+    "sweeps": 325
+  },
+  "matches": {
+    "pivots": true,
+    "pools": true,
+    "sweeps": true
+  },
+  "reported_historical_sweeps": 325
 }

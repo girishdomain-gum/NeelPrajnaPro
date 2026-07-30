@@ -1,51 +1,73 @@
 #!/usr/bin/env python3
-"""IVF NP-S1 AC-6, SS3 item 3: independent SWEEP recount.
+"""IVF NP-S1 AC-6, SS3 item 3: independent SWEEP recount. (rev 2)
 
-Re-derives the SWEEP event count from the M5 bars using NP-ADR-008 SS5
-v1.1's TEXT ALONE (no qrf import, no reading of np_feature_service.py /
-np_probability_engine.py). Compared against the Developer's reported 325
-(against the bespoke stack's historical 325, NP-ADR-008 SS5).
+rev 2 re-derives from NP-ADR-008 APPENDIX B SS B.1-B.5 (the pinned
+mechanics, ARCH-NP-003) instead of rev 1's own disclosed assumptions from
+SS3's under-specified text. Still no qrf import, still no reading of
+np_feature_service.py / np_probability_engine.py -- Appendix B is the
+sole source of the mechanics below.
 
-MECHANICAL DEFINITION (verbatim parameters from NP-ADR-008 SS3, frozen
-parameters): bar timeframe 300s (M5) single; pivot_k 3; member window
-200 bars; pool_tol 30.0 ticks fixed (TICK_SIZE 0.01 => 0.30 price units);
-min_pen 5.0 ticks (0.05 price units); reclose_window 2 bars.
+MECHANICAL DEFINITION, PINNED (Appendix B.1-B.5; frozen parameters from
+NP-ADR-008 SS3: pivot_k 3, member window 200 bars, pool_tol 30 ticks /
+0.30, min_pen 5 ticks / 0.05, reclose_window 2 bars):
 
-POOL_FORMED -- ADR text: "on each newly confirmed pivot: same-side pivots
-within the last 200 bars priced within pool_tol of the new pivot; >=2
-members; level = max of member prices (HIGH) / min (LOW), frozen at
-formation; no new pool within pool_tol of an active same-side pool;
-active until swept or invalidated."
+  B.1 PIVOT: bar i is a pivot HIGH iff high[i] is the STRICT max of
+      [i-k, i+k]; symmetrically LOW on low[i]. Both may be emitted at the
+      same bar. Confirmed (visible) only at bar i+k.
+  B.2 POOL MEMBERSHIP is ANCHORED on the newest pivot r, never pairwise/
+      transitive: same-side history first pruned to formation_index with
+      (current_confirmation_index - formation_index) <= 200 (permanent);
+      mates are surviving pivots within pool_tol of r's price ALONE; pool
+      forms iff >=1 mate exists (>=2 members including r); r is appended
+      to history only AFTER the mate search (cannot mate with itself).
+  B.3 LEVEL = max/min of members (including r), frozen at formation. The
+      candidate is SUPPRESSED ENTIRELY if any CURRENTLY ACTIVE same-side
+      pool lies within pool_tol of the CANDIDATE'S COMPUTED LEVEL (not of
+      r's raw price) -- no merge, no update. Resolved (swept/invalidated)
+      pools never suppress.
+  B.4 PER-BAR ORDER: at each bar, sweep/invalidation checks against every
+      active pool run FIRST; pivot-to-pool processing runs SECOND. A pool
+      cannot form and be swept on the same bar.
+  B.5 PENETRATION/RECLOSE: penetration HIGH: high[i] >= level+min_pen;
+      LOW: low[i] <= level-min_pen. Reclose HIGH: close[i] < level; LOW:
+      close[i] > level (strict). First penetrating bar p recloses same
+      bar -> SWEEP (reclose_bars=0). Else reclose is TESTABLE AT BARS
+      p+1 AND p+2 -- recloses at either -> SWEEP; invalidation fires at
+      the first bar with (i-p) >= 2 without a reclose. Max penetration
+      retained and reported on the SWEEP.
 
-SWEEP -- ADR text: "wick penetrates the level by >= min_pen ticks;
-same-bar close back on the defended side -> sweep (reclose_bars 0);
-else a 2-bar reclose window -- closing back inside -> sweep (max
-penetration retained); failing -> invalidation, pool resolved, no event."
-
-ASSUMPTIONS MADE WHERE THE ADR TEXT UNDERSPECIFIES THE MECHANICS (named
-here, not hidden -- the call site `build_pools_and_sweeps(bars, swings,
-30.0, 5.0, 3, 2)` takes a `swings` input the ADR text never defines the
-computation of):
-  (i) PIVOT/SWING DEFINITION: the ADR states only "a pivot at bar i is
-      confirmed only at i+k" (anti-repaint contract), never the pivot
-      TEST itself. This script uses the standard fractal definition
-      consistent with pivot_k=3: bar i is a swing HIGH iff high[i] is
-      the strict max of high[i-3..i+3]; swing LOW iff low[i] is the
-      strict min of low[i-3..i+3] (ties broken toward the earliest bar,
-      i.e. a later equal value is not itself a new pivot). This is a
-      genuine, disclosed assumption -- a different pivot test would
-      change the count.
-  (ii) POOL-MEMBER CLUSTERING: when a new pivot confirms, this script
-      collects every same-side pivot within the last 200 bars whose
-      price is within pool_tol of the NEW pivot's price (a star/anchor
-      clustering on the newest member, not full pairwise transitive
-      clustering). If that set has >=2 members (including the new
-      pivot) and no already-active same-side pool has a level within
-      pool_tol of the new pivot, a pool forms.
-  (iii) "no new pool within pool_tol" is read as: the new pivot forms no
-      pool and is simply not added to any pool (it is not merged into
-      the nearby active pool's membership either) -- ADR text does not
-      say which.
+WHAT CHANGED FROM REV 1's THREE DISCLOSED ASSUMPTIONS (per ARCH-NP-003 SS2):
+  (i) pivot test -- UNCHANGED. Rev 1's strict-extremum fractal over
+      [i-k,i+k] with both-sides-emittable-at-one-bar already matches B.1
+      exactly.
+  (ii) pool clustering (star/anchor on newest pivot) -- UNCHANGED in its
+      distance rule (distance to r alone), but rev 1 folded r into the
+      candidate history array before filtering by pool_tol, which is
+      mathematically identical to B.2's "mates found first, r appended
+      after" for the purposes of membership and level (r trivially
+      satisfies distance-0-to-itself either way) -- no behavioural change.
+  (iii) suppression -- CHANGED, and this is the fix that mattered. Rev 1
+      checked candidate active-pool proximity against r's OWN raw price;
+      B.3 requires the check against the CANDIDATE POOL'S COMPUTED LEVEL
+      (max/min of the whole cluster, which can differ from r's own price
+      when r is not the cluster's own extremum). This under-suppressed
+      rev 1 relative to the pinned rule whenever r's price was not the
+      pool's eventual level.
+  ALSO CHANGED, beyond rev 1's three named assumptions: rev 1's per-bar
+  loop processed pivot-to-pool formation BEFORE the sweep/invalidation
+  pass; B.4 pins the OPPOSITE order. This mattered whenever an active pool
+  P was resolved (swept/invalidated) on the SAME bar a new pivot's
+  candidate level would have been suppressed by P: under rev 1's order P
+  was still "active" (not yet resolved this bar) at candidate-check time,
+  over-suppressing; under B.4's pinned order P is already resolved by
+  then and does not suppress. Rev 1's `formed_at >= bar_i` guard already
+  prevented a pool from being swept the same bar it formed, so that one
+  consequence of B.4 was already satisfied by accident -- but the
+  suppression-ordering consequence above was not, and is fixed here by
+  literally reordering the per-bar loop to match B.4.
+  B.5 (reclose testable at p, p+1 AND p+2) -- UNCHANGED. Rev 1's
+  `range(1, RECLOSE_WINDOW+1)` already checked exactly p+1 and p+2 in
+  addition to p itself, matching B.5 exactly; re-verified, not modified.
 
 Usage:
   python ivf/checks/sweep_recount_np_s1_ac6.py --bars <path-to-m5-bars-parquet>
@@ -64,11 +86,14 @@ MIN_PEN = 5.0 * TICK  # 0.05
 PIVOT_K = 3
 MEMBER_WINDOW = 200
 RECLOSE_WINDOW = 2
-REPORTED_HISTORICAL = 325
+REPORTED_HISTORICAL_SWEEPS = 325
+EXPECTED_PIVOTS = 3099
+EXPECTED_POOLS = 465
+EXPECTED_SWEEPS = 325
 
 
 def find_pivots(highs, lows, k):
-    """(i) fractal pivot, confirmed at i+k. Returns list of (i, 'H'|'L', price)."""
+    """B.1: strict-extremum pivot, both sides emittable at one bar, confirmed at i+k."""
     n = len(highs)
     pivots = []
     for i in range(k, n - k):
@@ -93,8 +118,8 @@ class Pool:
         self.active = True
 
 
-def build_pools_and_sweeps(opens, highs, lows, closes, pivots):
-    """POOL_FORMED / SWEEP per NP-ADR-008 SS3 text + disclosed assumptions."""
+def build_pools_and_sweeps(highs, lows, closes, pivots):
+    """POOL_FORMED / SWEEP per Appendix B.1-B.5, pinned."""
     n = len(highs)
     pivots_by_confirm = {}
     for i, side, price in pivots:
@@ -102,89 +127,81 @@ def build_pools_and_sweeps(opens, highs, lows, closes, pivots):
         pivots_by_confirm.setdefault(confirm_at, []).append((i, side, price))
 
     active_pools = {"H": [], "L": []}
-    all_pools = []
     pool_formed_events = []
     sweep_events = []
+    first_divergence_bar = None  # reserved for diagnostic use if counts miss target
 
-    seen_pivots = {"H": [], "L": []}  # (orig_idx, price), confirmed and visible so far
+    # B.2: same-side history of CONFIRMED, VISIBLE pivots (formation_index, price).
+    seen_pivots = {"H": [], "L": []}
 
     for bar_i in range(n):
-        # 1) confirm any pivots that resolve at this bar (ADR anti-repaint: ts >= confirm bar)
-        for orig_idx, side, price in pivots_by_confirm.get(bar_i, []):
-            seen_pivots[side].append((orig_idx, price))
-            # candidate members: same-side pivots within last 200 bars (of confirm bar)
-            candidates = [
-                (oi, p) for (oi, p) in seen_pivots[side] if bar_i - oi <= MEMBER_WINDOW
-            ]
-            cluster = [p for (oi, p) in candidates if abs(p - price) <= POOL_TOL]
-            near_active = [
-                pl for pl in active_pools[side] if pl.active and abs(pl.level - price) <= POOL_TOL
-            ]
-            if len(cluster) >= 2 and not near_active:
-                level = max(cluster) if side == "H" else min(cluster)
-                pool = Pool(side, level, cluster, bar_i)
-                active_pools[side].append(pool)
-                all_pools.append(pool)
-                pool_formed_events.append({"bar": bar_i, "side": side, "level": level})
-
-        # 2) check active pools for sweep/invalidation against this bar's wick
+        # --- B.4 step 1: sweep / invalidation checks FIRST, against every active pool ---
         for side in ("H", "L"):
             still_active = []
             for pool in active_pools[side]:
-                if not pool.active:
-                    continue
                 if pool.formed_at >= bar_i:
+                    # cannot be checked before/at its own formation bar (B.4 consequence)
                     still_active.append(pool)
                     continue
                 if side == "H":
                     penetration = highs[bar_i] - pool.level
                 else:
                     penetration = pool.level - lows[bar_i]
-                if penetration >= MIN_PEN:
-                    # penetrated -- check reclose on THIS bar first
-                    reclosed = closes[bar_i] < pool.level if side == "H" else closes[bar_i] > pool.level
-                    if reclosed:
-                        sweep_events.append(
-                            {
-                                "pool_bar": pool.formed_at,
-                                "side": side,
-                                "level": pool.level,
-                                "sweep_bar": bar_i,
-                                "reclose_bars": 0,
-                                "penetration": penetration,
-                            }
-                        )
-                        pool.active = False
-                        continue
-                    # else: 2-bar reclose window from bar_i+1..bar_i+RECLOSE_WINDOW
-                    max_pen = penetration
-                    resolved = False
-                    for j in range(1, RECLOSE_WINDOW + 1):
-                        bj = bar_i + j
-                        if bj >= n:
-                            break
-                        pen_j = (highs[bj] - pool.level) if side == "H" else (pool.level - lows[bj])
-                        max_pen = max(max_pen, pen_j)
-                        reclosed_j = closes[bj] < pool.level if side == "H" else closes[bj] > pool.level
-                        if reclosed_j:
-                            sweep_events.append(
-                                {
-                                    "pool_bar": pool.formed_at,
-                                    "side": side,
-                                    "level": pool.level,
-                                    "sweep_bar": bj,
-                                    "reclose_bars": j,
-                                    "penetration": max_pen,
-                                }
-                            )
-                            pool.active = False
-                            resolved = True
-                            break
-                    if not resolved:
-                        pool.active = False  # invalidation, no event
+                if penetration < MIN_PEN:
+                    still_active.append(pool)
                     continue
-                still_active.append(pool)
+                # penetrated -- B.5: reclose testable at p (this bar), else p+1, p+2
+                p = bar_i
+                reclosed = closes[bar_i] < pool.level if side == "H" else closes[bar_i] > pool.level
+                if reclosed:
+                    sweep_events.append(
+                        {"pool_bar": pool.formed_at, "side": side, "level": pool.level,
+                         "sweep_bar": bar_i, "reclose_bars": 0, "penetration": penetration}
+                    )
+                    continue  # resolved, drop from active (not appended to still_active)
+                max_pen = penetration
+                resolved = False
+                for j in (1, 2):
+                    bj = p + j
+                    if bj >= n:
+                        break
+                    pen_j = (highs[bj] - pool.level) if side == "H" else (pool.level - lows[bj])
+                    max_pen = max(max_pen, pen_j)
+                    reclosed_j = closes[bj] < pool.level if side == "H" else closes[bj] > pool.level
+                    if reclosed_j:
+                        sweep_events.append(
+                            {"pool_bar": pool.formed_at, "side": side, "level": pool.level,
+                             "sweep_bar": bj, "reclose_bars": j, "penetration": max_pen}
+                        )
+                        resolved = True
+                        break
+                # if not resolved: invalidation at first bar with (bj - p) >= 2, no event
+                # (either way the pool is resolved and dropped from active)
+                if not resolved:
+                    pass
             active_pools[side] = still_active
+
+        # --- B.4 step 2: pivot-to-pool processing SECOND ---
+        for orig_idx, side, price in pivots_by_confirm.get(bar_i, []):
+            # B.2.1: prune history to formation_index within 200 of THIS confirmation bar
+            candidates = [
+                (oi, p) for (oi, p) in seen_pivots[side] if bar_i - oi <= MEMBER_WINDOW
+            ]
+            # B.2.2: mates = candidates within pool_tol of r's price ALONE
+            mates = [p for (oi, p) in candidates if abs(p - price) <= POOL_TOL]
+            # B.2.3/4: pool forms iff >=1 mate; r joins the cluster (and the history) after the search
+            if mates:
+                cluster = mates + [price]
+                level = max(cluster) if side == "H" else min(cluster)
+                # B.3: suppression is against the CANDIDATE'S COMPUTED LEVEL, not r's raw price
+                near_active = any(
+                    abs(pl.level - level) <= POOL_TOL for pl in active_pools[side]
+                )
+                if not near_active:
+                    pool = Pool(side, level, cluster, bar_i)
+                    active_pools[side].append(pool)
+                    pool_formed_events.append({"bar": bar_i, "side": side, "level": level})
+            seen_pivots[side].append((orig_idx, price))
 
     return pool_formed_events, sweep_events
 
@@ -198,27 +215,28 @@ def main() -> int:
     import pyarrow.parquet as pq
 
     df = pq.read_table(a.bars).to_pydict()
-    opens, highs, lows, closes = df["open"], df["high"], df["low"], df["close"]
+    highs, lows, closes = df["high"], df["low"], df["close"]
     n = len(highs)
 
     pivots = find_pivots(highs, lows, PIVOT_K)
-    pool_events, sweep_events = build_pools_and_sweeps(opens, highs, lows, closes, pivots)
+    pool_events, sweep_events = build_pools_and_sweeps(highs, lows, closes, pivots)
 
+    n_pivots, n_pools, n_sweeps = len(pivots), len(pool_events), len(sweep_events)
     report = {
         "check": "ac6_sweep_recount",
-        "rev": 1,
+        "rev": 2,
         "run_utc": int(time.time()),
         "n_bars": n,
-        "n_pivots": len(pivots),
-        "n_pools_formed": len(pool_events),
-        "n_sweeps": len(sweep_events),
-        "reported_historical": REPORTED_HISTORICAL,
-        "agrees_with_325": len(sweep_events) == REPORTED_HISTORICAL,
-        "assumptions": [
-            "pivot test: strict-max/min fractal over [i-3, i+3], unique extremum",
-            "pool clustering: star/anchor on the newest confirmed pivot, not full pairwise",
-            "near-active same-side pool suppresses new pool formation entirely (no merge)",
-        ],
+        "n_pivots": n_pivots,
+        "n_pools_formed": n_pools,
+        "n_sweeps": n_sweeps,
+        "expected": {"pivots": EXPECTED_PIVOTS, "pools": EXPECTED_POOLS, "sweeps": EXPECTED_SWEEPS},
+        "matches": {
+            "pivots": n_pivots == EXPECTED_PIVOTS,
+            "pools": n_pools == EXPECTED_POOLS,
+            "sweeps": n_sweeps == EXPECTED_SWEEPS,
+        },
+        "reported_historical_sweeps": REPORTED_HISTORICAL_SWEEPS,
     }
     out = json.dumps(report, indent=2)
     if a.report:

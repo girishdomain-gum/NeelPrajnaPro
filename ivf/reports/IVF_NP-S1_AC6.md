@@ -279,3 +279,131 @@ under-specified corner of the detector's own textual definition surfacing a 6-ev
 disagreement on independent recount — both of which NP-ADR-008 §3 anticipated might
 fail, and both should be dispositioned by the Architect/Owner before this lineage is
 relied on further.
+
+---
+
+## 7. Re-check under ARCH-NP-003
+
+*Appended, not editing §§0–6 above (P5). Instruction: `ops/ARCH-NP-003_IVF_recheck_instruction.md`.
+Scope: §3.2 and §3.3 only, against `ops/NP-ADR-008_APPENDIX-B_pinned_detector_mechanics.md`
+(B.1–B.9). §§0–6, the drill, the full §2 chain re-derivation, and §3.1/§3.4 stand as
+reported above and were not re-run.*
+
+### 7.0 What changed since §3
+
+Appendix B disposes §3.2's byte finding (B.7: accept as-is, deviation recorded, no
+re-registration) and pins five previously-underspecified mechanics for §3.3 (B.1–B.5),
+localized by the Architect's own comparison against the Stage-3 report: pivots agreed
+exactly (3,099 = 3,099); the divergence entered at pool formation (+11) and propagated to
+sweeps (+6).
+
+### 7.1 §3.2 re-checked as a substance test
+
+Full output: `ivf/reports/ac6_s32_recheck.json`. Script: `ivf/checks/recheck_ac6_s32_substance.py`.
+
+**Substance test** — does each proposition appear *in meaning* in `outcome_interpretations`/`thesis`?
+
+| Registration | Claim form | Stmt 1 (not equivalent to v1.0) | Stmt 2 (new hypothesis, v1.1 lineage) | Stmt 3 (T3/MSS needs separate impl. + fresh OOS) |
+|---|---|---|---|---|
+| `01KYSETR2C85MRRVWZCM8V0GMC` | prediction | PASS | PASS | PASS |
+| `01KYSETR3VACRBCWN9QYRRX6DW` | E2_existence | PASS | PASS | PASS |
+
+**Substance overall: PASS — 6/6.** Every one of the three propositions is present, in
+meaning, in both registrations.
+
+**Byte test, restated per B.7** — 0 of 6 byte-exact (unchanged from the original §3.2
+finding: the three sentences are joined into one semicolon-separated clause, and
+statement 1's `E2-` prefix is dropped, in both registrations). **This is recorded here as
+a deviation, per NP-ADR-008 Appendix B §B.7's disposition — not as a failure.**
+Re-registering to correct the wording would mint a new hypothesis id, orphaning the
+verdict from the hypothesis it judged and spending two further family trials; B.7 rules
+that cost disproportionate to a wording defect whose substantive purpose (no reader
+could conclude the verdict speaks for the historical T3 gate) is already served.
+
+**§3.2 re-check result: PASS** (substance is the operative test per B.7; the byte
+deviation is a recorded finding against the Architect's original wording of the
+requirement, not a defect in the registrations).
+
+### 7.2 §3.3 re-derived from Appendix B §B.1–B.5
+
+Full output: `ivf/reports/ac6_sweep_recount.json` (rev 2). Script:
+`ivf/checks/sweep_recount_np_s1_ac6.py` (rev 2, updated in place from the §3.3 rev-1
+script; rev 1's assumptions are preserved in the rev-2 docstring for the record).
+
+| Quantity | Target (B.6) | Rev 1 (§3.3, own assumptions) | Rev 2 (pinned B.1–B.5) |
+|---|---|---|---|
+| pivots | 3,099 | 3,099 | **3,099 — MATCH** |
+| pools formed | 465 | 476 (+11) | **465 — MATCH** |
+| sweeps | 325 | 331 (+6) | **325 — MATCH** |
+
+**All three reproduce exactly.**
+
+**Which of rev 1's three disclosed choices changed, per B.1–B.5 (ARCH-NP-003's own
+numbering):**
+
+1. **B.1 (pivot test)** — **UNCHANGED.** Rev 1's strict-extremum fractal over `[i-k,i+k]`,
+   both sides independently emittable at one bar, confirmed at `i+k`, already matched
+   B.1 exactly. Confirmed by the pivot count agreeing at both rev 1 and rev 2 (3,099 in
+   both) — consistent with the Architect's own localization that pivots were never in
+   dispute.
+2. **B.2 (anchored membership)** — **UNCHANGED in substance.** Rev 1's clustering was
+   already anchored on the newest pivot's price alone (never pairwise/transitive), and
+   folding the new pivot into the candidate list before filtering by `pool_tol` is
+   mathematically identical to B.2's "mates found first, `r` appended after" for
+   membership and level purposes (a value is always within `pool_tol` of itself).
+3. **B.3 (suppression) — CHANGED, and this is the fix that mattered most.** Rev 1 tested
+   proximity of active pools against the **new pivot's own raw price**. B.3 requires the
+   test against the **candidate pool's computed level** (max/min of the whole cluster
+   including `r`), which differs from `r`'s own price whenever `r` is not itself the
+   cluster's extremum. Rev 1 therefore **under-suppressed** relative to the pinned rule,
+   forming pools B.3 would have blocked — directly explaining rev 1's pool overcount
+   (+11) and, downstream, its sweep overcount (+6).
+4. **B.4 (per-bar order) — CHANGED**, and named separately because it falls outside rev
+   1's three original disclosed assumptions (it was an implementation-order choice rev 1
+   never flagged as a assumption at all). Rev 1 processed pivot→pool formation *before*
+   the sweep/invalidation pass each bar; B.4 pins the opposite order. Rev 1's
+   `formed_at >= bar_i` guard already prevented a same-bar form-then-sweep (so that one
+   named consequence of B.4 held by accident), but the reordering has a second
+   consequence B.4 makes explicit: a pool resolved *this* bar no longer suppresses a new
+   candidate at the same bar under B.4's order, whereas rev 1's order still treated it as
+   active at candidate-check time and over-suppressed. Fixed by literally reordering the
+   per-bar loop.
+5. **B.5 (reclose at p, p+1, p+2)** — **UNCHANGED, re-verified.** Rev 1's reclose loop
+   already checked exactly bars `p+1` and `p+2` in addition to `p` itself (`range(1,
+   RECLOSE_WINDOW+1)` with `RECLOSE_WINDOW=2`), matching B.5 exactly. Despite ARCH-NP-003
+   flagging this as "the strongest single candidate for the gap," it was not: the gap was
+   §B.3 and §B.4, not §B.5.
+
+No first-divergence bar index is reported because there is no divergence to localize —
+rev 2 reproduces the target exactly on all three counts.
+
+**§3.3 re-check result: PASS — 3,099 / 465 / 325, exact.**
+
+### 7.3 Limitation, per B.8 — read before concluding
+
+**This match demonstrates text-code fidelity, not code correctness.** Appendix B's
+B.1–B.5 were written by the Architect *from the evidenced implementation* — the same
+direction of derivation §5 v1.1 itself was built in. An independent re-derivation from
+text that was itself reverse-engineered from the code, matching that code's output, shows
+the *text* now faithfully describes what the code does — it does **not** show the code
+is a correct implementation of anything external (the historical MQL5 gate, or an
+abstract notion of "liquidity sweep"). This is weaker than the independence AC-6 was
+originally reaching for when it re-derived from NP-ADR-008 §3 alone, before the gap was
+found. **This session does not report the 3,099/465/325 match as independent
+confirmation of the detector.** Per B.8, genuine independence for this lineage would
+require a population produced by a different implementation entirely — out of scope
+here, and reserved for NP-S2's fresh-data path.
+
+### 7.4 Restated overall verdict
+
+| Item | Result |
+|---|---|
+| §3.2 substance test | **PASS** (6/6; byte deviation recorded per B.7, not a failure) |
+| §3.3 recount vs B.6 target | **PASS** (3,099 / 465 / 325, exact) |
+
+**Both of ARCH-NP-003 §4's conditions are met: overall AC-6 verdict is GREEN**,
+qualified by §7.3's limitation (text-code fidelity, not independent code correctness).
+Combined with §§1–6 standing unchanged (drill CAUGHT, full §2 chain re-derivation GREEN
+to 1e-9, §3.1 and §3.4 PASS), **no RED line remains in this report.** Whether this
+suffices to begin HC is the Architect/Owner's call, not this session's — this report
+states the check results and their limitation, nothing more.
