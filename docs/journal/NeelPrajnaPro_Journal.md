@@ -229,3 +229,14 @@ ARCH-NP-001 is sealed with the H-07 mechanical definition (Execution Plan §5) i
 **Handover rewritten (§0), sprint outputs appended (§12, previously empty by design), NP-S2 opened with its ruled precondition.** §4 and §5 remain frozen and unedited throughout — every correction this sprint travelled as an appended record, never an in-place change.
 
 **The honest score.** At sprint open: ~30 documents, 0 integrated verdicts — the exact imbalance THE_ONE_PAGE warned to worry about. At close: **1 integrated verdict, and it says no.** A FAIL that answers a question outranks a PASS that flatters one.
+
+## J-038 · 2026-07-30 · Finding (Architect) — T-046 reported RESULT: FAILED on a false negative
+**What was claimed:** T-046's RESULT line read **FAILED**, on a single check reporting `MISSING: SS12 entry`. **What was true:** §12's NP-S1 sprint-outputs entry was present, correct and committed (`39059c7`, pushed); the diff in the same log shows the old `*(none yet ...)*` placeholder being removed. Every other check in the script passed, including both frozen guards and both append-only guards.
+
+**Cause.** The check searched for `"NP-S1 - H-07 twice framed, once judged"` with an ASCII hyphen; the document reads `NP-S1 — H-07 twice framed, once judged` with an em-dash. The script was written ASCII-only to avoid PowerShell encoding trouble, the document was not, and the two were never reconciled. **The pattern was retyped by hand rather than copied from the artifact it verifies.**
+
+**Species: F-18** (a script's RESULT computed from something other than checked reality) — and, more pointedly, **retro item (d) from J-037 recurring inside the very commit that recorded it**: *a verbatim requirement ships with the quotable string.* A verification pattern is a verbatim requirement on the artifact it checks; this one was typed from memory.
+
+**Standing rule (extends J-037 retro (d)):** **a verification pattern is copied from the artifact it verifies, never retyped** — and where a script must be ASCII-only, it matches on an ASCII-safe substring rather than on punctuation it cannot reproduce.
+
+**Disposition:** no rewrite. T-046's log stands as written, with its FAILED line intact — P5. The correction is this record and T-047's corrected re-verification. **The sprint close itself is unaffected: NP-S1 is closed and accepted, and the content T-046 committed is correct.**
