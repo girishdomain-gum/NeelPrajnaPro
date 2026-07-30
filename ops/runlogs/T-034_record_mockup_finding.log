@@ -1,0 +1,54 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730101859
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-034_record_mockup_finding.ps1
+Process ID: 2820
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-034_record_mockup_finding.log
+=== T-034 record mockup finding F-23 === 2026-07-30T10:18:59.7824258+05:30
+--- [1] outstanding before the sweep ---
+?? ops/runlogs/T-034_record_mockup_finding.log
+
+--- [2] verify the correction is on disk in both places ---
+OK: NP-S8 carries the mockup correction
+OK: journal carries J-031 (F-23)
+--- [3] confirm the mockup itself is untouched (append-only culture: we do not edit the artifact) ---
+OK: mockup present and unmodified - the correction lives in the sprint instruction, not in a rewritten artifact
+--- [4] commit + push ---
+
+staged files:
+ops/runlogs/T-034_record_mockup_finding.log
+[main 578e16d] T-034: finding F-23 - Book A advisor mockup predates the F-13 Auto-Adopt ruling and shows an active criterion as selected default; correction written into NP-S8 sprint text; standing rule added (check mockups against rulings in force before building from them)
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 ops/runlogs/T-034_record_mockup_finding.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-034_record_mockup_finding.ps1:48 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   a48ce6b..578e16d  main -> main
+578e16d T-034: finding F-23 - Book A advisor mockup predates the F-13 Auto-Adopt ruling and shows an active criterion as selected default; correction written into NP-S8 sprint text; standing rule added (check mockups against rulings in force before building from them)
+a48ce6b T-033: attach run log
+597fe1e T-033: OWNER RULING recorded - H-07 window designated TRAINING (typed-phrase power, P8 / Constitution S6); scope-based per method (b), Developer must echo resolved span for confirmation before seal; ALL NP-S1 preconditions now met - awaiting only Go/No-Go
+--- [5] confirm clean tree ---
+ M ops/runlogs/T-034_record_mockup_finding.log
+
+RESULT: OK
+**********************
+Windows PowerShell transcript end
+End time: 20260730101902
+**********************
