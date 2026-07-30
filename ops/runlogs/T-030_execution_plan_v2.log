@@ -1,0 +1,60 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730075419
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-030_execution_plan_v2.ps1
+Process ID: 2476
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-030_execution_plan_v2.log
+=== T-030 Execution Plan v1.0 -> v2.0 === 2026-07-30T07:54:20.0903103+05:30
+--- [1] verify v2.0 exists before archiving v1.0 ---
+OK: v2.0 present
+--- [2] archive v1.0 md + its now-stale docx twin ---
+
+archived NeelPrajnaPro_Execution_Plan-v1.0.md
+
+archived NeelPrajnaPro_Execution_Plan-v1.0.docx
+--- [3] verify folder now holds exactly the v2.0 master ---
+files: NeelPrajnaPro_Execution_Plan-v2.0.md
+--- [4] commit docs + ops together ---
+git : warning: in the working copy of 'ops/T-030_execution_plan_v2.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-030_execution_plan_v2.ps1:55 char:1
++ git add docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+[main 91624f7] T-030: Execution Plan v2.0 - full path to the ratified architecture (component map + Phases 3-5: Contract v2, Knowledge Graph, both dashboards, Pattern Evolution); v1.0 md+docx archived; NP-S1 and H-07 sealed definition carried forward verbatim
+ 6 files changed, 255 insertions(+)
+ rename docs/{ => archive}/execution_plan/NeelPrajnaPro_Execution_Plan-v1.0.docx (100%)
+ rename docs/{ => archive}/execution_plan/NeelPrajnaPro_Execution_Plan-v1.0.md (100%)
+ create mode 100644 docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
+ create mode 100644 ops/T-030_execution_plan_v2.ps1
+ create mode 100644 ops/runlogs/T-030_execution_plan_v2.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-030_execution_plan_v2.ps1:60 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   d3adbcd..91624f7  main -> main
+91624f7 T-030: Execution Plan v2.0 - full path to the ratified architecture (component map + Phases 3-5: Contract v2, Knowledge Graph, both dashboards, Pattern Evolution); v1.0 md+docx archived; NP-S1 and H-07 sealed definition carried forward verbatim
+d3adbcd T-026: attach run log
+4a11848 T-026: Research docx twin placed (whiteboard render, 3 diagrams) - tenth and final planned docx twin
+
+RESULT: OK
+**********************
+Windows PowerShell transcript end
+End time: 20260730075426
+**********************
