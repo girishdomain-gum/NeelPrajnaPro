@@ -1,6 +1,5 @@
 # DEVQ-01 — Sprint NP-S1 · §5 parameter trigger fired (definitional divergence)
 *WORKING RECORD ONLY — not a normative document. Written 2026-07-30 on Owner approval ("Handover Files: Approved"). Session: Developer-analog via claude.ai chat with Filesystem connector (read/analysis + these two approved writes only; no code, no commits, no registrations — the implementation sprint runs in Claude Code per the boot prompt).*
-*[WORKTREE COPY — verbatim from mainline `ops\DEVQ-01_NP-S1.md`, placed here 2026-07-30 so the sprint session can read the authoritative state from its own disk; the mainline file is the original and the two converge in git.]*
 
 ---
 
