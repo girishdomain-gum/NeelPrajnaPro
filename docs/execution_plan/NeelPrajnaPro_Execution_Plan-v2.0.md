@@ -4,7 +4,7 @@
 ---
 
 ## 0. CURRENT STATE (rewritten at every sprint boundary — this is the handover)
-**As of 2026-07-30:** Repo bootstrapped, full Gen-1 history on GitHub. Estate RATIFIED (Owner memo, journal J-004). H-07 definition SEALED (§4 below). Rulings in force: Auto-Adopt DISABLE pending hysteresis · cost model `xauusd_retail_h07` · claim form E2 · vision ruling · one-doc-per-thing law. All 14 docs carry PDF-verified docx twins. Legacy repos paused. **Blocking items, all Owner, all typed lines: (1) H-07 window designation, (2) neelprajna α-budget, (3) Go/No-Go on Sprint NP-S1.** On Go: Developer boots per §3 boot sequence.
+**As of 2026-07-30:** Repo bootstrapped, full Gen-1 history on GitHub. Estate RATIFIED (Owner memo, journal J-004). H-07 definition SEALED (§5 below). Rulings in force: Auto-Adopt DISABLE pending hysteresis · cost model `xauusd_retail_h07` · claim form E2 · vision ruling · one-doc-per-thing law · **neelprajna family α-budget = 0.05 (Owner-typed 2026-07-30; per-claim bar at 18 registered trials = p < 0.0028)**. All 14 docs carry PDF-verified docx twins. Legacy repos paused. **Blocking items remaining, both Owner, both typed lines: (1) the H-07 window designation — method (b) selected by the Owner (scope-based; Developer resolves the exact span from the export at registration and echoes it back for confirmation before the seal), designation line itself still to be typed; (2) Go/No-Go on Sprint NP-S1.** On Go: Developer boots per §3 boot sequence.
 
 ## 1. THE DESTINATION — what "NeelPrajna as per our architecture" concretely means
 
@@ -60,7 +60,7 @@ Cadence: quality gates, not clocks. Per-sprint rhythm (Gen-1's, proven): instruc
 
 **Architecture boxes delivered:** Observation Engine (NP feed, first detector) · Scientific Memory (first NP records)
 
-**Preconditions:** ☑ F-13 ruled (Auto-Adopt NONE) · ☑ cost model named `xauusd_retail_h07` (frozen once cited) · ☑ definition sealed (§5) · ☐ Owner window designation · ☐ Owner α-budget.
+**Preconditions:** ☑ F-13 ruled (Auto-Adopt NONE) · ☑ cost model named `xauusd_retail_h07` (frozen once cited) · ☑ definition sealed (§5) · ☑ **α-budget ruled 0.05 (Owner-typed 2026-07-30) — per-claim bar at 18 trials: p < 0.0028; deflation recomputed against total family trials at every judgment** · ☐ Owner window designation (method (b) selected; line still to be typed).
 
 **Deliverables:**
 1. `qrf/trading/concepts/neelprajna/liquidity_sweep.py` — standard Detector contract; implements exactly §5's events and frozen parameters; MQL5 gate + `np_feature_service.py` are reference only, §5 is normative.
