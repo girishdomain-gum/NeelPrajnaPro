@@ -1,7 +1,18 @@
-# NP-ADR-0ZZ — H-07 Detector Definition §5 **v1.1** (DRAFT v2.0 — M1–M7 incorporated)
+# NP-ADR-008 — H-07 Detector Definition §5 **v1.1** · **RATIFIED 2026-07-30**
+*Number allocated 2026-07-30 against both registries: NeelPrajna-side ADRs run 001–007 (NP-ADR-005 = operational autonomy and governance, cited in Architecture §5); no NP-ADR-008 existed. Collision discipline per NP-D-006.*
+
+> **OWNER RATIFICATION (verbatim, 2026-07-30):** *"NP-ADR H-07 §5 v1.1 is RATIFIED as written, including E2 restated as POOL→SWEEP arrangement, the cost model `xauusd_retail_h07` set at $0.41/oz round-trip (measured spread 0.24 + 2×(0.05 + 0.035)), the neelprajna family trial count corrected to 19 (per-claim significance threshold p < 0.00263), the v1.1-only detector target, Option C with the agreed lineage and scope limitation, and the corrected characterization of the bespoke result. §5 v1.0 remains frozen and unedited. Subject to incorporation of the approved M1–M7 corrections into the ADR, NP-S1 registration is unblocked against v1.1."*
+>
+> **The ratification condition is satisfied by this document.** M1–M7 were incorporated in draft v2.0 *before* the ruling, and their application was independently checked in `ops\POST_CORRECTION_VERIFICATION_H07_v1.1.md` (seven of seven, exact as intended). "The agreed lineage" therefore resolves to the **M1-corrected** value `h007_np_liquidity_sweep_v1_1`, not the pre-correction dotted form. Chief Scientist review filed: `ops\CS_REVIEW_H07_v1.1_2026-07-30.md`.
+>
+> **Lineage of this document:** draft v1.0 → draft v2.0 (M1–M7 + CS §2.1) → **NP-ADR-008, sealed here.** Prior drafts retained as provenance; never overwritten (P5).
+
+---
+
+## 0. Preamble (as drafted v2.0, now sealed)
 *Supersedes `ops\NP-ADR-H07_definition_v1.1_draft_v1.0.md`. Corrections per `ops\PRE_RATIFICATION_REVIEW_H07_v1.1.md` (M1–M7) and `ops\CS_REVIEW_H07_v1.1_2026-07-30.md` (Q1's three binding statements). **Number 0ZZ unassigned** pending registry check (NP-D-006). No normative document edited. Architect role · session: Opus 5, claude.ai interface, filesystem connector · 2026-07-30.*
 
-**Status:** Chief Scientist review **FILED and accepted** ✅ · corrections applied ✅ · verification pass `ops\POST_CORRECTION_VERIFICATION_H07_v1.1.md` ✅ · **awaiting two Owner rulings (§7) and ratification (§9).**
+**Status:** **RATIFIED 2026-07-30 by the Owner.** Chief Scientist review filed and accepted ✅ · M1–M7 applied ✅ · verification pass ✅ · both embedded decisions ruled (cost model $0.41/oz; trial count 19, p < 0.00263) ✅ · **NP-S1 registration is UNBLOCKED against v1.1.**
 
 ---
 
@@ -68,9 +79,9 @@ Architecture §3.2 describes the data path as `NP_Trades_*` / `NPSU_Trades_*` CS
 
 **Prediction claim:** judged this sprint by the certified Battery against the random-timing placebo.
 
-## 7. The two decisions the Owner must rule *(Chief Scientist concurs with both; a concurrence is not a ruling)*
+## 7. The two embedded decisions — **RULED by the Owner 2026-07-30**
 
-**Decision A · Cost model (M5).** `xauusd_retail_h07` does not yet exist in `configs/venues.yaml`; registration hard-errors on an unknown cost model (ARCH-006 §1, V&V §2.3). **Recommended: $0.41/oz round-trip**, entered as:
+**Decision A · Cost model — RULED: `xauusd_retail_h07` = $0.41/oz round-trip.** Entered in `configs/venues.yaml` as:
 
 ```yaml
   xauusd_retail_h07:
@@ -87,9 +98,9 @@ Architecture §3.2 describes the data path as `NP_Trades_*` / `NPSU_Trades_*` CS
       estimates. The bespoke stack charged 26 ticks (0.26 USD/oz) — approximately
       spread-only, charging almost nothing for slippage or commission.
 ```
-Alternatives: $0.26 (bespoke as-run) or $0.47 (`xauusd_retail_median`). **Name immutability applies: frozen once cited by any ledger record.**
+Alternatives considered and declined: $0.26 (bespoke as-run, spread-only) and $0.47 (`xauusd_retail_median`). **Name immutability now applies: frozen the moment any ledger record cites it; every change is a new name.**
 
-**Decision B · Trial count.** J-029 recorded 18. QRF-ADR-011 spends an attempt per registration, and NP-S1 makes **19** (H-07's two + 17 counted-only). Recommended: **19 → per-claim bar p < 0.00263** (a tightening, never a loosening; recomputed against family totals at every judgment).
+**Decision B · Trial count — RULED: 19 registrations; per-claim bar p < 0.00263.** J-029's 18 treated H-07's dual registration as one trial; QRF-ADR-011 spends an attempt per registration (H-07's two + 17 counted-only = 19). A tightening, never a loosening; recomputed against family totals at every judgment.
 
 ## 8. Consequences for the sprint
 

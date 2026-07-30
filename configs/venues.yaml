@@ -36,3 +36,24 @@ venues:
       All figures are honest estimates for a median retail XAUUSD account
       (spread-inclusive broker with a small commission). Round-trip cost per
       ounce = 0.30 + 2*(0.05 + 0.035) = 0.47 USD/oz.
+
+  xauusd_retail_h07:
+    # RATIFIED by the Owner 2026-07-30 (NP-ADR-008 Decision A). NAME IMMUTABILITY
+    # APPLIES: frozen the moment any ledger record cites it; every change is a NEW
+    # name, never an in-place edit. Reconciles NP-D-004's requirement to unify
+    # QRF's 0.47 USD/oz estimate with the bespoke stack's 26-tick figure.
+    instrument: XAUUSD
+    unit: troy_ounce
+    currency: USD
+    spread: 0.24              # MEASURED median across the 60 Stage-2 tick files (24 ticks)
+    slippage_per_side: 0.05   # adopted from xauusd_retail_median (declared estimate)
+    commission_per_side: 0.035 # adopted from xauusd_retail_median (declared estimate)
+    version: "1.0.0"
+    note: >
+      Round-trip = 0.24 + 2*(0.05 + 0.035) = 0.41 USD/oz. The spread is MEASURED
+      from the evidence dataset itself (Stage2_DataValidationReport: median 24
+      ticks across all 60 daily files); slippage and commission are QRF's declared
+      estimates, adopted unchanged. The bespoke stack charged 26 ticks (0.26
+      USD/oz) - approximately spread-only, charging almost nothing for slippage or
+      commission. Sealed BEFORE the run so that a cost-driven divergence in the
+      NP-S1 comparison cannot later be misread as an instrument divergence.
