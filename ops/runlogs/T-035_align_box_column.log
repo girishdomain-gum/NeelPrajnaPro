@@ -1,0 +1,81 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730110903
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-035_align_box_column.ps1
+Process ID: 12860
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-035_align_box_column.log
+=== T-035 align all docs to the architecture box column === 2026-07-30T11:09:03.7736288+05:30
+--- [1] outstanding before the sweep ---
+ M docs/architecture/NeelPrajnaPro_Architecture-v1.0.md
+ M docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
+ M docs/journal/NeelPrajnaPro_Journal.md
+ M docs/vision/NeelPrajnaPro_Vision-v1.0.md
+?? ops/T-035_align_box_column.ps1
+?? ops/runlogs/T-035_align_box_column.log
+ .../NeelPrajnaPro_Architecture-v1.0.md             | 31 +++++++++++++++++++---
+ .../NeelPrajnaPro_Execution_Plan-v2.0.md           | 18 ++++++++-----
+ docs/journal/NeelPrajnaPro_Journal.md              | 20 ++++++++++++++
+ docs/vision/NeelPrajnaPro_Vision-v1.0.md           | 31 +++++++++++++---------
+ 4 files changed, 78 insertions(+), 22 deletions(-)
+--- [2] verify the alignment landed in all four files ---
+OK: architecture carries the canonical box table
+OK: vision points at the architecture spine
+OK: execution plan NP-S7 cites row 11
+OK: execution plan NP-S8 cites row 12
+OK: journal carries J-032 (F-24)
+--- [3] confirm the stale NP-S4 pointers are gone ---
+OK: architecture free of the stale Diagram-3 caption
+OK: vision free of the stale NP-S3/S4 mapping
+--- [4] commit + push ---
+git : warning: in the working copy of 'ops/T-035_align_box_column.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-035_align_box_column.ps1:48 char:1
++ git add docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+staged files:
+docs/architecture/NeelPrajnaPro_Architecture-v1.0.md
+docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md
+docs/journal/NeelPrajnaPro_Journal.md
+docs/vision/NeelPrajnaPro_Vision-v1.0.md
+ops/T-035_align_box_column.ps1
+ops/runlogs/T-035_align_box_column.log
+[main 07e7f42] T-035: finding F-24 - Architecture/Vision/Execution Plan were out of sync (box-to-sprint pointers stale from Plan v1.0). Owner ruled: align everything to the architecture box column. Architecture gains canonical 12-row table SA.1 (spine); Vision and Execution Plan use its exact rows; surfaces (Console NP-S7, Book A dashboard NP-S8) enumerated for the first time. Constitution S7.2 clarification - no requirement changed
+ 6 files changed, 151 insertions(+), 22 deletions(-)
+ create mode 100644 ops/T-035_align_box_column.ps1
+ create mode 100644 ops/runlogs/T-035_align_box_column.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-035_align_box_column.ps1:54 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   a63a038..07e7f42  main -> main
+07e7f42 T-035: finding F-24 - Architecture/Vision/Execution Plan were out of sync (box-to-sprint pointers stale from Plan v1.0). Owner ruled: align everything to the architecture box column. Architecture gains canonical 12-row table SA.1 (spine); Vision and Execution Plan use its exact rows; surfaces (Console NP-S7, Book A dashboard NP-S8) enumerated for the first time. Constitution S7.2 clarification - no requirement changed
+a63a038 T-034: attach run log
+578e16d T-034: finding F-23 - Book A advisor mockup predates the F-13 Auto-Adopt ruling and shows an active criterion as selected default; correction written into NP-S8 sprint text; standing rule added (check mockups against rulings in force before building from them)
+--- [5] confirm clean tree ---
+ M ops/runlogs/T-035_align_box_column.log
+--- [6] KNOWN OPEN ITEM (not a failure) ---
+The Architecture docx twin now diverges from its md (Part A prose -> table).
+Under the twin rule that is a finding until the docx is rebuilt. Recorded in J-032.
+
+RESULT: OK - all three documents aligned to one box column
+**********************
+Windows PowerShell transcript end
+End time: 20260730110907
+**********************
