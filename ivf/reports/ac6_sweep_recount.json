@@ -1,7 +1,7 @@
 {
   "check": "ac6_sweep_recount",
   "rev": 1,
-  "run_utc": 1785417363,
+  "run_utc": 1785420375,
   "n_bars": 16029,
   "n_pivots": 3099,
   "n_pools_formed": 476,

@@ -2,7 +2,11 @@
 
 *IVF / Validator session · fresh worktree `ivf-validator-neelprajnapro-a9bdfe`, no prior
 context · 2026-07-30. Instruction: `ops/ARCH-NP-002_IVF_instruction_AC6.md`. Scope: AC-6
-only.*
+only. Rebased onto `main` (`3e3bd71`, "Merge NP-S1 deliverables 1-6") before any file was
+read; `datastore/journal/journal.jsonl` confirmed at 112 records with both the target
+verdict `01KYSGQR3D8SYSVJFSF9M77CMY` and burn `01KYSGQR6K1HHRT66R78BV6Z8Y` present before
+proceeding. Drill, then re-derivation, both re-run from the rebased branch; every result
+below is unchanged from the pre-rebase run.*
 
 **OVERALL VERDICT: RED.** The drill passed clean (6/6 frauds caught, control clean). The
 core chain re-derivation (NP-ADR-002 §2, all 15 lines) reproduces the ledger to 1e-9 on
@@ -40,18 +44,20 @@ docstrings, which address the IVF directly:
   SWEEP recount (§3 item 3) — `np_feature_service.py` / `np_probability_engine.py` were
   never opened.
 
-**Provenance finding, stated plainly:** the target verdict `01KYSGQR3D8SYSVJFSF9M77CMY`
-and its burn are **not present on `main`** (or on this worktree's branch) at the commit
-this instruction was issued from (`9b2df73`). The Battery run that produced them
-(Execution Plan deliverable 4+5) lives only on the unmerged branch
-`claude/np-adr-008-liquidity-sweep-7aa72b` (commit `2e8d40a`), whose worktree also holds
-the only copy of `datastore/bulk/verdict_trades.h007_np_liquidity_sweep_v1_1/` and
-`datastore/bulk/xauusd_m5_vantage/` on this machine (both gitignored, unrecoverable from
-git objects alone). This session read those files directly, read-only, from that
-worktree's working tree — it did not modify anything there. **Anyone auditing this
-verdict from `main` alone, today, cannot find it**; that branch must merge first. This is
-named here because the ARCH instruction itself was written against that unmerged data
-without saying so.
+**Provenance note, updated after rebase:** at the branch point this instruction was
+first executed from (`9b2df73`), the target verdict and burn were not yet on `main` —
+the Battery run lived only on the unmerged branch `claude/np-adr-008-liquidity-sweep-7aa72b`
+(commit `2e8d40a`). `main` has since merged that work at `3e3bd71`, and this branch was
+fetched and rebased onto it before this run: `datastore/journal/journal.jsonl` (112
+records), `configs/venues.yaml`, and both H-07 registrations are now confirmed
+byte-identical between this worktree and that source branch, and native to `main`. The
+one thing still read externally is the gitignored, derived `datastore/bulk/` output
+(`verdict_trades.h007_np_liquidity_sweep_v1_1/` and `xauusd_m5_vantage/` parquet) —
+by design (`.gitignore`: "derived/heavy... rebuildable, so they are ignored"), these
+never travel through git at all, on any branch, merged or not. This session read them
+read-only from the `np-adr-008-liquidity-sweep-7aa72b` worktree (the only copy on this
+machine); it did not modify anything there. This is a normal consequence of the bulk
+store's design, not a provenance gap — but is named here for the record.
 
 ---
 
