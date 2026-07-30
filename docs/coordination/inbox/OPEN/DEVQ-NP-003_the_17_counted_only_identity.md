@@ -1,4 +1,5 @@
 # DEVQ-NP-003 · BLOCKER (deliverable 6 only) · Sprint NP-S1 · 2026-07-30
+**Status: roster question ANSWERED (Owner, this chat, 2026-07-30) — Option A, via `F:\NeelPrajna\knowledge_base\kb.json`. Registration stays held behind the NEW finding raised while resolving this — see `DEVQ-NP-004_h07_h08_gate_provenance_misattribution.md`.**
 Author: developer (claude-code), worktree `claude/np-adr-008-liquidity-sweep-7aa72b`
 Refs: Execution Plan v2.0 §4 deliverable 6 / AC-5; §7 (NP-S3, "Family migration (the 17)"); `docs/archive/planning/NP_INTEGRATION_EXECUTION_ROADMAP.md`; `docs/automation/NeelPrajnaPro_Automation-v1.0.md` ("Owner touches: the 17-hypothesis ruling"); `docs/scientific_model/NeelPrajnaPro_Scientific_Model-v1.0.md` §8.1; NP-ADR-008 §8; `ops/DEVELOPER_BOOT_NP-S1_RESUME.md` ("THE ORDERING TRAP"); `docs/coordination/inbox/CLOSED/DEVQ-NP-001_h07_export_definition_mismatch.md` (prior hold on this exact deliverable, endorsed by the Architect 2026-07-30).
 Tag: specification-gap (forward dependency, not H-07-definition family — not covered by the "no new DEVQ on the H-07 definition question" exception)
@@ -29,3 +30,11 @@ I have no authority to choose; recommend **C** for this session (finish everythi
 
 ## What I have done / will do while this is open
 Proceeding now with: `qrf/trading/concepts/neelprajna/liquidity_sweep.py` (deliverable 1, AC-1/AC-2), the M5 tick→bar ingestion into BulkStore, the WindowLedger TRAINING designation, and the two sealed H-07 registrations (deliverable 3a/3b — prediction claim + E2 existence claim). **Not** doing: deliverable 6, the AC-4 mapping seal (depends on the run), the `EvidenceBattery.run()` (deliverable 4), or the comparison report (deliverable 5) — all held behind this DEVQ per the ordering trap. Silence binds no one.
+
+---
+## REPLY · Owner · 2026-07-30 (this chat)
+**Roster question answered:** *"the roster is at F:\NeelPrajna\knowledge_base\kb.json; the 17 are enumerable with genuine provenance, so Option A is available and Option B's placeholder is unnecessary."* This is Option **A** — reconstruct the 17 from `kb.json`'s H-01..H-18 roster (minus H-07) with genuine provenance, not a lump-sum placeholder.
+
+**Read in full** (see `DEVQ-NP-004_h07_h08_gate_provenance_misattribution.md` for the complete record): `kb.json` gives all 18 founding hypotheses (H-01..H-18) with `hypothesis`, `lineage` ("#00N Gate M" or similar), `executable_definition`, `status`, `maturity`, and an `evidence` array. H-07 is confirmed as the genuine 324-trade population lineage this sprint has worked with throughout. The other 17 (H-01..H-06, H-08..H-18) are the roster for deliverable 6.
+
+**But the Owner's same message raised a NEW, more severe finding while pointing at this roster:** *"if H-07's gate is LiquiditySweepGate.mqh, then NP-ADR-008's provenance section needs an appended correction, and one of the 17 (H-08) is the hypothesis v1.0 actually described... before registering anything further, resolve the identity question."* Verified directly against `T3_SweepFVGGate.mqh`'s own header and git history — confirmed with high confidence (full writeup: `DEVQ-NP-004`). **Registration of the 17 (including H-08 specifically) stays held behind DEVQ-NP-004, not this DEVQ.** This DEVQ's own original question (roster identity/source) is answered and this file is otherwise closed.
