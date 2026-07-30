@@ -4,17 +4,23 @@
 ---
 
 ## 0. CURRENT STATE (rewritten at every sprint boundary — this is the handover)
-**As of 2026-07-30 — SPRINT NP-S1 IS SEALED, IN FLIGHT, AND REGISTRATION IS NOW UNBLOCKED.** Owner GO given 2026-07-30. **NP-ADR-008 ratified 2026-07-30 (J-034): H-07 detector definition §5 v1.1 sealed; §5 v1.0 remains frozen and unedited.** The blocking first obligation is discharged: the H-07 export was identified, its span resolved and **Owner-confirmed** (UTC half-open `[2026-04-20T22:00:00Z, 2026-07-10T14:33:00Z)`, TRAINING, burned), and the §5 parameter trigger that fired was resolved through the ADR process rather than silently adjusted.
+**As of 2026-07-30 — SPRINT NP-S1 IS CLOSED AND ACCEPTED. Owner GO given 2026-07-30 (J-037). NP-S2 IS THE OPEN SPRINT.**
 
-**Binding constants for every NP-S1 registration** (from NP-ADR-008; a registration that misses any of these is wrong by construction): lineage `h007_np_liquidity_sweep_v1_1` · detector `neelprajna.liquidity_sweep@1.1.0` · **family `xauusd/neelprajna`, identical across all 19 registrations** (sibling family strings do not match in `deflation.py`, so a per-detector family would silently void the α-budget) · scope `xauusd_m5_vantage` · cost model **`xauusd_retail_h07` at $0.41/oz** (now in `configs/venues.yaml`; name immutability applies) · **19 family trials → per-claim bar p < 0.00263** (supersedes J-029's 18) · claim form E2 restated as the POOL→SWEEP arrangement claim, null design N2.
+**The number that changed.** Integrated verdicts: **0 → 1**. Verdict `01KYSGQR3D8SYSVJFSF9M77CMY` — **FAIL** · 259 trades · mean net +1.52/oz · p 0.0574 · bar p < 0.00263 (19 family trials) · burn `01KYSGQR6K1HHRT66R78BV6Z8Y`, atomic · window `[2026-04-20T22:00:00Z, 2026-07-10T14:33:00Z)` TRAINING, **spent**. All six acceptance criteria met; IVF GREEN behind a 6/6 drill; HC passed; Chief Scientist REV **APPROVED 8.8/10**.
 
-**Three statements that must survive into every derived artifact** (Chief Scientist, adopted verbatim, ADR §2.1): E2-v1.1 is not equivalent to the v1.0 hypothesis · it is a new hypothesis bound to the v1.1 lineage · judging the original T3/MSS detector requires a separate implementation and fresh out-of-sample evidence. **No verdict under v1.1 speaks for the historical T3 gate.**
+**THE QUALIFICATION THAT TRAVELS WITH THIS RESULT FOREVER** (Owner-ruled, REV-mandated; quote it, never paraphrase): *Under two independently implemented execution frameworks using different exit mechanics, neither framework produced statistically significant evidence supporting the hypothesis over the designated window.* **NP-S1 did not establish equivalence between the bespoke and Battery execution strategies.** And per NP-ADR-008 §2.1: **no verdict under v1.1 speaks for the historical T3/MSS gate** — which Appendix A established is H-08's, not H-07's.
 
-**Corrections carried into the sprint (documentation vs implementation, all verified against code):** the Battery has **eight** pipeline steps, not nine (`battery.py`, ARCH-006 §3) · the bespoke report has **six** reported criteria, not seven (B2 is procedural) and its verdict is a **five-gate FAIL**, not "FAIL on cost sensitivity" · the Battery **re-simulates from bars and events over fold TEST ranges only**, so it does not judge the 324 trades — same window, same definition, same trade rule, **different judged trade set by construction**, and the judged n will be materially smaller · no M5 scope or ingestion path existed, and Architecture §3.2's stated adapter path does not apply to this population (ticks → M5 mid bars → BulkStore instead). §4's frozen instruction text is **not edited**; these corrections live in NP-ADR-008 and in the sealed AC-4 interpretation table.
+**Scope limits any reader must carry:** the window was TRAINING, so the verdict is **corroborative, never confirmatory** · the E2 existence claim is registered and counted but **unjudged**, awaiting N2 null machinery · the IVF match demonstrates **text-code fidelity, not independent code correctness** (Appendix B.8) — genuine independence needs a population from a different implementation, which is NP-S2's path.
 
-**Open findings carried into the sprint:** F-23 (Book A mockup vs Auto-Adopt ruling — bites only at NP-S8) · F-24 consequence (Architecture docx twin stale) · queued non-frozen documentation fixes (Architecture §2 and V&V §3.4 "nine steps"; Architecture §3.2 adapter path) · attribution corrections pending on four ops/DEVQ artifacts.
+**NP-S2 opens with a ruled precondition (Owner, 2026-07-30, D2):** **execution-model parity is implemented BEFORE any further R6 evidence collection.** The audited engine must express variable stop distance, variable targets and richer exit rules; until it does, every population it judges inherits NP-S1's primary limitation and every future comparison carries the same qualification. This reorders §6 and is recorded there.
 
-**Next Owner action:** none until the sprint's Go/No-Go at close. The Developer resumes at §4 deliverable 1 against v1.1.
+**Standing rule adopted (Owner, 2026-07-30, D3 — NP-D-012):** *any normative specification defining a computation must be sufficient for an independent implementation to reproduce that computation's outputs without consulting the implementation.* Proposed independently by the Architect (Appendix B.9) and the Chief Scientist after three instances surfaced in one sprint.
+
+**Findings are permanent (Owner-ruled):** NP-S1's findings *"remain part of the permanent record and shall not be softened or removed."*
+
+**Open items carried forward:** F-23 (Book A mockup vs Auto-Adopt ruling — bites at NP-S8) · F-24 consequence (Architecture docx twin stale) · non-frozen documentation fixes queued (Architecture §2 and V&V §3.4 "nine steps"; Architecture §3.2 adapter path) · attribution corrections on four ops/DEVQ artifacts · unratified design backlog (ARO ADR, organization/roles ADR, repository autonomy layer, detector-fingerprint ADR) — none blocking.
+
+**Next Owner action:** none until NP-S2's own gates. The Architect opens NP-S2 with the execution-parity work order.
 
 ## 1. THE DESTINATION — what "NeelPrajna as per our architecture" concretely means
 
@@ -116,9 +122,13 @@ Cadence: quality gates, not clocks. Per-sprint rhythm (Gen-1's, proven): instruc
 
 **Requires:** scoped lab unpause ruling (Owner) — the bridge must run.
 
-**Deliverables:** 3–6 months real-tick collection, Owner-typed withheld-OOS designation **before** collection completes · R6 files run as bridge `experiment` jobs, watchdog-guarded, `preserve`-archived · **NPSU CSV → RecordStore/BulkStore migration**: exports land as hash-chained records with manifests, backward compatibility maintained · execution feedback (fills, outcomes) formalized as Performance Store observations · automated `tests/windows.json` ↔ WindowLedger consistency check.
+**WO-P · EXECUTION-MODEL PARITY — RULED BY THE OWNER 2026-07-30 (D2) AS A HARD PRECONDITION.** *Before any further R6 evidence is collected*, the audited execution engine shall be extended to express **variable stop distance, variable targets, and richer exit rules**. Rationale, from NP-S1's REV: the engine could not express the evidenced per-trade stop/target, so H-007 was registered with `stop_offset: null, target_offset: null, exit_rule: time_stop` and the Battery judged *sweep-then-hold-12-bars* rather than the evidenced strategy (NOTE-NP-001). Every population judged before parity exists inherits that limitation, and **every comparison built on it carries NP-S1's qualification permanently.** Collecting months of R6 data first would multiply the defect across everything that data later judges. **Exit:** a registration expressing a per-trade variable stop and target round-trips through the engine and reproduces a hand-computed fixture exactly; the `h001` `stop_offset: null` precedent is no longer the only available shape.
 
-**Exit:** dataset designated, hashed, untouched beyond designation · data-quality report (gaps/seams/DST computed from data) on record · every NP export reproducible from a manifest · no judging performed this sprint.
+**Deliverables (WO-P first, then):** 3–6 months real-tick collection, Owner-typed withheld-OOS designation **before** collection completes · R6 files run as bridge `experiment` jobs, watchdog-guarded, `preserve`-archived · **NPSU CSV → RecordStore/BulkStore migration**: exports land as hash-chained records with manifests, backward compatibility maintained · execution feedback (fills, outcomes) formalized as Performance Store observations · automated `tests/windows.json` ↔ WindowLedger consistency check.
+
+**Exit:** WO-P complete · dataset designated, hashed, untouched beyond designation · data-quality report (gaps/seams/DST computed from data) on record · every NP export reproducible from a manifest · no judging performed this sprint.
+
+**Carried from NP-S1 as the sprint's scientific opportunity:** NP-S1's IVF match demonstrated text-code fidelity, not independent code correctness (Appendix B.8). **Genuine independence requires a population produced by a different implementation** — NP-S2's fresh data is the first chance to provide one.
 
 ## 7. PHASE 2 — THE FAMILY
 
@@ -185,7 +195,32 @@ Additional concept families beyond `neelprajna`. Hypothesis refinement as new se
 WO-A doc truth pass · WO-B A4.0 tester-screenshot spike (gates NP-S3 visuals; needs lab unpause) · WO-C cross-repo evidence linkage · WO-D windows-register consistency check.
 
 ## 12. SPRINT OUTPUTS (appended at each close — empty is honest)
-*(none yet — the first entry here will be NP-S1's: verdict id, comparison-report summary, findings, retro, GO record)*
+
+### NP-S1 — H-07 twice framed, once judged · CLOSED AND ACCEPTED 2026-07-30
+
+**GO record (Owner, verbatim):** *"NP-S1 is GO. The sprint is closed and accepted. NP-S2 shall proceed with execution-model parity being implemented before additional R6 evidence collection. The specification-completeness standing rule is adopted... The findings recorded for NP-S1 remain part of the permanent record and shall not be softened or removed. The NP-S1 verdict is accepted within its documented scope and limitations."*
+
+**The verdict.** `01KYSGQR3D8SYSVJFSF9M77CMY` — **FAIL**. 259 trades over 4 fold TEST ranges · mean net **+1.52/oz** · one-sided p **0.0574** · deflated bar **p < 0.00263** (19 family trials, α 0.05) · gross−net = 0.41 exactly, confirming the ratified cost model applied · fold means +3.19, +3.79, +0.49, −1.72 · burn `01KYSGQR6K1HHRT66R78BV6Z8Y`, atomic with the verdict · window `[2026-04-20T22:00:00Z, 2026-07-10T14:33:00Z)` TRAINING, **spent**. **The FAIL is robust to the sprint's most contested arithmetic:** p exceeds even the undeflated 0.05, so the 19-vs-18 trial ruling could not have changed it.
+
+**Comparison report (AC-4).** `docs/coordination/notes/NOTE-NP-002_*`. Top-line agreement (both FAIL) with **seven divergences named by cause**, and the honest core: the two instruments **test substantially non-overlapping criteria** — B4–B7 are *unjudged by the real Battery, not corroborated* — while disagreeing on **expectancy sign** (bespoke negative OOS, Battery positive-but-insignificant) and running **different trade rules entirely**. **REV-mandated narrowing, §7, to be quoted not paraphrased:** *Under two independently implemented execution frameworks using different exit mechanics, neither framework produced statistically significant evidence supporting the hypothesis over the designated window.*
+
+**Definition sealed.** NP-ADR-008 (§5 v1.1) + Appendix A (Gate 7/Gate 8 provenance) + Appendix B (pinned mechanics). **§5 v1.0 remains frozen and unedited.** Lineage `h007_np_liquidity_sweep_v1_1` · detector `neelprajna.liquidity_sweep@1.1.0` · family `xauusd/neelprajna` · scope `xauusd_m5_vantage` · cost model `xauusd_retail_h07` @ $0.41/oz.
+
+**Verification.** IVF: drill 6/6 planted frauds caught with a silent control · full chain re-derived to 1e-9 · first pass **RED** (correctly) on two of four unchecked items · re-check after Appendix B reproduced **3,099 pivots / 465 pools / 325 sweeps exactly, no tuning** · **GREEN**, qualified as text-code fidelity. HC passed (Owner). REV **APPROVED 8.8/10**.
+
+**The four discoveries worth more than the verdict.**
+1. **The export was made by a structurally different detector than the sealed definition** — caught before registration, resolved by ADR rather than silent adjustment.
+2. **`T3_SweepFVGGate.mqh` says "was Gate 8"** — §5 v1.0 documented a hybrid of H-07's absorbed pool engine and H-08's mandatory MSS/FVG chain. **H-07's true original is deleted and unrecoverable**, making the v1.1 detector its best surviving expression.
+3. **The family string is load-bearing** — sibling families don't match in `deflation.py`, so a per-detector string would have voided the α-budget silently.
+4. **A sealed definition two honest readers implement differently is not yet a definition** — 6 events wide, localized to pool formation, closed by Appendix B.
+
+**Findings (permanent, Owner-ruled).** Against the Architect: "nine steps" propagated into three documents unsourced · §4/§5 mischaracterized the bespoke verdict as cost-sensitivity-only (it was five-gate) · a lineage recommendation violating the repository's own convention · requiring "verbatim" text without supplying it · signing artifacts with another session's name · **three prompts referencing repository state the recipient could not yet fetch** · naming B.5 as the recount culprit when it was B.3 and B.4. Structural, no name: **three normative texts could not reproduce their own outputs without reading code** — now closed by NP-D-012.
+
+**Working as designed.** Four sessions independently refused to act on state they could not verify. The Developer found the Gate 7/Gate 8 misattribution unprompted and calibrated verifiable claims against unverifiable ones. **The IVF returned RED on the Architect's own instruction and was right.**
+
+**Retro — what to change.** (a) An instruction naming repository state must name **the commit that contains it**. (b) Assumptions must be disclosed at the **granularity where two implementers could differ** — "full suppression" was disclosed; *which value is compared* was not, and that was the bug. (c) Decision records are committed **the same day** they are approved. (d) Verbatim requirements ship with the quotable string. (e) Design work stays off the critical path while a sprint is in flight — fifteen documents were produced on the day the first verdict was earned.
+
+**Score.** Documents at sprint open: ~30, integrated verdicts 0. At close: **integrated verdicts 1**, and the answer is **no**.
 
 ---
 
