@@ -1,0 +1,87 @@
+{
+  "drill": "np_s1_ac6",
+  "rev": 1,
+  "run_utc": 1785417516,
+  "results": {
+    "C0_control": {
+      "expect": "CLEAN",
+      "outcome": "CLEAN",
+      "exit_code": 0,
+      "red": []
+    },
+    "P1_altered_trade_net": {
+      "expect": "CATCH",
+      "outcome": "CAUGHT",
+      "exit_code": 1,
+      "red": [
+        "K.file_sha256: parquet on disk=1454fcfcd3024d5192e64ad0ad6d5a3b86b4e902a0fd48c601a619662dc826b1 vs manifest=1cf638a2a7fc35e3cc9321595dc6c86bc84c05bee46c6b631705a191c24f4db3",
+        "D.net_mean: mine=1.9056949806949626 vs verdict=1.5195945945945775",
+        "D.net_total: mine=493.5749999999953 vs verdict=393.5749999999953",
+        "D.t_stat: mine=1.8435935822594558 vs verdict=1.5821919583845476",
+        "D.p_one_sided: mine=0.03319458422483104 vs verdict=0.057415412388292036",
+        "D.ci_low: mine=-0.06817084942082739 vs verdict=-0.3067311776062075",
+        "D.ci_high: mine=3.905872104247085 vs verdict=3.389103764478732",
+        "D.fold1.mean: mine=4.752109375000014 vs verdict=3.1896093750000145",
+        "F.per_trade_cost: gross-net values found = [-99.59, 0.41], expected {0.41}"
+      ]
+    },
+    "P2_family_m_19_to_18": {
+      "expect": "CATCH",
+      "outcome": "CAUGHT",
+      "exit_code": 1,
+      "red": [
+        "J.hash_chain: broken at line 110 (content_hash mismatch, record 01KYSGQR3D8SYSVJFSF9M77CMY)",
+        "A.family_m: my recount=19 (family=xauusd/neelprajna) vs verdict family_m=18",
+        "A.effective_alpha: my 0.002631578947368421 vs verdict 0.002777777777777778"
+      ]
+    },
+    "P3_deleted_trial_count": {
+      "expect": "CATCH",
+      "outcome": "CAUGHT",
+      "exit_code": 1,
+      "red": [
+        "J.hash_chain: broken at line 89 (prev_hash does not chain, record 01KYSETR3VACRBCWN9QYRRX6DW)",
+        "A.family_m: my recount=18 (family=xauusd/neelprajna) vs verdict family_m=19",
+        "A.effective_alpha: my 0.002777777777777778 vs verdict 0.002631578947368421"
+      ]
+    },
+    "P4_cost_model_swap_026": {
+      "expect": "CATCH",
+      "outcome": "CAUGHT",
+      "exit_code": 1,
+      "red": [
+        "K.file_sha256: parquet on disk=ca287b09b096615ed2e67fb21686052856b1efe3b6b97e3b205c5dc83b21ad2a vs manifest=1cf638a2a7fc35e3cc9321595dc6c86bc84c05bee46c6b631705a191c24f4db3",
+        "D.net_mean: mine=1.6695945945945767 vs verdict=1.5195945945945775",
+        "D.net_total: mine=432.42499999999535 vs verdict=393.5749999999953",
+        "D.t_stat: mine=1.7383709778426943 vs verdict=1.5821919583845476",
+        "D.p_one_sided: mine=0.04166923593480525 vs verdict=0.057415412388292036",
+        "D.ci_low: mine=-0.15673117760620872 vs verdict=-0.3067311776062075",
+        "D.ci_high: mine=3.5391037644787313 vs verdict=3.389103764478732",
+        "D.fold1.mean: mine=3.3396093750000144 vs verdict=3.1896093750000145",
+        "D.fold2.mean: mine=3.9379285714285914 vs verdict=3.7879285714285915",
+        "D.fold3.mean: mine=0.6415079365079088 vs verdict=0.4915079365079102",
+        "D.fold4.mean: mine=-1.5706451612904069 vs verdict=-1.7206451612904061",
+        "F.per_trade_cost: gross-net values found = [0.26], expected {0.41}"
+      ]
+    },
+    "P5_window_ts_end_shift": {
+      "expect": "CATCH",
+      "outcome": "CAUGHT",
+      "exit_code": 1,
+      "red": [
+        "J.hash_chain: broken at line 85 (content_hash mismatch, record 01KYSEDSM6K5ZKWK0XRCC4SVZ7)",
+        "G.bounds: window=[2026-04-20T22:00:00+00:00, 2026-07-10T14:28:00+00:00) vs ratified [2026-04-20T22:00:00Z, 2026-07-10T14:33:00Z)"
+      ]
+    },
+    "P6_thresholds_edited_after_fact": {
+      "expect": "CATCH",
+      "outcome": "CAUGHT",
+      "exit_code": 1,
+      "red": [
+        "J.hash_chain: broken at line 88 (content_hash mismatch, record 01KYSETR2C85MRRVWZCM8V0GMC)",
+        "B.thresholds: verdict.thresholds != hypothesis.thresholds (canonical)"
+      ]
+    }
+  },
+  "verdict": "CAUGHT"
+}
