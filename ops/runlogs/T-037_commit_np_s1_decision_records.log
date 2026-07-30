@@ -1,0 +1,111 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730152118
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-037_commit_np_s1_decision_records.ps1
+Process ID: 5712
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-037_commit_np_s1_decision_records.log
+=== T-037 COMMIT NP-S1 DECISION RECORDS === 2026-07-30T15:21:18.7192170+05:30
+--- [1] what is outstanding right now ---
+?? ops/ARO_Architecture_Review_NP.md
+?? ops/DEVQ-01_NP-S1.md
+?? ops/H07_evidenced_definition_annex_NP-S1.md
+?? ops/NP-ADR-ARO_draft_v1.0.md
+?? ops/NP-ADR-model_agnostic_roles_draft_v1.0.md
+?? ops/NP-ADR-organization_and_roles_v1.0.md
+?? ops/OWNER_PACKET_ARO_ratification.md
+?? ops/T-037_commit_np_s1_decision_records.ps1
+?? ops/runlogs/T-037_commit_np_s1_decision_records.log
+--- [2] verify the five records exist before staging ---
+OK:      ops\DEVQ-01_NP-S1.md
+OK:      ops\H07_evidenced_definition_annex_NP-S1.md
+OK:      ops\ARO_Architecture_Review_NP.md
+OK:      ops\NP-ADR-ARO_draft_v1.0.md
+OK:      ops\OWNER_PACKET_ARO_ratification.md
+OK:      ops\NP-ADR-organization_and_roles_v1.0.md
+OK:      ops\NP-ADR-model_agnostic_roles_draft_v1.0.md
+--- [3] verify the Owner ruling, the confirmed span, and the annex addenda are in the record ---
+OK: span confirmation quoted in DEVQ-01
+OK: DEVQ-01 ruling recorded
+OK: Addendum B (developer DEVQ reconciliation) present
+OK: annex Addendum C (placement correction) present - mainline and worktree copies match
+--- [4] stage docs AND ops together (F-22), commit, push ---
+git : warning: in the working copy of 'ops/T-037_commit_np_s1_decision_records.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-037_commit_np_s1_decision_records.ps1:62 char:1
++ git add docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+staged files:
+ops/ARO_Architecture_Review_NP.md
+ops/DEVQ-01_NP-S1.md
+ops/H07_evidenced_definition_annex_NP-S1.md
+ops/NP-ADR-ARO_draft_v1.0.md
+ops/NP-ADR-model_agnostic_roles_draft_v1.0.md
+ops/NP-ADR-organization_and_roles_v1.0.md
+ops/OWNER_PACKET_ARO_ratification.md
+ops/T-037_commit_np_s1_decision_records.ps1
+ops/runlogs/T-037_commit_np_s1_decision_records.log
+[main ee4d4e1] T-037: commit NP-S1 decision records - DEVQ-01 (span Owner-confirmed; definitional divergence resolved as v1.1-by-ADR) + H-07 evidenced-definition annex for the v1.1 ADR + ARO architecture review, NP-ADR draft and Owner ratification packet. Records were written and approved earlier the same day but left uncommitted, which is why the Developer session's DEVQ-NP-001/002 re-asked already-ruled questions. Standing rule: decision records are committed the same day they are approved
+ 9 files changed, 915 insertions(+)
+ create mode 100644 ops/ARO_Architecture_Review_NP.md
+ create mode 100644 ops/DEVQ-01_NP-S1.md
+ create mode 100644 ops/H07_evidenced_definition_annex_NP-S1.md
+ create mode 100644 ops/NP-ADR-ARO_draft_v1.0.md
+ create mode 100644 ops/NP-ADR-model_agnostic_roles_draft_v1.0.md
+ create mode 100644 ops/NP-ADR-organization_and_roles_v1.0.md
+ create mode 100644 ops/OWNER_PACKET_ARO_ratification.md
+ create mode 100644 ops/T-037_commit_np_s1_decision_records.ps1
+ create mode 100644 ops/runlogs/T-037_commit_np_s1_decision_records.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-037_commit_np_s1_decision_records.ps1:68 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   482c1a1..ee4d4e1  main -> main
+ee4d4e1 T-037: commit NP-S1 decision records - DEVQ-01 (span Owner-confirmed; definitional divergence resolved as v1.1-by-ADR) + H-07 evidenced-definition annex for the v1.1 ADR + ARO architecture review, NP-ADR draft and Owner ratification packet. Records were written and approved earlier the same day but left uncommitted, which is why the Developer session's DEVQ-NP-001/002 re-asked already-ruled questions. Standing rule: decision records are committed the same day they are approved
+482c1a1 T-036: attach run log
+b227a93 T-036: OWNER GO - Sprint NP-S1 sealed and in flight. ARCH-NP-001 sealed with the H-07 mechanical definition; instruction text frozen from this commit. All six preconditions met and recorded. Developer boot prompt created at ops/DEVELOPER_BOOT_NP-S1.md. Blocking first obligation: resolve the H-07 export span and present it to the Owner before anything registers, runs or burns
+--- [5] branch visibility check: can the Developer branch now see the records? ---
+  claude/arch-002-execution-t0-b7b83b
+  claude/arch-003-execution-t0-f0c36e
+  claude/arch-004-t0-execution-fe57c0
+  claude/arch-005-t0-execution-7549cc
+  claude/arch-006-t0-execution-7c31ff
+  claude/arch-007-t0-execution-19e5d2
+  claude/arch-009-hypothesis-schema-v3-41df8b
+  claude/arch-009-hypothesis-schema-v3-cebf6a
+  claude/arch-009-t0-execution-59fec3
+  claude/arch-010-t0-execution-1ab7e3
+  claude/devq-021-smc-toolkit-c6240a
++ claude/neelprajnapro-sprint-np-s1-a8171d
+  claude/qrf-architect-handover-cf5806
+* main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/claude/neelprajnapro-sprint-np-s1-a8171d
+  remotes/origin/main
+NOTE: the Developer session must rebase/merge mainline into
+      claude/neelprajnapro-sprint-np-s1-a8171d to inherit these records in git
+      (verbatim copies were already placed in its worktree ops\ by hand).
+--- [6] tree state after commit ---
+ M ops/runlogs/T-037_commit_np_s1_decision_records.log
+
+RESULT: OK - NP-S1 decision records are committed and pushed; the repository can now defend them
+**********************
+Windows PowerShell transcript end
+End time: 20260730152122
+**********************
