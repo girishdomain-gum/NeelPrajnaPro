@@ -1,0 +1,82 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260730203715
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-043_ac6_green_and_hc_packet.ps1
+Process ID: 16044
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-043_ac6_green_and_hc_packet.log
+=== T-043 AC-6 GREEN + HC PACKET === 2026-07-30T20:37:15.7675573+05:30
+--- [1] outstanding before anything ---
+ M docs/journal/NeelPrajnaPro_Journal.md
+ M ops/runlogs/T-043_ac6_green_and_hc_packet.log
+?? ops/REV_BRIEF_NP-S1.md
+?? ops/T-044_hc_passed_issue_rev.ps1
+--- [2] merge the IVF branch so AC-6's report is native to main ---
+
+Already up to date.
+--- [3] AC-6 artifacts are now present on main ---
+OK: IVF AC-6 report on main
+OK: OVERALL VERDICT: RED
+OK: Re-check under ARCH-NP-003
+OK: 3,099 / 465 / 325
+OK: text-code fidelity
+NOTE: the original 'OVERALL VERDICT: RED' line MUST still be present - SS7 is an append,
+      not an edit. Its absence would mean the RED was rewritten (P5 violation).
+--- [4] HC packet present and complete ---
+OK: HC packet present
+OK: disqualifying
+OK: was Gate 8
+OK: HC passed. Proceed to REV
+--- [5] FROZEN / APPEND-ONLY GUARDS ---
+OK: SS4 seal line and SS5 heading intact
+OK: untouched - ops/NP-ADR-H07_definition_v1.1_draft_v2.0.md
+OK: untouched - ops/NP-ADR-008_APPENDIX-A_provenance_correction.md
+OK: untouched - ops/NP-ADR-008_APPENDIX-B_pinned_detector_mechanics.md
+--- [6] stage docs + ops + ivf, commit, push ---
+git : warning: in the working copy of 'ops/T-044_hc_passed_issue_rev.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-043_ac6_green_and_hc_packet.ps1:63 char:1
++ git add docs ops ivf 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+staged files:
+docs/journal/NeelPrajnaPro_Journal.md
+ops/REV_BRIEF_NP-S1.md
+ops/T-044_hc_passed_issue_rev.ps1
+ops/runlogs/T-043_ac6_green_and_hc_packet.log
+[main ad73ac8] T-043: AC-6 GREEN and HC packet issued. IVF re-check under ARCH-NP-003 closed both RED lines: SS3.2 substance test 6/6 (byte deviation recorded per Appendix B.7, not a failure) and SS3.3 recount exact at 3,099 pivots / 465 pools / 325 sweeps with no tuning. Root causes were B.3 (suppression tested against the new pivot's raw price instead of the candidate pool's computed level, under-suppressing by 11 pools) and B.4 (per-bar ordering, an assumption never flagged) - NOT B.5, which the Architect had named as the strongest candidate and which was correct all along. Limitation carried forward permanently: the match shows text-code fidelity, not independent code correctness; genuine independence awaits NP-S2's fresh-data path. All six acceptance criteria met; no RED line remains. HC is the Owner's step and cannot be delegated
+ 4 files changed, 174 insertions(+), 106 deletions(-)
+ create mode 100644 ops/REV_BRIEF_NP-S1.md
+ create mode 100644 ops/T-044_hc_passed_issue_rev.ps1
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-043_ac6_green_and_hc_packet.ps1:69 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   691760f..ad73ac8  main -> main
+ad73ac8 T-043: AC-6 GREEN and HC packet issued. IVF re-check under ARCH-NP-003 closed both RED lines: SS3.2 substance test 6/6 (byte deviation recorded per Appendix B.7, not a failure) and SS3.3 recount exact at 3,099 pivots / 465 pools / 325 sweeps with no tuning. Root causes were B.3 (suppression tested against the new pivot's raw price instead of the candidate pool's computed level, under-suppressing by 11 pools) and B.4 (per-bar ordering, an assumption never flagged) - NOT B.5, which the Architect had named as the strongest candidate and which was correct all along. Limitation carried forward permanently: the match shows text-code fidelity, not independent code correctness; genuine independence awaits NP-S2's fresh-data path. All six acceptance criteria met; no RED line remains. HC is the Owner's step and cannot be delegated
+691760f T-043: attach run log
+92e6c2a T-043: AC-6 GREEN and HC packet issued. IVF re-check under ARCH-NP-003 closed both RED lines: SS3.2 substance test 6/6 (byte deviation recorded per Appendix B.7, not a failure) and SS3.3 recount exact at 3,099 pivots / 465 pools / 325 sweeps with no tuning. Root causes were B.3 (suppression tested against the new pivot's raw price instead of the candidate pool's computed level, under-suppressing by 11 pools) and B.4 (per-bar ordering, an assumption never flagged) - NOT B.5, which the Architect had named as the strongest candidate and which was correct all along. Limitation carried forward permanently: the match shows text-code fidelity, not independent code correctness; genuine independence awaits NP-S2's fresh-data path. All six acceptance criteria met; no RED line remains. HC is the Owner's step and cannot be delegated
+08979e0 Merge AC-6: IVF independent re-derivation of the NP-S1 verdict - drill 6/6 caught, chain GREEN to 1e-9, and the re-check under ARCH-NP-003 closing the recount gap at 3,099/465/325 exact
+--- [7] tree state after commit ---
+ M ops/runlogs/T-043_ac6_green_and_hc_packet.log
+
+RESULT: OK - AC-6 GREEN, all six acceptance criteria met. HC packet is on main at ops\HC_PACKET_NP-S1.md - the Owner's move.
+**********************
+Windows PowerShell transcript end
+End time: 20260730203720
+**********************
