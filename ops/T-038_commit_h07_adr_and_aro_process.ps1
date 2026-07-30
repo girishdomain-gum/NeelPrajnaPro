@@ -28,7 +28,9 @@ Write-Host "--- [2] verify the three records exist ---"
 $files = @(
   "ops\NP-ADR-H07_definition_v1.1_draft_v1.0.md",
   "ops\PRE_RATIFICATION_REVIEW_H07_v1.1.md",
-  "ops\ARO_Execution_Process_v1.0.md"
+  "ops\ARO_Execution_Process_v1.0.md",
+  "ops\ARO_Execution_Process_v2.0.md",
+  "ops\REPOSITORY_AUTONOMY_v3.0.md"
 )
 foreach ($f in $files) {
   $p = Join-Path $repo $f
@@ -54,7 +56,7 @@ git add docs ops 2>&1 | Out-String | Write-Host
 $staged = git diff --cached --name-only
 if ($staged) {
     Write-Host "staged files:"; $staged | Out-String | Write-Host
-    git commit -m "T-038: H-07 SS5 v1.1 ADR draft + pre-ratification review (M1-M7: lineage naming, family-string alpha binding, 8-not-9 battery steps, 6-not-7 bespoke gates, missing cost model, battery re-simulates rather than judging the 324, no M5 scope/dataset) + ARO execution process v1.0 (work-order workflow, routing, escalation, Owner decision packet)" 2>&1 | Out-String | Write-Host
+    git commit -m "T-038: H-07 SS5 v1.1 ADR draft + pre-ratification review (M1-M7) + ARO execution process v2.0 repository-first (pull queues, git-lease claiming, role mailboxes, handover package, Owner three-verb model; v1.0 superseded) + repository autonomy layer v3.0 (boot spec, generated manifests by reference-not-restatement, discovery, recovery, state model, multi-session rules)" 2>&1 | Out-String | Write-Host
     if ($LASTEXITCODE -ne 0) { Write-Host "commit exit: $LASTEXITCODE"; $failed = $true }
     git push 2>&1 | Out-String | Write-Host
     if ($LASTEXITCODE -ne 0) { Write-Host "push exit: $LASTEXITCODE"; $failed = $true }

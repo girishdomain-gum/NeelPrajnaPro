@@ -1,4 +1,6 @@
-# ARO EXECUTION PROCESS v1.0 — the Autonomous Development Workflow
+> **SUPERSEDED 2026-07-30 by `ops\ARO_Execution_Process_v2.0.md`.** Owner correction, accepted: v1.0 designed *around* the chat-relay limitation instead of past it, treating "external participants cannot write to the repository" as an architectural constraint when it is a temporary implementation limitation. v2.0 is repository-first and assumes repo-capable sessions. Retained for provenance only.
+
+# ARO EXECUTION PROCESS v1.0 (SUPERSEDED) — the Autonomous Development Workflow
 *Annex to `ops\NP-ADR-ARO_draft_v1.0.md` (Phase C operating manual). Introduces **no new authority**: every routing rule below moves artifacts between roles that already hold the mandate to produce them. Architect role · session: Opus 5, claude.ai interface, filesystem connector · 2026-07-30. Status: DRAFT, rides with the ARO ADR to Chief Scientist review and Owner ratification.*
 
 ---
