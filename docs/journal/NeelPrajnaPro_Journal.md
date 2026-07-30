@@ -102,3 +102,29 @@ T-029 confirmed green (commit 1b4e04b): Journal twin placed, invariant held unde
 **WINDOW DESIGNATION — method selected, line not yet typed.** The Owner selected method (b): a scope-based designation naming the H-07 export rather than hard-coded dates, with the Developer resolving the exact market-time span from the export file at registration and echoing it back for Owner confirmation before the seal. **The designation phrase itself has not yet been typed.** Recorded as still-open rather than inferred from the method choice: P8 and Constitution §6 make designation a typed-phrase power, and a method selection is not a designation. Architect flagged this to the Owner rather than proceeding on assumption (per ROLES §3.7 — silence binds no one; assumptions in place of answers are findings).
 
 Execution Plan v2.0 §0 and §4 preconditions updated: α-budget ☑ with its per-claim arithmetic stated inline; window designation ☐ with the selected method noted. **Two typed lines now stand between here and NP-S1: the designation, and Go/No-Go.**
+
+## J-030 · 2026-07-30 · OWNER RULING — H-07 WINDOW DESIGNATED · all NP-S1 preconditions now met
+**DESIGNATION (Owner-typed, verbatim):** *"The XAUUSD market time covered by the H-07 324-trade export is designated TRAINING."*
+
+Recorded as the designation ceremony under **P8** (reserves are inviolable and human-held; designated and unlocked only by the Owner's typed phrase) and **Constitution §6** (permanently-human powers). Scope-based per method (b), which the Owner selected in J-029.
+
+**What this establishes.** The market time behind H-07's 324 trades is TRAINING tier — built and fitted on, in-sample. This is the honest designation: those trades were the data H-07 was developed *and* tested against through the bespoke B1–B7 battery, whose FAIL-on-cost-sensitivity verdict is already on record. EXPLORATION was available and was **not** chosen; had it been, the record would have claimed an independence the data cannot support. VIRGIN was never available — the data has been seen.
+
+**What this costs.** The designation BURNS that market time. No later claim may treat it as fresh. NP-S1's verdict on H-07 is therefore in-sample: **corroborative, never confirmatory.** A confirmatory test of H-07 requires data that does not yet exist — which is precisely what NP-S2's R6 long run manufactures, with its own withheld OOS window designated by a separate typed phrase before collection completes.
+
+**One step carries into the sprint and must not be lost.** Method (b) designates by scope, not by dates. The Developer therefore **resolves the exact market-time span from the H-07 export at registration and echoes it back to the Owner for confirmation BEFORE the registration seals.** A scope-designated window is not sealed until its resolved span has been seen and confirmed by the Owner. This is written into §0 and §4 of the Execution Plan so a fresh Developer session cannot skip it.
+
+**ALL NP-S1 PRECONDITIONS ARE NOW MET:** Auto-Adopt ruled · cost model named and frozen · H-07 definition sealed · claim form E2 · α-budget 0.05 · window designated TRAINING. **One item remains in the entire programme: the Owner's Go / No-Go on Sprint NP-S1.**
+
+## J-031 · 2026-07-30 · F-23 (Architect) — Book A mockup contradicts the ratified Auto-Adopt ruling
+**Owner question:** have the NeelPrajna dashboard mockups been updated, and which sprint implements the dashboard?
+
+**Answer to the second:** both dashboards are scheduled in Execution Plan v2.0 Phase 4 — **NP-S7** Research Console (Kernel side, spec v1.3), **NP-S8** Book A dashboard depth (runtime side, spec v1.4/v1.5), independent of each other. Both were unscheduled until v2.0; that gap was itself the 2026-07-30 finding recorded in J-028.
+
+**Answer to the first: NO, and one mockup is now in conflict.** Files read directly rather than assumed. `neelprajna_advisor_detail_mockup.html` predates the F-13 ruling (Auto-Adopt DISABLE pending hysteresis, `InpADV_AutoAdopt = NONE`, ratified 2026-07-29) and depicts an active state in two places:
+- **line ~337, Advisor Settings dropdown:** `2: highest account value (net R)` marked `selected` — an **active criterion shown as the default**. This directly contradicts the ruling and is the binding defect: a UI built literally from this mockup would ship a ruled-against default.
+- **line ~153, Live Advisor banner:** `AUTO-ADOPT is ACTIVE (EQUITY)`. Assessed as **defensible, not a defect** — the mockup's own caption reads "the banner is the point," and demonstrating a conditional safety banner requires depicting the condition that fires it. The banner mechanism is itself the remedy to the original Auto-Adopt audit finding and must be kept.
+
+`neelprajna_live_univ_mockup.html` checked and clean (no Auto-Adopt dependency). Console mockups unaffected (Kernel-side; their own v1.3 correction already handled their separate issue).
+
+**Disposition — recorded, not urgently fixed.** Mockups are DESIGNED-tier and non-normative; nothing builds from them until NP-S8, which is Phase 4. The real risk was the correction being forgotten across that distance, so it is written into NP-S8's own sprint text in the Execution Plan where the Developer cannot miss it, rather than left as a note here. **Standing rule created:** before any sprint builds from a mockup, that mockup is checked against the rulings in force, and any conflict is named in the sprint instruction.

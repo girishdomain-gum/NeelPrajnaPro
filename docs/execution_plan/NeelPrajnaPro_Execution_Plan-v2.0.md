@@ -4,7 +4,7 @@
 ---
 
 ## 0. CURRENT STATE (rewritten at every sprint boundary — this is the handover)
-**As of 2026-07-30:** Repo bootstrapped, full Gen-1 history on GitHub. Estate RATIFIED (Owner memo, journal J-004). H-07 definition SEALED (§5 below). Rulings in force: Auto-Adopt DISABLE pending hysteresis · cost model `xauusd_retail_h07` · claim form E2 · vision ruling · one-doc-per-thing law · **neelprajna family α-budget = 0.05 (Owner-typed 2026-07-30; per-claim bar at 18 registered trials = p < 0.0028)**. All 14 docs carry PDF-verified docx twins. Legacy repos paused. **Blocking items remaining, both Owner, both typed lines: (1) the H-07 window designation — method (b) selected by the Owner (scope-based; Developer resolves the exact span from the export at registration and echoes it back for confirmation before the seal), designation line itself still to be typed; (2) Go/No-Go on Sprint NP-S1.** On Go: Developer boots per §3 boot sequence.
+**As of 2026-07-30:** Repo bootstrapped, full Gen-1 history on GitHub. Estate RATIFIED (Owner memo, journal J-004). H-07 definition SEALED (§5 below). Rulings in force: Auto-Adopt DISABLE pending hysteresis · cost model `xauusd_retail_h07` · claim form E2 · vision ruling · one-doc-per-thing law · **neelprajna family α-budget = 0.05 (Owner-typed 2026-07-30; per-claim bar at 18 registered trials = p < 0.0028)** · **H-07 window designated TRAINING (Owner-typed 2026-07-30)**. All 14 docs carry PDF-verified docx twins. Legacy repos paused. **ALL PRECONDITIONS MET. One item remains, the Owner's alone: Go / No-Go on Sprint NP-S1.** On Go: ARCH-NP-001 seals with the H-07 definition and the Developer boots per §4's boot sequence. **One step carries into the sprint:** under the Owner's chosen method (b), the Developer resolves the exact market-time span from the H-07 export at registration and echoes it back to the Owner for confirmation **before** the seal — a scope-designated window is not sealed until its resolved span has been seen and confirmed.
 
 ## 1. THE DESTINATION — what "NeelPrajna as per our architecture" concretely means
 
@@ -60,7 +60,9 @@ Cadence: quality gates, not clocks. Per-sprint rhythm (Gen-1's, proven): instruc
 
 **Architecture boxes delivered:** Observation Engine (NP feed, first detector) · Scientific Memory (first NP records)
 
-**Preconditions:** ☑ F-13 ruled (Auto-Adopt NONE) · ☑ cost model named `xauusd_retail_h07` (frozen once cited) · ☑ definition sealed (§5) · ☑ **α-budget ruled 0.05 (Owner-typed 2026-07-30) — per-claim bar at 18 trials: p < 0.0028; deflation recomputed against total family trials at every judgment** · ☐ Owner window designation (method (b) selected; line still to be typed).
+**Preconditions — ALL MET as of 2026-07-30:** ☑ F-13 ruled (Auto-Adopt NONE) · ☑ cost model named `xauusd_retail_h07` (frozen once cited) · ☑ definition sealed (§5) · ☑ **α-budget ruled 0.05 (Owner-typed 2026-07-30) — per-claim bar at 18 trials: p < 0.0028; deflation recomputed against total family trials at every judgment** · ☑ **window designated TRAINING (Owner-typed 2026-07-30, verbatim): "The XAUUSD market time covered by the H-07 324-trade export is designated TRAINING."** — scope-based per method (b); **the Developer must resolve the exact span from the export and echo it back for Owner confirmation before the registration seals.** The designation BURNS that market time: no later claim may treat it as fresh, and H-07's verdict from it is in-sample — corroborative, never confirmatory.
+
+**Awaiting only: Owner Go / No-Go.**
 
 **Deliverables:**
 1. `qrf/trading/concepts/neelprajna/liquidity_sweep.py` — standard Detector contract; implements exactly §5's events and frozen parameters; MQL5 gate + `np_feature_service.py` are reference only, §5 is normative.
@@ -147,6 +149,14 @@ Build to `docs\specs\QRF_Research_Console_spec_v1.3-amended.md`, read-only v1.0 
 
 ### SPRINT NP-S8 — Book A dashboard depth (runtime side)
 Build to `docs\specs\NeelPrajna_Live_Advisor_Detail_spec_v1.0.md` (v1.4/v1.5 amendments): Live Advisor card with hysteresis meter, Observation Space panel, Analysis Details grid, plain-language Entry/Exit criteria, Advisor Settings in CTRL, plus the LIVE and VIRT UNIV deep views. **Note:** this sprint touches only display logic over existing StateHub/NPSU fields — its exit check is a byte-identical tester deal list, proving trading was not affected.
+
+**MOCKUP CORRECTION REQUIRED BEFORE BUILD (finding 2026-07-30).** `docs\specs\mockups_book_a\neelprajna_advisor_detail_mockup.html` predates the F-13 Auto-Adopt ruling and depicts a state the Owner has since ruled against. Two places:
+- **Line ~337, Advisor Settings dropdown:** shows `2: highest account value (net R)` as the **selected** option. The ratified default is `InpADV_AutoAdopt = NONE`. **The built UI must default to NONE**, not to any active criterion. This is the binding correction.
+- **Line ~153, Live Advisor banner:** shows `AUTO-ADOPT is ACTIVE (EQUITY)`. This is *defensible as design communication* — the mockup's own caption says "the banner is the point," and demonstrating a conditional safety banner requires depicting the condition that fires it. **Keep the banner mechanism; it is a safety feature.** But the mockup should be annotated so no reader mistakes the illustration for the ruled default.
+
+The second Book A mockup (`neelprajna_live_univ_mockup.html`) was checked and is clean — no Auto-Adopt dependency. Console mockups are unaffected (Kernel-side).
+
+**Standing rule this creates:** mockups are DESIGNED-tier and non-normative, but a mockup that contradicts a ratified ruling is a trap for whoever builds from it later. Before any sprint builds from a mockup, that mockup is checked against the rulings in force, and any conflict is named in the sprint instruction — as here.
 
 *NP-S7 and NP-S8 are independent of each other and may run in either order or in parallel.*
 
