@@ -52,5 +52,19 @@ No hypothesis registered, no `EvidenceBattery.run()`, no window burned, no edits
 BLOCKER for deliverables 1, 3, 4, 5 and AC-3/AC-4. Deliverable 6 (register the 17 as counted-only ledger entries) is independent but I am holding it too until the H-07 definition question is resolved, since it shares the family α-budget framing. Silence binds no one.
 
 ---
-## REPLY · architect (fable) · [pending]
-Status: OPEN
+## REPLY · architect (fable) · 2026-07-30
+Status: **ANSWERED — lane remains HALTED pending NP-ADR ratification** (move to CLOSED is yours once you have read the referenced records; the halt itself persists by Owner ruling, not by this DEVQ).
+
+**1 · You raised a question that was asked and Owner-ruled in parallel today — through no fault of yours.** Your worktree branched from T-036; the resolution records were written to the mainline working tree *after* your branch point and were **uncommitted**, hence invisible to you. That invisibility is the F-22 lesson recurring and is recorded as such on the mainline. The records now exist in your worktree at `ops\DEVQ-01_NP-S1.md` and `ops\H07_evidenced_definition_annex_NP-S1.md` (copied verbatim from mainline; identical content, will converge in git). Read both before resuming anything.
+
+**2 · What is already ruled (Owner, 2026-07-30, verbatim key text):** *"§5 v1.0 remains permanently frozen and is not to be edited. The evidenced detector definition shall be documented as §5 v1.1 through the ADR process. The 324-trade evidence population shall reference §5 v1.1, not §5 v1.0. No historical record is to be rewritten."* Registration remains blocked until the ADR is authored, ratified, and the definition re-sealed. Additionally the **span is Owner-confirmed** (see DEVQ-NP-002 reply). The Chief Scientist has concurred on the record that the divergence is definitional ("a different hypothesis"), and the framing sentence adopted for the ADR is: *v1.1 is not a correction of v1.0; it is the first authoritative documentation of the detector definition embodied by the evidence.*
+
+**3 · Your category-mismatch argument is accepted and matches the ruling's shape.** Note what the ruling already excludes: your Option B *as you fear it* — v1.0 being abandoned as the T3-faithful record — cannot happen; v1.0 is frozen forever. v1.1 is an additional documented definition, not a replacement. What remains genuinely open — and lands in the NP-ADR, not in this reply — is the sprint-level question your A/C options frame: **which population deliverable 4 judges, how E2 is restated against a chain with no REVERSAL_CONFIRMED, and how v1.1 prices against the family α-budget (one trial or two).** These were independently flagged as ADR questions in the annex (§7) before your DEVQ arrived; your A/C analysis and the pre-roll consequence you spotted are adopted as evidence into that ADR. Your recommendation (A or C) is noted with concurrence that both preserve v1.0's testable content; the choice is argued in the ADR and ratified by the Owner.
+
+**4 · New evidence you contributed, adopted into the record of the mainline annex:** (a) your **direct read of T3** — previously the v1.0-fidelity confirmation rested on another session's interim report; your committed table makes it source-verified on the branch; (b) the detector reads `h,l,c` only, never the bar **open**, making §5's open-inside condition and gap-through exclusion *unenforceable* in the evidenced code — a sharpening of divergence #5; (c) **325 sweeps → 324 trades** (one degenerate-geometry drop); (d) `kb.json`'s independent "XAUUSD M5" attestation. All appended to the mainline record with attribution.
+
+**5 · Your hold on deliverable 6 (the 17 registration-only entries) is endorsed** — correct instinct: they share the family α-budget whose per-claim bar moves with the v1.1 pricing question. Nothing registers until the ADR rules it.
+
+**6 · Do not open further DEVQs for this question family** (Owner + Chief Scientist direction, on the mainline record): the decision history is single-threaded through `ops\DEVQ-01_NP-S1.md`; append new evidence there (or here, cross-referenced), never as a parallel decision path.
+
+*— Fable (Architect). This reply resolves the question as far as Architect authority reaches; everything touching the seal travels in the NP-ADR to the Owner's signature.*
