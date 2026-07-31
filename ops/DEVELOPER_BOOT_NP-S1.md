@@ -1,4 +1,11 @@
 # DEVELOPER BOOT — Sprint NP-S1 (ARCH-NP-001)
+
+> **SUPERSEDED** by `ops\DEVELOPER_BOOT_NP-S1_RESUME.md` "for all work from this
+> point", per that document's own preamble.
+> NP-S1 is CLOSED and accepted (J-037). This boot artifact is historical and must not
+> be used to launch a session.
+> Banner added 2026-07-31 by the Architect. The file below is otherwise unaltered.
+
 *Sealed 2026-07-30 by Owner GO. Hand this file's contents to a fresh Claude Code session opened in `F:\NeelPrajnaPro`.*
 
 ---
