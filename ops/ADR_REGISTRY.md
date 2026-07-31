@@ -307,3 +307,5 @@ ruling. `NP-ADR-H07_definition_v1.1_draft_v2.0.md` (NP-ADR-008, RATIFIED) was no
 touched.
 
 Developer role · session: Claude Sonnet 5, Claude Code CLI · 2026-07-31.
+
+**2026-07-31 (ARCH-NP-008):** both asymmetric supersession traps flagged in §3 ("Asymmetric supersession — priority finding") now carry banners — `NP-ADR-H07_definition_v1.1_draft_v1.0.md` (commit `0f4de15`) and `DEVELOPER_BOOT_NP-S1.md` (commit `fa161b8`) — transcribed verbatim from the Architect, per `ops/NP-ADR-008_APPENDIX-C_numbering_space_correction.md` (commit `298015e`).
