@@ -98,9 +98,11 @@ def test_ac1_h001_through_h004_reproduce_byte_identically():
             continue
         hyp = hyps[verdict.payload["hypothesis_ref"]]
         lineage = hyp.payload["lineage"]
+        if lineage == H007_LINEAGE:
+            continue  # verified separately below (test_ac1_h007_reproduces_byte_identically)
         dataset = rebuild_bulk._LINEAGE_DATASET.get(lineage)
         if dataset is None:
-            continue  # not an h001-h004 lineage (e.g. h007 — checked separately below)
+            continue  # no dispatch entry for this lineage
 
         bars_table, bars_full = _bars(dataset)
         events = rebuild_bulk._events_for_lineage(lineage, bars_table, bars_full)

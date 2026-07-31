@@ -55,7 +55,9 @@ from pathlib import Path
 
 import pandas as pd
 import pyarrow as pa
+import pyarrow.parquet as pq
 
+from qrf.kernel.errors import BulkIntegrityError
 from qrf.kernel.protocol.windows import WindowLedger
 from qrf.kernel.records.bulk import BulkStore
 from qrf.kernel.records.store import RecordStore
@@ -129,6 +131,53 @@ def build_m5_bars(tick_dir: Path) -> pd.DataFrame:
     return bars[["ts", "open", "high", "low", "close", "ticks"]]
 
 
+def _bars_to_table(bars: pd.DataFrame) -> pa.Table:
+    """The exact BulkStore table shape written at ingest (reused by rebuild)."""
+    return pa.table(
+        {
+            "ts": pa.array(bars["ts"].tolist(), type=pa.int64()),
+            "open": pa.array(bars["open"].tolist(), type=pa.float64()),
+            "high": pa.array(bars["high"].tolist(), type=pa.float64()),
+            "low": pa.array(bars["low"].tolist(), type=pa.float64()),
+            "close": pa.array(bars["close"].tolist(), type=pa.float64()),
+            "ticks": pa.array(bars["ticks"].tolist(), type=pa.int64()),
+        }
+    )
+
+
+def rebuild_bulk() -> None:
+    """Re-create the gitignored M5 bars parquet from raw ticks; hash-verify.
+
+    Mirrors ``judge_h001.rebuild_bulk``'s pattern: the manifest (and its path,
+    dataset name, recorded sha256) is already in the journal from the original
+    ingest; only the file bytes are gitignored and need reconstructing.
+    """
+    store = RecordStore(JOURNAL)
+    bulk = BulkStore(store, BULK_ROOT)
+    n_before = len(store)
+    manifest = next(
+        (m for m in store.query(record_type="bulk_manifest") if m.payload["dataset"] == DATASET),
+        None,
+    )
+    if manifest is None:
+        raise SystemExit(
+            f"no bulk_manifest for {DATASET} — run scripts/ingest_h07_m5_vantage.py first"
+        )
+    table = _bars_to_table(build_m5_bars(TICK_DIR))
+    path = Path(BULK_ROOT) / manifest.payload["path"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pq.write_table(table, path)
+    try:
+        bulk.read(manifest.record_id)  # hash-verify vs the existing manifest, or raise
+    except BulkIntegrityError as e:
+        raise SystemExit(
+            f"rebuild hash mismatch: {e}\nThe raw tick source at {TICK_DIR} does not "
+            "match the ingest that produced the manifest."
+        ) from e
+    assert len(store) == n_before, "rebuild must not append records"
+    print(f"rebuilt + hash-verified {manifest.record_id} ({DATASET}, {table.num_rows} rows)")
+
+
 def _run_ingest(store: RecordStore) -> None:
     for w in store.query(record_type="window"):
         if w.payload["dataset"] == DATASET:
@@ -146,16 +195,7 @@ def _run_ingest(store: RecordStore) -> None:
         f"vs sealed window [{SEALED_TS_START_NS}, {SEALED_TS_END_NS})"
     )
 
-    table = pa.table(
-        {
-            "ts": pa.array(bars["ts"].tolist(), type=pa.int64()),
-            "open": pa.array(bars["open"].tolist(), type=pa.float64()),
-            "high": pa.array(bars["high"].tolist(), type=pa.float64()),
-            "low": pa.array(bars["low"].tolist(), type=pa.float64()),
-            "close": pa.array(bars["close"].tolist(), type=pa.float64()),
-            "ticks": pa.array(bars["ticks"].tolist(), type=pa.int64()),
-        }
-    )
+    table = _bars_to_table(bars)
     manifest = bulk.write(DATASET, table, producer="human:girish", parents=[])
     print(f"wrote bulk_manifest={manifest.record_id} rows={manifest.payload['row_count']}")
 
