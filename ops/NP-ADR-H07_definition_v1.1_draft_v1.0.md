@@ -1,4 +1,12 @@
 # NP-ADR-0ZZ — H-07 Detector Definition §5 **v1.1**: the evidenced definition, sealed
+
+> **SUPERSEDED 2026-07-30** by `ops\NP-ADR-H07_definition_v1.1_draft_v2.0.md`, which
+> was ratified as **NP-ADR-008** on 2026-07-30.
+> Retained for provenance only — never ratified, never to be cited.
+> This file keeps the placeholder `0ZZ` permanently and is assigned no ADR number
+> (corrected Rule A, Architect ruling 2026-07-31, F-29).
+> Banner added 2026-07-31 by the Architect. The file below is otherwise unaltered.
+
 *WORKING RECORD — Architect-role draft, 2026-07-30, for Chief Scientist review → Owner ratification (Constitution §7.3, and §5's own "changes = v1.1 by NP-ADR, never edits"). **Number 0ZZ unassigned** pending registry check (NP-D-006). No normative document edited by this draft.*
 
 **Attribution (per the proposed standard):** *Architect role · session: Opus 5, claude.ai interface, filesystem connector · 2026-07-30.*
