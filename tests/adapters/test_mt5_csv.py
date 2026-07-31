@@ -234,7 +234,7 @@ def test_ingest_report_v2_records_params(env, tmp_path):
 # --- the real Sprint-2 export ingests clean (AC) -----------------------------
 def test_real_ivf_export_ingests_zero_flags(env):
     store, bulk = env
-    csv = REPO_ROOT / "IVF_S2_XAUUSD_PERIOD_H1.csv"
+    csv = REPO_ROOT / "docs" / "archive" / "gen1" / "artifacts" / "IVF_S2_XAUUSD_PERIOD_H1.csv"
     res = A.ingest_mt5_csv(
         csv, "xauusd_h1_sample", timeframe_seconds=TF, store=store, bulk_store=bulk,
         column_map=IVF_S2_COLUMN_MAP, holidays={"2024-01-15"},
