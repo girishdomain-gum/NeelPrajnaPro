@@ -32,6 +32,16 @@ Fill-rule scope this sprint (DEVQ-012): entries are next-open, fixed (not
 configurable); exits are time-stop-at-next-open plus optional intrabar
 stop/target. Alternative fill rules (signal-close with a declared lag, VWAP, …)
 are out of scope and would be a new, declared rule.
+
+Per-trade stops and R-multiple targets (ARCH-NP-004 §4): this module stays a
+PURE geometric primitive and is unchanged by that capability. ``resolve_exit``
+still takes a plain ``stop_offset``/``target_offset`` DISTANCE pair; the caller
+(``engine.EventEngine.simulate``) resolves whatever mechanism a hypothesis
+declares — a hypothesis-level constant, or a per-event absolute stop price
+(``ExecutionSpec.event_stop_column``) combined with an R-multiple target
+(``ExecutionSpec.target_r_multiple``) — into that same distance pair, once per
+trade, before calling here. The stop-before-target tie rule and the pessimistic
+gap-through below apply identically either way.
 """
 
 from __future__ import annotations

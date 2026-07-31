@@ -18,7 +18,10 @@ Prefer invoking the venv python directly: `.venv/Scripts/python.exe`
    your working branch (create the branch off main if starting fresh).
    Never conclude a file is "missing" from an unfetched tree.
 2. `docs/coordination/PROTOCOL.md` — your role and the rules.
-3. `docs/handover/AI_PROJECT_STATE.md` — where the project stands.
+3. Execution Plan §0 (`docs/execution_plan/NeelPrajnaPro_Execution_Plan-v2.0.md`)
+   — where the project stands. (`docs/handover/AI_PROJECT_STATE.md` is
+   **RETIRED**, 2026-07-31, Owner ruling — see `NOTE-NP-004`;
+   `gen_state.py` is no longer run.)
 4. `docs/coordination/sessions/` — read the LATEST session log; it is
    your predecessor's handover to you.
 5. Your current instruction: the highest-numbered ARCH file whose work
@@ -37,8 +40,9 @@ above are the project.
   (1) new files in `docs/coordination/inbox/OPEN/`,
   (2) new files in `docs/coordination/notes/`,
   (3) new files in `docs/coordination/sessions/` (your session logs),
-  (4) regenerating `docs/handover/AI_PROJECT_STATE.md` via
-      `scripts/gen_state.py` only (DEVQ-001 = C).
+  (4) [RETIRED 2026-07-31 — see `NOTE-NP-004`. The exception below no
+      longer applies; nothing regenerates `docs/handover/AI_PROJECT_STATE.md`,
+      which does not exist as a live file.]
   Plus the sanctioned completion-report append to your own ARCH file.
 - **Session log or it didn't happen:** at session end AND at any stop,
   write `sessions/S{sprint}-{seq}_{date}.md` per PROTOCOL v1.1, commit,
@@ -68,12 +72,21 @@ no writes outside permitted paths; completion report appended under
 `## COMPLETION REPORT (developer)`; final session log written; branch
 merged to main and pushed.
 
-## Session close list (ARCH-010 §2)
-At every session close, in addition to the DoD above:
-- Regenerate the state file: `.venv/Scripts/python.exe scripts/gen_state.py`
-  (DEVQ-001 = C; the ONLY sanctioned way to touch
-  `docs/handover/AI_PROJECT_STATE.md`). Commit + push the regenerated
-  file so the record's DERIVED rows (test count, journal count, branch)
-  stay current for the next session's boot.
+## Session close list (ARCH-010 §2) — RETIRED 2026-07-31 (NOTE-NP-004, Owner disposition (c))
+The state-file regeneration step below is retired. `docs/handover/
+AI_PROJECT_STATE.md` has not existed as a live file since the NeelPrajnaPro
+restructure (commit `a6823c3`, T-009); `gen_state.py` can only update an
+existing file in place and has had no target since. **Do not hand-write
+`AI_PROJECT_STATE.md` to work around this** — that would violate the very
+rule ("only sanctioned way to touch this path") the retired step depended on.
+Execution Plan §0 is the authoritative project-state record until a generated
+`STATUS.md` (WO-Q v0.1) supersedes it.
+
+*(Retired text, kept for history: "At every session close, in addition to
+the DoD above: Regenerate the state file: `.venv/Scripts/python.exe
+scripts/gen_state.py` (DEVQ-001 = C; the ONLY sanctioned way to touch
+`docs/handover/AI_PROJECT_STATE.md`). Commit + push the regenerated file so
+the record's DERIVED rows (test count, journal count, branch) stay current
+for the next session's boot.")*
 
 Start now: run the boot sequence.

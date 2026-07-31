@@ -32,6 +32,12 @@ Thin, sprint-level. Decisions live in docs/adr/, not here.
   channel at docs/coordination/, CLAUDE.md standing orders at root.
 - ARCH-001 issued: Sprint 1 (Ledger Core) instruction for the Developer.
 
+## [NP-S2] — 2026-07-31
+- Retired `docs/handover/AI_PROJECT_STATE.md` / `scripts/gen_state.py`'s
+  session-close step (Owner ruling, NOTE-NP-004 disposition (c)); Execution
+  Plan §0 is authoritative until WO-Q's `STATUS.md` (v0.1). `CLAUDE.md`
+  updated accordingly; `gen_state.py` left in place, marked deprecated.
+
 ## [Pre-Sprint] — 2026-07-24
 - Frozen: Architecture v1.1 (Whiteboard Edition).
 - Completed: Implementation Blueprint v1.0; Independent Verification

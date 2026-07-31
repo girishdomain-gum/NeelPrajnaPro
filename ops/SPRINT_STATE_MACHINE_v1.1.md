@@ -317,8 +317,19 @@ Every step in §10 is a lookup on type, existence, timestamp or hash. None needs
 
 ## DOCUMENT HISTORY
 
+- **v1.2 (2026-07-31)** — §13 appended: no calendar-bound sprints (NP-D-013), adopted the same day NP-S2's scope was narrowed to WO-P only under exactly this rule.
 - **v1.1 (2026-07-30)** — execution layer added after the Owner caught that v1.0 defined the ARO and Watchdog tokens and then used neither, and never said who runs the machine. New §8 (where ARO sits, write scope, accountability), §9 (mechanical exit checks), §10 (the runbook), §11 (adoption, and why the orchestrator is a script). Accountability split refined per Chief-Scientist-style review, with one row declined: operational execution stays with the Architect, because a script cannot hold a finding. Build backlog issued separately as WO-Q. **The correction is recorded rather than made silently.**
 - **v1.0 (2026-07-30)** — first draft: notation, the machine, phase specifications, STOP protocol, parallelism, SP2's graph, risk register.
+
+## 13. NO CALENDAR-BOUND SPRINTS (NP-D-013, appended 2026-07-31)
+
+**Every sprint must have a clear, measurable definition of "done" achievable without waiting for calendar time.** A sprint whose exit condition is *"wait N months"* is not specified to the standard the rest of this machine holds itself to — P0's exit check, P2's handover, every mechanical gate in §9 resolves against a file or a fact, never against a clock.
+
+**Where an activity inherently takes months** (evidence collection is the case that motivated this rule), **the act of starting and supervising it is one sprint's deliverable; the completed dataset is a different sprint's precondition.** Concretely: a sprint that opens a `PX` background collection closes when the collection is *designated, hashed, and handed off* — not when it finishes. The sprint that consumes the finished dataset is a new sprint, opened fresh, with its own P0 preflight.
+
+**What this deliberately does not solve.** It does not answer whether two sprints may be open at once, who owns shared infrastructure while one sprint's `PX` runs in the background of another's `P2`, or what happens if architecture changes mid-collection. **These are recorded as open questions, not solved by this rule** — NP-D-013 exists precisely so the organization does not have to answer them before it has a real case in front of it. The first time a `PX` collection genuinely overlaps a second sprint's build phase, that overlap is the trigger to design the concurrency model this section deliberately defers.
+
+**Consequence for `PX`'s own definition (§1.2):** a background phase is not a phase the sprint waits inside. It is handed off. The sprint that started it closes; a later sprint receives the artifact `PX` eventually produces as its own precondition.
 
 ---
 *Anchor: **phases say when, concurrency bars say who may act at once, the single-writer bar says where the ledger may be touched — and the shared branch says that nothing anyone did is invisible to anyone else.***

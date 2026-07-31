@@ -166,6 +166,79 @@ ARCH-NP-001 is sealed with the H-07 mechanical definition (Execution Plan §5) i
 
 **The documentation phase of this programme ends here. What follows is evidence.**
 
+## J-040 · 2026-07-31 · **OWNER RULING — G1 SEAL: NP-S2 scope is WO-P only; NOTE-NP-003 fixed; NOTE-NP-004 retired; new standing rule adopted**
+**Owner typed (verbatim, key content):** *"G1 Scope: Option A. NP-SP2 scope is WO-P only. R6 collection moves to NP-SP3 with its own P0 preflight and G1 authorization. Disposition NOTE-NP-003: Fix NOTE-NP-003. Disposition NOTE-NP-004: Option (c) — Retire AI_PROJECT_STATE.md. Execution Plan §0 remains the authoritative project state until STATUS.md is introduced."* Reasoning given: long-running work blurs sprint boundaries and introduces concurrency questions (can NP-S3 start while NP-S2 runs? which sprint owns ARO/the dashboard? what if architecture changes mid-collection?) that do not need solving today; software-building and evidence-collection are different activities and deserve separate sprints; Option A matches the organization's current maturity.
+
+**This is NP-S2's first sealed G1 decision under `SPRINT_STATE_MACHINE_v1.1.md`**, and it closes the sprint: **NP-S2's entire scope was WO-P, which is complete** (J-039). No further build tracks open under this sprint; R6 collection becomes **NP-S3**, with its own fresh P0 preflight and G1 authorization — the concurrency questions above are recorded as unresolved and explicitly deferred, not solved by this ruling.
+
+**New standing rule adopted — NP-D-013, no calendar-bound sprints (Owner-proposed).** *Every sprint must have a clear, measurable definition of "done" achievable without waiting for calendar time. Where an activity inherently takes months (e.g. evidence collection), the act of starting and supervising it is one sprint's deliverable; the completed dataset is a different sprint's precondition.* This is what makes Option A coherent rather than merely deferred: NP-S2 closes this week on a real deliverable (WO-P), and NP-S3 opens against a real precondition (a designated, hashed dataset) rather than against a partially-elapsed calendar window. Recorded in the Decisions register and appended to the state machine as §13.
+
+**NOTE-NP-003 — disposition: fix immediately.** Owner's own characterization: mechanical, isolated, low risk, independently testable — no reason to defer. `ARCH-NP-005_fix_rebuild_bulk_h007.md` issued for a fresh Developer session, scoped to `scripts/**` only, folded into the same `sprint/NP-S2` branch before its P8 merge.
+
+**NOTE-NP-004 — disposition: retire (Option c).** `docs/handover/AI_PROJECT_STATE.md` is not restored; `CLAUDE.md`'s session-close regeneration step is struck, replaced by a pointer to Execution Plan §0 as the authoritative project-state record until WO-Q's `STATUS.md` (v0.1) supersedes it. `scripts/gen_state.py` is left in place, marked deprecated in its own header rather than deleted — preserves history, zero behavioural risk. Both edits executed this entry, on `sprint/NP-S2`, per the Owner's condition that the retirement be documented.
+
+**A further discovery made while executing the retirement, disclosed rather than expanded upon:** `CLAUDE.md` in its entirety is Gen-1 vintage — it still names "the QRF project," points to `docs/coordination/PROTOCOL.md` (a Gen-1 path, archived) as the role definition, and uses `ARCH-0XX` numbering, none of which matches the NeelPrajnaPro structure this estate has operated under all session. `CHANGELOG.md` is likewise frozen at 2026-07-24, Gen-1 Sprint-1 content, with no NeelPrajnaPro-era entries at all. **Both were already flagged as known-stale and deliberately deferred to "WO-A's job" at J-012** (2026-07-29) — this is not a new gap, but a reminder that the deferred item is larger than today's single-topic fix. **Only the two spots relevant to NOTE-NP-004 are edited this entry; the broader modernization remains deferred**, consistent with today's own instruction to keep fixes scoped to what was ruled rather than expanding them.
+
+**A second, self-caught defect from this Architect, found while writing this very entry.** `T-053`'s journal-insertion step was not idempotent — it wrote **J-039 twice, verbatim**, back to back, with no guard checking whether the entry already existed before inserting it again. Caught by reading the file directly before writing to it, not by any script. **Deduplicated in this same edit** (one copy of J-039 retained, content unchanged) rather than left standing, since two byte-identical copies of one entry serve no historical purpose distinct from one — P5 protects against altering *what was recorded*, not against removing an accidental verbatim duplicate of it. **Standing rule extended:** any script that inserts a journal entry checks for the entry's own heading before inserting, and refuses (not re-inserts) if already present — the same single-flight discipline already required of ARO's work-order claims, now required of journal writes too.
+
+**Sprint state: NP-S2 (WO-P only) is complete pending ARCH-NP-005's fix and its own merge to main (P8).** R6 collection, the NPSU migration, and the windows.json consistency check are **not** part of this sprint; they open under NP-S3 with a fresh preflight.
+
+## J-039 · 2026-07-31 · WO-P COMPLETE — execution-model parity, Sprint NP-S2
+Owner confirmed CI green on origin/sprint/NP-S2 for the Developer's WO-P commits.
+Independent verification attempted from this session (GitHub Actions API) returned
+403 - unauthenticated rate limit exhausted; no credential entry was made, per the
+standing prohibition on handling tokens. The Owner's confirmation is the record
+here - a legitimate division of labour, not a gap papered over.
+
+What shipped. ExecutionSpec gains event_stop_column (per-trade stop, sourced from
+one of the kernel's three float64 EventFrame columns - level, zone_hi, zone_lo)
+and target_r_multiple (R-multiple target, computed from realized risk). Both
+resolve to a per-trade EFFECTIVE stop_offset/target_offset once, at entry, inside
+EventEngine.simulate, then flow through the UNMODIFIED fills.resolve_exit.
+Verified by this session's own direct read of engine.py: when neither new field
+is set, the effective values equal the legacy scalars with ZERO arithmetic - so
+AC-1 (byte-identical reproduction of every existing sealed verdict) holds BY
+CONSTRUCTION, not merely by test. engine_version s5.1 -> s5.2. Registration
+validation refuses all three AC-5 cases plus two additional mutual-exclusivity
+guards the Developer identified as implied by Section 4.5's own framing. AC-1
+through AC-7 all evidenced with passing tests, cited in the handover's Section 7.
+
+Two real, pre-existing gaps found and left alone - correctly. scripts/rebuild_bulk.py
+has no dispatch entry for the h007 lineage (NOTE-NP-003) - outside WO-P's
+qrf/**+tests/** scope, worked around in-test rather than fixed. NOTE-NP-004
+traces back to this Architect's own T-009 restructuring, several hundred commits
+ago in this same session: docs/handover/AI_PROJECT_STATE.md was archived to
+docs/archive/gen1/ and nothing since recreated a live file at the path
+scripts/gen_state.py still targets - meaning CLAUDE.md's session-close step has
+been silently unrunnable since T-009, and every session between then and this
+one either skipped it or never noticed. The Developer refused to hand-write
+around it, correctly citing that doing so would violate the very rule ("only
+sanctioned way to touch this file") the step depends on. Finding recorded
+against the Architect, spanning the whole session to date.
+
+A second self-caught deviation, from this Architect, on the branch model's first
+real day. T-051's trailing block - following the T-037-T-050 pattern of always
+finishing on main - committed the run-log attach to MAIN, mid-sprint, directly
+contradicting the "main untouched until P8" rule sealed in
+SPRINT_STATE_MACHINE_v1.1.md the same day. The rule was broken on its first
+opportunity to apply it. Corrected from this point forward - this entry and its
+commit land on sprint/NP-S2 only; T-051 itself stands unedited, per P5.
+
+A live near-collision, worth naming rather than fixing with new design: the
+Developer's own second commit used the message prefix "T-052" - independently,
+unaware of this session's own T-numbering sequence. No actual collision occurred
+(different branches, no shared registry), but it is a small, concrete instance
+of the numbering-discipline gap WO-Q's centralized allocation exists to close.
+No action taken; noted for whenever that ladder is built.
+
+Sprint state: WO-P (the gating deliverable) is COMPLETE. The G1 scope decision -
+narrow to WO-P only, or seal all four decisions for the full three-track scope -
+remains OPEN and is unaffected by WO-P's completion. NOTE-NP-003 and NOTE-NP-004
+await disposition (recommended, not yet actioned): a small follow-up fix for the
+former; for the latter, either restore a live handover file seeded from the
+archived Gen-1 prose, or repoint gen_state.py and CLAUDE.md - Owner's call, since
+it touches a file CLAUDE.md calls normative.
+
 ## J-034 · 2026-07-30 · **OWNER RATIFICATION — NP-ADR-008 (H-07 §5 v1.1) · NP-S1 REGISTRATION UNBLOCKED**
 **Owner typed (verbatim):** *"NP-ADR H-07 §5 v1.1 is RATIFIED as written, including E2 restated as POOL→SWEEP arrangement, the cost model `xauusd_retail_h07` set at $0.41/oz round-trip (measured spread 0.24 + 2×(0.05 + 0.035)), the neelprajna family trial count corrected to 19 (per-claim significance threshold p < 0.00263), the v1.1-only detector target, Option C with the agreed lineage and scope limitation, and the corrected characterization of the bespoke result. §5 v1.0 remains frozen and unedited. Subject to incorporation of the approved M1–M7 corrections into the ADR, NP-S1 registration is unblocked against v1.1."*
 

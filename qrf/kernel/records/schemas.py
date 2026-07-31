@@ -19,6 +19,7 @@ bulk manifests) arrive in later sprints.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 
 from qrf.kernel.errors import SchemaViolation
@@ -396,13 +397,27 @@ _VERDICT_VALUES = frozenset({"PASS", "FAIL", "INSUFFICIENT"})
 
 _EXIT_RULES = frozenset({"time_stop", "calendar_day"})
 
+# ARCH-NP-004 §4.1: EventFrame columns (kernel §4.3) that may carry a per-trade
+# stop PRICE. Duplicated in qrf/trading/simulator/engine.py's ExecutionSpec (the
+# kernel/trading boundary already duplicates small closed sets this way, e.g.
+# _EXIT_RULES above) — kernel may not import qrf.trading, so this is the kernel's
+# own copy of the same closed set.
+_EVENT_STOP_COLUMNS = frozenset({"level", "zone_hi", "zone_lo"})
+
 
 def _validate_execution(payload: dict, where: str) -> None:
     """A hypothesis's ``execution`` sub-object (mirrors ExecutionSpec.as_dict)."""
     _check_keys(
         payload,
         {"hold_bars", "size"},
-        {"strength_min", "stop_offset", "target_offset", "exit_rule"},
+        {
+            "strength_min",
+            "stop_offset",
+            "target_offset",
+            "exit_rule",
+            "event_stop_column",
+            "target_r_multiple",
+        },
         where,
     )
     _require_int(payload, "hold_bars", where)
@@ -415,12 +430,55 @@ def _validate_execution(payload: dict, where: str) -> None:
         if name in payload:
             val = payload[name]
             _require_number_or_none(val, f"{where}.{name}")
-            _require(val is None or val > 0, f"{where}.{name} must be > 0 or null")
+            _require(
+                val is None or (math.isfinite(val) and val > 0),
+                f"{where}.{name} must be a positive finite number or null",
+            )
     if "exit_rule" in payload:
         _require_str(payload, "exit_rule", where)
         _require(
             payload["exit_rule"] in _EXIT_RULES,
             f"{where}.exit_rule must be one of {sorted(_EXIT_RULES)} (ARCH-009 §4)",
+        )
+
+    has_stop_offset = payload.get("stop_offset") is not None
+    has_event_stop = False
+    if "event_stop_column" in payload:
+        val = payload["event_stop_column"]
+        _require(
+            isinstance(val, str) and val != "" or val is None,
+            f"{where}.event_stop_column must be a non-empty string or null",
+        )
+        if val is not None:
+            has_event_stop = True
+            _require(
+                val in _EVENT_STOP_COLUMNS,
+                f"{where}.event_stop_column {val!r} is not an EventFrame column that "
+                f"can carry a stop (must be one of {sorted(_EVENT_STOP_COLUMNS)}) — "
+                "the EventFrame cannot supply it; registration refused",
+            )
+            _require(
+                not has_stop_offset,
+                f"{where}.stop_offset and {where}.event_stop_column are mutually "
+                "exclusive — declare exactly one stop mechanism; registration refused",
+            )
+    if "target_r_multiple" in payload and payload["target_r_multiple"] is not None:
+        val = payload["target_r_multiple"]
+        _require_number(payload, "target_r_multiple", where)
+        _require(
+            math.isfinite(val) and val > 0,
+            f"{where}.target_r_multiple must be a positive finite number or null",
+        )
+        _require(
+            has_stop_offset or has_event_stop,
+            f"{where}.target_r_multiple requires a stop ({where}.stop_offset or "
+            f"{where}.event_stop_column) — an R-multiple target without a stop is "
+            "meaningless; registration refused",
+        )
+        _require(
+            payload.get("target_offset") is None,
+            f"{where}.target_offset and {where}.target_r_multiple are mutually "
+            "exclusive — declare exactly one target mechanism; registration refused",
         )
 
 

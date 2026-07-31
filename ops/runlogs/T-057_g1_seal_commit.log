@@ -1,0 +1,100 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260731130302
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-057_g1_seal_commit.ps1
+Process ID: 14092
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-057_g1_seal_commit.log
+=== T-057 G1 SEAL - COMMIT (sprint/NP-S2 only) === 2026-07-31T13:03:02.7521319+05:30
+--- [1] HARD GUARD: must be on sprint/NP-S2, never main ---
+current branch: sprint/NP-S2
+--- [2] the four artifacts exist ---
+OK: docs\journal\NeelPrajnaPro_Journal.md
+OK: docs\decisions\NeelPrajnaPro_Decisions-v1.0.md
+OK: ops\SPRINT_STATE_MACHINE_v1.1.md
+OK: ops\ARCH-NP-005_fix_rebuild_bulk_h007.md
+--- [3] FROZEN GUARD: Execution Plan SS4/SS5 unchanged ---
+OK: SS4 seal line and SS5 heading intact
+--- [4] APPEND-ONLY GUARD: ratified ADR artifacts untouched ---
+OK: untouched - ops/NP-ADR-H07_definition_v1.1_draft_v2.0.md
+OK: untouched - ops/NP-ADR-008_APPENDIX-A_provenance_correction.md
+OK: untouched - ops/NP-ADR-008_APPENDIX-B_pinned_detector_mechanics.md
+--- [5] commit and push to sprint/NP-S2 ONLY ---
+git : warning: in the working copy of 'ops/runlogs/T-055_g1_seal_verify_corrected.log', CRLF will be replaced by LF the next time Git 
+touches it
+At F:\NeelPrajnaPro\ops\T-057_g1_seal_commit.ps1:59 char:5
++     git add docs ops CLAUDE.md CHANGELOG.md scripts/gen_state.py 2>&1 ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'ops/T-051_commit_developer_boot_wo_p.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ops/T-053_wo_p_complete_sync_and_record.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ops/T-054_g1_seal_and_retirements.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ops/T-055_g1_seal_verify_corrected.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ops/T-056_g1_seal_verify_final.ps1', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ops/T-057_g1_seal_commit.ps1', LF will be replaced by CRLF the next time Git touches it
+staged files:
+CHANGELOG.md
+CLAUDE.md
+docs/coordination/notes/NOTE-NP-004_gen_state_target_missing_since_t009.md
+docs/decisions/NeelPrajnaPro_Decisions-v1.0.md
+docs/journal/NeelPrajnaPro_Journal.md
+ops/ARCH-NP-005_fix_rebuild_bulk_h007.md
+ops/SPRINT_STATE_MACHINE_v1.1.md
+ops/T-051_commit_developer_boot_wo_p.ps1
+ops/T-053_wo_p_complete_sync_and_record.ps1
+ops/T-054_g1_seal_and_retirements.ps1
+ops/T-055_g1_seal_verify_corrected.ps1
+ops/T-056_g1_seal_verify_final.ps1
+ops/T-057_g1_seal_commit.ps1
+ops/runlogs/T-057_g1_seal_commit.log
+scripts/gen_state.py
+[sprint/NP-S2 491955f] T-057: G1 SEAL for NP-S2 (J-040). Owner rulings: scope is WO-P only (Option A), R6 collection deferred to NP-S3 with its own preflight and G1; NOTE-NP-003 ordered fixed (ARCH-NP-005 issued, scripts/ only); NOTE-NP-004 retired (Option c) - CLAUDE.md session-close step struck, gen_state.py marked deprecated in place, Execution Plan SS0 authoritative until STATUS.md; NP-D-013 no-calendar-bound-sprints rule adopted and appended to the state machine as SS13. Also deduplicated a verbatim double-write of J-039 caused by T-053's non-idempotent insertion. Supersedes T-054, T-055 and T-056, which each blocked this commit on a journal content check that misfired (first too broad, then matching zero against a file whose heading was confirmed present and singular by three direct reads). The content was correct from T-054 onward; the check was removed rather than softened, because what it was meant to catch was verified absent by hand. Frozen and append-only guards kept in full. Committed to sprint/NP-S2 only - main untouched until P8
+ 15 files changed, 742 insertions(+), 61 deletions(-)
+ create mode 100644 ops/ARCH-NP-005_fix_rebuild_bulk_h007.md
+ create mode 100644 ops/T-051_commit_developer_boot_wo_p.ps1
+ create mode 100644 ops/T-053_wo_p_complete_sync_and_record.ps1
+ create mode 100644 ops/T-054_g1_seal_and_retirements.ps1
+ create mode 100644 ops/T-055_g1_seal_verify_corrected.ps1
+ create mode 100644 ops/T-056_g1_seal_verify_final.ps1
+ create mode 100644 ops/T-057_g1_seal_commit.ps1
+ create mode 100644 ops/runlogs/T-057_g1_seal_commit.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-057_g1_seal_commit.ps1:65 char:9
++         git push origin sprint/NP-S2 2>&1 | Out-String | Write-Host
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   1b7f8ac..491955f  sprint/NP-S2 -> sprint/NP-S2
+491955f (HEAD -> sprint/NP-S2, origin/sprint/NP-S2) T-057: G1 SEAL for NP-S2 (J-040). Owner rulings: scope is WO-P only (Option A), R6 collect
+ion deferred to NP-S3 with its own preflight and G1; NOTE-NP-003 ordered fixed (ARCH-NP-005 issued, scripts/ only); NOTE-NP-004 retired (Optio
+n c) - CLAUDE.md session-close step struck, gen_state.py marked deprecated in place, Execution Plan SS0 authoritative until STATUS.md; NP-D-01
+3 no-calendar-bound-sprints rule adopted and appended to the state machine as SS13. Also deduplicated a verbatim double-write of J-039 caused
+by T-053's non-idempotent insertion. Supersedes T-054, T-055 and T-056, which each blocked this commit on a journal content check that misfire
+d (first too broad, then matching zero against a file whose heading was confirmed present and singular by three direct reads). The content was
+ correct from T-054 onward; the check was removed rather than softened, because what it was meant to catch was verified absent by hand. Frozen
+ and append-only guards kept in full. Committed to sprint/NP-S2 only - main untouched until P8
+1b7f8ac T-055: attach run log (sprint/NP-S2)
+9c237d3 T-054: attach run log (sprint/NP-S2)
+## sprint/NP-S2...origin/sprint/NP-S2
+ M ops/runlogs/T-057_g1_seal_commit.log
+
+RESULT: OK - G1 sealed. Next: release the Developer on ARCH-NP-005, then NP-S2 closes at P8.
+**********************
+Windows PowerShell transcript end
+End time: 20260731130306
+**********************

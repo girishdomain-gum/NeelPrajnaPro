@@ -59,6 +59,18 @@ def _events(pairs):
     )
 
 
+def _events_with_level(rows):
+    """Like ``_events`` but each row also carries a ``level`` (event-sourced stop)."""
+    return pd.DataFrame(
+        {
+            "ts": [r[0] for r in rows],
+            "direction": [r[1] for r in rows],
+            "strength": [1.0 for _ in rows],
+            "level": [r[2] for r in rows],
+        }
+    )
+
+
 # --- fills primitives --------------------------------------------------------
 def test_entry_is_next_bar_strictly_after_signal():
     ts = [0, 1, 2, 3]
@@ -254,6 +266,65 @@ def test_pessimistic_tie_stop_before_target():
     assert _one_trade(bars, 1, exe).trades[0].exit_reason == "stop"
 
 
+# --- ARCH-NP-004 §4.1/§4.2 — per-trade event-sourced stop + R-multiple target ------
+# AC-2: a hand-computed fixture with per-trade VARYING stops and a 1.5R target
+# round-trips exactly. Two events share one bars frame, each with its own
+# event-sourced stop (the "level" column), so the same hypothesis prices two
+# different risk distances — impossible under the legacy scalar stop_offset.
+#
+# Hand computation:
+#   A  long  @ ts0 -> entry ts1 open 100.0, event stop (level) = 95.0
+#             R = |100.0 - 95.0| = 5.0; target = 100.0 + 1.5*5.0 = 107.5
+#             bar ts3 high touches 107.5 first (no earlier stop touch) -> target, 107.5
+#   B  short @ ts10-> entry ts11 open 200.0, event stop (level) = 206.0
+#             R = |200.0 - 206.0| = 6.0; target = 200.0 - 1.5*6.0 = 191.0
+#             bar ts13 low touches 191.0 first (no earlier stop touch) -> target, 191.0
+def test_ac2_hand_computed_per_trade_stop_and_r_multiple_target():
+    n = 17
+    opens = [100.0] * n
+    highs = list(opens)
+    lows = list(opens)
+    for i in range(10, n):
+        opens[i] = 200.0
+        highs[i] = 200.0
+        lows[i] = 200.0
+    highs[3] = 107.5   # event A's target touched here
+    lows[13] = 191.0   # event B's target touched here
+    bars = _bars(opens, highs, lows)
+
+    events = _events_with_level([(0, 1, 95.0), (10, -1, 206.0)])
+    exe = ExecutionSpec(hold_bars=5, event_stop_column="level", target_r_multiple=1.5)
+    trades = EventEngine().simulate(bars, events, COST, seed=1, execution=exe).trades
+    assert len(trades) == 2
+    by_signal = {t.signal_ts: t for t in trades}
+
+    a = by_signal[0]
+    assert a.direction == 1 and a.entry_price == 100.0
+    assert a.exit_reason == "target" and a.exit_price == 107.5
+
+    b = by_signal[10]
+    assert b.direction == -1 and b.entry_price == 200.0
+    assert b.exit_reason == "target" and b.exit_price == 191.0
+
+
+# AC-3: the both-levels-in-one-bar fixture, for the NEW per-trade/R-multiple path,
+# still fills the STOP (the pessimistic tie, §4.3) — not just the legacy constant-
+# offset path already covered by test_pessimistic_tie_stop_before_target above.
+def test_ac3_pessimistic_tie_stop_before_target_per_trade_path():
+    # Long entry 100.0, event stop (level) = 98.0 -> R = 2.0, target = 100 + 1.5*2 = 103.0.
+    # One bar spans BOTH: low 97 (below the 98 stop) and high 103 (at the target).
+    bars = _bars(
+        opens=[100.0, 100.0, 100.0, 100.0],
+        highs=[100.0, 100.0, 103.0, 100.0],
+        lows=[100.0, 100.0, 97.0, 100.0],
+    )
+    events = _events_with_level([(0, 1, 98.0)])
+    exe = ExecutionSpec(hold_bars=2, event_stop_column="level", target_r_multiple=1.5)
+    t = EventEngine().simulate(bars, events, COST, seed=1, execution=exe).trades[0]
+    assert t.exit_reason == "stop"
+    assert t.exit_price == 98.0  # non-gapping touch, exact stop
+
+
 # --- strength filter ---------------------------------------------------------
 def test_strength_min_filters_weak_events():
     bars = _bars([100.0, 100.0, 100.0, 105.0])
@@ -281,6 +352,34 @@ def test_no_look_ahead_incremental_feed():
         prefix = engine.simulate(bars.iloc[:k], ev, COST, seed=1, execution=exe)
         for t in prefix.trades:
             # Every trade closed in the prefix is byte-for-byte the full-run trade.
+            assert t == full_by_sig[t.signal_ts], f"trade at signal {t.signal_ts} changed"
+
+
+# AC-4: the anti-hindsight property, WITH the per-trade paths exercised (an
+# event-sourced stop + R-multiple target, not just the legacy scalar offsets).
+# The event stop is fixed from data at-or-before its own signal_ts (the signal
+# bar's own open — knowable the instant the event fires), so it never depends on
+# what a data prefix does or doesn't include beyond that point.
+def test_ac4_no_look_ahead_incremental_feed_per_trade_paths():
+    rng = np.random.default_rng(11)
+    n = 200
+    opens = 100.0 + np.cumsum(rng.normal(0, 1, n))
+    bars = _bars(opens, highs=opens + 1.5, lows=opens - 1.5)
+    rows = []
+    for i in range(0, n, 7):
+        direction = 1 if (i // 7) % 2 == 0 else -1
+        level = opens[i] - 2.0 * direction  # adverse side, known at signal time
+        rows.append((i, direction, level))
+    ev = _events_with_level(rows)
+    engine = EventEngine()
+    exe = ExecutionSpec(hold_bars=3, event_stop_column="level", target_r_multiple=1.5)
+    full = engine.simulate(bars, ev, COST, seed=1, execution=exe)
+    full_by_sig = {t.signal_ts: t for t in full.trades}
+    assert full_by_sig  # the scenario actually produces trades
+
+    for k in range(10, n + 1, 13):
+        prefix = engine.simulate(bars.iloc[:k], ev, COST, seed=1, execution=exe)
+        for t in prefix.trades:
             assert t == full_by_sig[t.signal_ts], f"trade at signal {t.signal_ts} changed"
 
 
@@ -326,6 +425,47 @@ def test_bare_object_rejected_as_simulator():
 def test_bad_hold_bars_rejected():
     with pytest.raises(SchemaViolation):
         ExecutionSpec(hold_bars=0)
+
+
+# --- ARCH-NP-004 §4.5 — ExecutionSpec-level mirror of the registry refusals -------
+def test_execspec_target_r_multiple_without_stop_rejected():
+    with pytest.raises(SchemaViolation, match="target_r_multiple requires a stop"):
+        ExecutionSpec(hold_bars=2, target_r_multiple=1.5)
+
+
+def test_execspec_event_stop_column_unknown_rejected():
+    with pytest.raises(SchemaViolation, match="EventFrame cannot supply it"):
+        ExecutionSpec(hold_bars=2, event_stop_column="close")
+
+
+def test_execspec_stop_offset_and_event_stop_column_mutually_exclusive():
+    with pytest.raises(SchemaViolation, match="mutually exclusive"):
+        ExecutionSpec(hold_bars=2, stop_offset=1.0, event_stop_column="level")
+
+
+def test_execspec_target_offset_and_target_r_multiple_mutually_exclusive():
+    with pytest.raises(SchemaViolation, match="mutually exclusive"):
+        ExecutionSpec(hold_bars=2, stop_offset=1.0, target_offset=1.0, target_r_multiple=1.5)
+
+
+def test_execspec_non_finite_stop_offset_rejected():
+    with pytest.raises(SchemaViolation, match="finite"):
+        ExecutionSpec(hold_bars=2, stop_offset=float("inf"))
+
+
+def test_execspec_event_stop_column_and_target_r_multiple_roundtrip_through_dict():
+    exe = ExecutionSpec(hold_bars=2, event_stop_column="level", target_r_multiple=1.5)
+    d = exe.as_dict()
+    assert d["event_stop_column"] == "level" and d["target_r_multiple"] == 1.5
+    assert ExecutionSpec.from_dict(d) == exe
+
+
+def test_execspec_legacy_dict_without_new_keys_still_parses():
+    # A dict shaped exactly like every sealed hypothesis's execution (AC-1): no
+    # event_stop_column / target_r_multiple keys at all.
+    d = {"hold_bars": 4, "size": 1.0, "strength_min": 0.0, "stop_offset": None, "target_offset": None}
+    exe = ExecutionSpec.from_dict(d)
+    assert exe.event_stop_column is None and exe.target_r_multiple is None
 
 
 def test_missing_bar_columns_rejected():

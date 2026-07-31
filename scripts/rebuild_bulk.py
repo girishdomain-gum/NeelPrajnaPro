@@ -14,11 +14,11 @@ any mismatch is a loud, fatal failure, not a warning.
     F:/QRF/.venv/Scripts/python.exe scripts/rebuild_bulk.py            # rebuild + assert
     F:/QRF/.venv/Scripts/python.exe scripts/rebuild_bulk.py --check    # same; explicit
 
-Appends NOTHING (asserted). The bars parquet is rebuilt first from the source CSV
-(reusing scripts/judge_h001.py so there is one bars-rebuild code path); then the
-three lineages h001 / h002 / h003 are regenerated. An unknown lineage (a future
-verdict with no registered event builder) is a LOUD failure, never a silent skip
-— "every" means every.
+Appends NOTHING (asserted). The bars parquets are rebuilt first from their source
+(reusing each ingest's own rebuild path so there is one bars-rebuild code path per
+dataset); then every registered lineage (h001 / h002 / h003 / h004 / h007) is
+regenerated. An unknown lineage (a future verdict with no registered event
+builder) is a LOUD failure, never a silent skip — "every" means every.
 
 Independent-lens note (ARCH-009 architecture note of record): the per-lineage
 event reconstruction below is a dispatch, so a new hypothesis lineage joins by
@@ -39,6 +39,7 @@ from qrf.kernel.errors import BulkIntegrityError
 from qrf.kernel.records.bulk import BulkStore, _sha256_file
 from qrf.kernel.records.record import Record
 from qrf.kernel.records.store import RecordStore
+from qrf.trading.concepts.neelprajna.detector import LiquiditySweepDetector
 from qrf.trading.concepts.seasonality.detector import SeasonalityDetector
 from qrf.trading.concepts.smc.detector import SMCFVGDetector
 from qrf.trading.simulator.engine import EventEngine
@@ -65,19 +66,26 @@ def _load_sibling(name: str):
 _judge_h001 = _load_sibling("judge_h001")
 _wave1 = _load_sibling("judge_family_wave1_s8")
 _lens = _load_sibling("ingest_lens_feeds_s9")
+_h007_ingest = _load_sibling("ingest_h07_m5_vantage")
 rebuild_bars = _judge_h001.rebuild_bulk
 rebuild_lens_bars = _lens.rebuild  # rebuilds xauusd_h1_primary_full (+ secondfeed) parquet
+rebuild_h007_bars = _h007_ingest.rebuild_bulk  # rebuilds xauusd_m5_vantage from raw ticks
 _intra_week_events = _wave1._intra_week_events
 _monday_long_events = _wave1._monday_long_events
 
+DATASET_H007_M5 = _h007_ingest.DATASET  # "xauusd_m5_vantage" (NP-ADR-008 §5 v1.1)
+_H007_SWEEP_EVENT_TYPE = f"{LiquiditySweepDetector.instrument_id}.sweep"
+
 # Which ingested dataset carries each lineage's window bars. Single-window 2024
 # lineages ride xauusd_h1_full; H-004's multi-window union (2024+2025) rides
-# xauusd_h1_primary_full (whose 2024 slice is byte-identical to xauusd_h1_full).
+# xauusd_h1_primary_full (whose 2024 slice is byte-identical to xauusd_h1_full);
+# H-007 (NP-ADR-008 §5 v1.1 liquidity sweep) rides its own M5 vantage bars.
 _LINEAGE_DATASET = {
     "h001_fvg_follow_through": DATASET_FULL,
     "h002_fvg_intraweek_follow_through": DATASET_FULL,
     "h003_dow_monday_drift": DATASET_FULL,
     "h004_dow_monday_drift_v2": DATASET_PRIMARY,
+    "h007_np_liquidity_sweep_v1_1": DATASET_H007_M5,
 }
 
 
@@ -109,6 +117,11 @@ def _events_for_lineage(
         # union (sealed in the hypothesis, applied by the battery), not the events.
         seasonality = SeasonalityDetector().detect(bars_table).to_pandas()
         return _monday_long_events(seasonality)
+    if lineage == "h007_np_liquidity_sweep_v1_1":
+        all_events = LiquiditySweepDetector().detect(bars_table).to_pandas()
+        return all_events[all_events["event_type"] == _H007_SWEEP_EVENT_TYPE].reset_index(
+            drop=True
+        )
     raise SystemExit(
         f"no event builder registered for lineage {lineage!r} — refusing to "
         "leave its verdict_trades un-rebuilt (register a builder in "
@@ -124,9 +137,11 @@ def rebuild_all(*, verbose: bool = True) -> list[str]:
     """
     # 1. Bars parquets first (root of trust for events) — reuse the ingest paths.
     #    xauusd_h1_full (2024) via judge_h001; xauusd_h1_primary_full (2024+2025, for
-    #    H-004's union) via the lens ingest. Both are hash-verified on read below.
+    #    H-004's union) via the lens ingest; xauusd_m5_vantage (H-007) via its own
+    #    tick-source ingest. All three are hash-verified on read below.
     rebuild_bars()
     rebuild_lens_bars()
+    rebuild_h007_bars()
 
     store = RecordStore(JOURNAL)  # verifies the chain on open
     bulk = BulkStore(store, BULK_ROOT)
