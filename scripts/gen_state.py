@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# DEPRECATED 2026-07-31 (Owner ruling, NOTE-NP-004 disposition (c)). This
+# script's target, docs/handover/AI_PROJECT_STATE.md, has not existed since
+# the NeelPrajnaPro restructure (T-009); this script has had no file to
+# regenerate since. Left in place for history, not deleted. Execution Plan
+# SS0 is the authoritative project-state record until WO-Q's STATUS.md (v0.1)
+# supersedes it. Do not run this script expecting it to create the file --
+# it only updates one that already exists (see the module docstring below).
 """gen_state.py — regenerate docs/handover/AI_PROJECT_STATE.md (ADR-007, v1).
 
 ADR-007: the handover/status file is *generated*, not hand-written, so a second

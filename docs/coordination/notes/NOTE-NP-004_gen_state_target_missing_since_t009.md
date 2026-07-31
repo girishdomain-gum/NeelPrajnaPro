@@ -41,3 +41,15 @@ Not created or hand-edited `docs/handover/AI_PROJECT_STATE.md`. Not modified
 (`docs/coordination/sessions/SNP-S2-01_2026-07-31_WO-P.md`) and in the
 handover (`ops/aro/handovers/WO-P/HANDOVER.md`) that this step was attempted
 and blocked, rather than silently omitted.
+
+## Disposition (appended 2026-07-31, Owner ruling, J-040)
+**Option (c) — Retire.** `docs/handover/AI_PROJECT_STATE.md` is not
+restored. `CLAUDE.md`'s session-close step is struck and replaced with a
+pointer to Execution Plan §0 as the authoritative project-state record,
+until WO-Q's `STATUS.md` (v0.1) supersedes it. `scripts/gen_state.py` is left
+in place, marked deprecated in its own header, not deleted — preserves
+history, zero behavioural risk. Owner's stated reasoning: Execution Plan §0
+already fulfills the purpose, and recreating a file only to retire it again
+once `STATUS.md` exists would create duplicate state and unnecessary
+maintenance. Condition satisfied: the retirement is documented here, in
+`CLAUDE.md` itself, in `CHANGELOG.md`, and in journal J-040.
