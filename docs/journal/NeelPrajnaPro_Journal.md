@@ -222,6 +222,62 @@ former; for the latter, either restore a live handover file seeded from the
 archived Gen-1 prose, or repoint gen_state.py and CLAUDE.md - Owner's call, since
 it touches a file CLAUDE.md calls normative.
 
+## J-039 - 2026-07-31 - WO-P COMPLETE - execution-model parity, Sprint NP-S2
+Owner confirmed CI green on origin/sprint/NP-S2 for the Developer's WO-P commits.
+Independent verification attempted from this session (GitHub Actions API) returned
+403 - unauthenticated rate limit exhausted; no credential entry was made, per the
+standing prohibition on handling tokens. The Owner's confirmation is the record
+here - a legitimate division of labour, not a gap papered over.
+
+What shipped. ExecutionSpec gains event_stop_column (per-trade stop, sourced from
+one of the kernel's three float64 EventFrame columns - level, zone_hi, zone_lo)
+and target_r_multiple (R-multiple target, computed from realized risk). Both
+resolve to a per-trade EFFECTIVE stop_offset/target_offset once, at entry, inside
+EventEngine.simulate, then flow through the UNMODIFIED fills.resolve_exit.
+Verified by this session's own direct read of engine.py: when neither new field
+is set, the effective values equal the legacy scalars with ZERO arithmetic - so
+AC-1 (byte-identical reproduction of every existing sealed verdict) holds BY
+CONSTRUCTION, not merely by test. engine_version s5.1 -> s5.2. Registration
+validation refuses all three AC-5 cases plus two additional mutual-exclusivity
+guards the Developer identified as implied by Section 4.5's own framing. AC-1
+through AC-7 all evidenced with passing tests, cited in the handover's Section 7.
+
+Two real, pre-existing gaps found and left alone - correctly. scripts/rebuild_bulk.py
+has no dispatch entry for the h007 lineage (NOTE-NP-003) - outside WO-P's
+qrf/**+tests/** scope, worked around in-test rather than fixed. NOTE-NP-004
+traces back to this Architect's own T-009 restructuring, several hundred commits
+ago in this same session: docs/handover/AI_PROJECT_STATE.md was archived to
+docs/archive/gen1/ and nothing since recreated a live file at the path
+scripts/gen_state.py still targets - meaning CLAUDE.md's session-close step has
+been silently unrunnable since T-009, and every session between then and this
+one either skipped it or never noticed. The Developer refused to hand-write
+around it, correctly citing that doing so would violate the very rule ("only
+sanctioned way to touch this file") the step depends on. Finding recorded
+against the Architect, spanning the whole session to date.
+
+A second self-caught deviation, from this Architect, on the branch model's first
+real day. T-051's trailing block - following the T-037-T-050 pattern of always
+finishing on main - committed the run-log attach to MAIN, mid-sprint, directly
+contradicting the "main untouched until P8" rule sealed in
+SPRINT_STATE_MACHINE_v1.1.md the same day. The rule was broken on its first
+opportunity to apply it. Corrected from this point forward - this entry and its
+commit land on sprint/NP-S2 only; T-051 itself stands unedited, per P5.
+
+A live near-collision, worth naming rather than fixing with new design: the
+Developer's own second commit used the message prefix "T-052" - independently,
+unaware of this session's own T-numbering sequence. No actual collision occurred
+(different branches, no shared registry), but it is a small, concrete instance
+of the numbering-discipline gap WO-Q's centralized allocation exists to close.
+No action taken; noted for whenever that ladder is built.
+
+Sprint state: WO-P (the gating deliverable) is COMPLETE. The G1 scope decision -
+narrow to WO-P only, or seal all four decisions for the full three-track scope -
+remains OPEN and is unaffected by WO-P's completion. NOTE-NP-003 and NOTE-NP-004
+await disposition (recommended, not yet actioned): a small follow-up fix for the
+former; for the latter, either restore a live handover file seeded from the
+archived Gen-1 prose, or repoint gen_state.py and CLAUDE.md - Owner's call, since
+it touches a file CLAUDE.md calls normative.
+
 ## J-034 · 2026-07-30 · **OWNER RATIFICATION — NP-ADR-008 (H-07 §5 v1.1) · NP-S1 REGISTRATION UNBLOCKED**
 **Owner typed (verbatim):** *"NP-ADR H-07 §5 v1.1 is RATIFIED as written, including E2 restated as POOL→SWEEP arrangement, the cost model `xauusd_retail_h07` set at $0.41/oz round-trip (measured spread 0.24 + 2×(0.05 + 0.035)), the neelprajna family trial count corrected to 19 (per-claim significance threshold p < 0.00263), the v1.1-only detector target, Option C with the agreed lineage and scope limitation, and the corrected characterization of the bespoke result. §5 v1.0 remains frozen and unedited. Subject to incorporation of the approved M1–M7 corrections into the ADR, NP-S1 registration is unblocked against v1.1."*
 
