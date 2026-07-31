@@ -1,0 +1,88 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260731072404
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-051_commit_developer_boot_wo_p.ps1
+Process ID: 17228
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-051_commit_developer_boot_wo_p.log
+=== T-051 COMMIT DEVELOPER BOOT (WO-P) === 2026-07-31T07:24:04.9777017+05:30
+--- [1] outstanding before commit ---
+?? ops/DEVELOPER_BOOT_WO-P.md
+?? ops/T-051_commit_developer_boot_wo_p.ps1
+?? ops/runlogs/T-051_commit_developer_boot_wo_p.log
+--- [2] the boot file exists and references the right branch ---
+OK: boot file present
+OK: sprint/NP-S2
+OK: ARCH-NP-004_WO-P_execution_parity.md
+OK: AC-1 outranks the feature
+OK: HANDOVER.md
+--- [3] commit to main first (discoverability) ---
+git : Switched to branch 'main'
+At F:\NeelPrajnaPro\ops\T-051_commit_developer_boot_wo_p.ps1:33 char:1
++ git checkout main 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Switched to branch 'main':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Your branch is up to date with 'origin/main'.
+
+[main 8bf0e28] T-051: commit Developer boot instruction for WO-P, referencing sprint/NP-S2 by name
+ 1 file changed, 26 insertions(+)
+ create mode 100644 ops/DEVELOPER_BOOT_WO-P.md
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-051_commit_developer_boot_wo_p.ps1:38 char:5
++     git push origin main 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   e05535f..8bf0e28  main -> main
+--- [4] merge into sprint/NP-S2 so the Developer's own branch carries it ---
+
+git : Switched to branch 'sprint/NP-S2'
+At F:\NeelPrajnaPro\ops\T-051_commit_developer_boot_wo_p.ps1:43 char:1
++ git checkout sprint/NP-S2 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Switched to branch 'sprint/NP-S2':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Your branch is up to date with 'origin/sprint/NP-S2'.
+Updating e05535f..8bf0e28
+Fast-forward (no commit created; -m option ignored)
+ ops/DEVELOPER_BOOT_WO-P.md | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+ create mode 100644 ops/DEVELOPER_BOOT_WO-P.md
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-051_commit_developer_boot_wo_p.ps1:46 char:1
++ git push origin sprint/NP-S2 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   e05535f..8bf0e28  sprint/NP-S2 -> sprint/NP-S2
+--- [5] confirm the boot file is present ON sprint/NP-S2 ---
+OK: boot file present on sprint/NP-S2 working tree
+--- [6] verify origin/sprint/NP-S2 matches local ---
+8bf0e28 T-051: commit Developer boot instruction for WO-P, referencing sprint/NP-S2 by name
+8bf0e28 T-051: commit Developer boot instruction for WO-P, referencing sprint/NP-S2 by name
+## sprint/NP-S2...origin/sprint/NP-S2
+?? ops/T-051_commit_developer_boot_wo_p.ps1
+?? ops/runlogs/T-051_commit_developer_boot_wo_p.log
+
+RESULT: OK - the boot instruction is on both main and sprint/NP-S2, and origin matches local. The Developer session may now be released.
+**********************
+Windows PowerShell transcript end
+End time: 20260731072411
+**********************
