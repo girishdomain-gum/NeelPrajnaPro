@@ -1,0 +1,97 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260731070410
+Username: GIRISH-KUMAR\giris
+RunAs User: GIRISH-KUMAR\giris
+Configuration Name: 
+Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
+Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-049_commit_state_machine_and_wo_q.ps1
+Process ID: 6644
+PSVersion: 5.1.19041.6456
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
+BuildVersion: 10.0.19041.6456
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is F:\NeelPrajnaPro\ops\runlogs\T-049_commit_state_machine_and_wo_q.log
+=== T-049 COMMIT STATE MACHINE + WO-Q === 2026-07-31T07:04:10.4635783+05:30
+--- [1] outstanding before commit ---
+?? ops/ARCH-NP-004_WO-P_execution_parity.md
+?? ops/SPRINT_STATE_MACHINE_v1.1.md
+?? ops/T-048_open_np_s2_issue_wo_p.ps1
+?? ops/T-049_commit_state_machine_and_wo_q.ps1
+?? ops/WO-Q_ARO_implementation_ladder.md
+?? ops/runlogs/T-049_commit_state_machine_and_wo_q.log
+--- [2] both artifacts exist ---
+OK: state machine present
+OK: WO-Q present
+--- [2b] md and docx twins agree on version ---
+OK: STATE MACHINE v1.1
+OK: WHO RUNS THE MACHINE
+OK: THE RUNBOOK
+OK: MADE EXECUTABLE
+NOTE: docx twin not in the repo - download it from the chat and save to ops\ if you want it version-controlled (not an error)
+--- [3] WO-Q is a ladder, not a design doc ---
+OK: v0.0
+OK: v0.1
+OK: v0.2
+OK: v0.3
+OK: v0.4
+OK: v0.5
+OK: v0.6
+OK: Drill before grant
+OK: specification is wrong
+--- [4] the write-scope refusal is stated ---
+OK: ARO never writes the scientific zone
+--- [5] FROZEN / APPEND-ONLY GUARDS ---
+OK: SS4 seal line and SS5 heading intact
+OK: NP-S1 close undisturbed
+OK: untouched - ops/NP-ADR-H07_definition_v1.1_draft_v2.0.md
+OK: untouched - ops/NP-ADR-008_APPENDIX-A_provenance_correction.md
+OK: untouched - ops/NP-ADR-008_APPENDIX-B_pinned_detector_mechanics.md
+--- [6] stage docs + ops, commit, push ---
+git : warning: in the working copy of 'ops/T-048_open_np_s2_issue_wo_p.ps1', LF will be replaced by CRLF the next time Git touches it
+At F:\NeelPrajnaPro\ops\T-049_commit_state_machine_and_wo_q.ps1:66 char:1
++ git add docs ops 2>&1 | Out-String | Write-Host
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'ops/T-049_commit_state_machine_and_wo_q.ps1', LF will be replaced by CRLF the next time Git touches it
+staged files:
+ops/ARCH-NP-004_WO-P_execution_parity.md
+ops/SPRINT_STATE_MACHINE_v1.1.md
+ops/T-048_open_np_s2_issue_wo_p.ps1
+ops/T-049_commit_state_machine_and_wo_q.ps1
+ops/WO-Q_ARO_implementation_ladder.md
+ops/runlogs/T-049_commit_state_machine_and_wo_q.log
+[main 018190f] T-049: sprint execution state machine v1.0 and WO-Q, the ARO implementation ladder. Seven milestones, each granting ONE permission, each with one exit test and one drill, each reversible: v0.0 preflight checklist (no code, highest value, run before G1) - v0.1 status.json read-only - v0.2 dashboard render - v0.3 waiting-to-inbox movement - v0.4 Owner packet assembly - v0.5 work-order creation - v0.6 lease recovery. Unit is one permission per PASSED DRILL, not per week: a permission is earned by catching planted faults, never by working once. ARO never writes datastore, docs, configs/hypotheses, qrf, ivf or CI at any rung. Accountability split refined but operational execution stays with the Architect - findings attach to whoever built or trusted the machinery, never to a script. Design work stops here; WO-P remains NP-S2's gating work order and nothing on this ladder sits on its critical path
+ 6 files changed, 682 insertions(+)
+ create mode 100644 ops/ARCH-NP-004_WO-P_execution_parity.md
+ create mode 100644 ops/SPRINT_STATE_MACHINE_v1.1.md
+ create mode 100644 ops/T-048_open_np_s2_issue_wo_p.ps1
+ create mode 100644 ops/T-049_commit_state_machine_and_wo_q.ps1
+ create mode 100644 ops/WO-Q_ARO_implementation_ladder.md
+ create mode 100644 ops/runlogs/T-049_commit_state_machine_and_wo_q.log
+git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
+At F:\NeelPrajnaPro\ops\T-049_commit_state_machine_and_wo_q.ps1:72 char:5
++     git push 2>&1 | Out-String | Write-Host
++     ~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   a4e9602..018190f  main -> main
+018190f T-049: sprint execution state machine v1.0 and WO-Q, the ARO implementation ladder. Seven milestones, each granting ONE permission, each with one exit test and one drill, each reversible: v0.0 preflight checklist (no code, highest value, run before G1) - v0.1 status.json read-only - v0.2 dashboard render - v0.3 waiting-to-inbox movement - v0.4 Owner packet assembly - v0.5 work-order creation - v0.6 lease recovery. Unit is one permission per PASSED DRILL, not per week: a permission is earned by catching planted faults, never by working once. ARO never writes datastore, docs, configs/hypotheses, qrf, ivf or CI at any rung. Accountability split refined but operational execution stays with the Architect - findings attach to whoever built or trusted the machinery, never to a script. Design work stops here; WO-P remains NP-S2's gating work order and nothing on this ladder sits on its critical path
+a4e9602 T-047: attach run log
+efbb011 T-047: corrected re-verification of the NP-S1 close. T-046 reported RESULT: FAILED on a false negative - its check searched for an ASCII hyphen where the document carries an em-dash, so it missed an SS12 entry that was present, correct and committed at 39059c7. Journal J-038 records the finding against the Architect (F-18 species, and J-037 retro item (d) recurring inside the commit that recorded it). New standing rule: a verification pattern is copied from the artifact it verifies, never retyped; an ASCII-only script matches on an ASCII-safe substring. T-046's log stands unedited with its FAILED line - corrected by record, not by rewrite (P5). The sprint close itself is unaffected: NP-S1 is closed and accepted
+--- [7] tree state after commit ---
+ M ops/runlogs/T-049_commit_state_machine_and_wo_q.log
+
+RESULT: OK - WO-Q is on the record. Next build step is v0.0, the preflight checklist, which needs no code.
+**********************
+Windows PowerShell transcript end
+End time: 20260731070416
+**********************
