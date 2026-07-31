@@ -199,5 +199,14 @@ Read `qrf/trading/simulator/engine.py`'s `ExecutionSpec` docstring and
   `rebuild_bulk.py` directly (not just my test) — until someone extends
   `_LINEAGE_DATASET`, any full-repo rebuild audit needs the same workaround
   this session used.
+- **CLAUDE.md's session-close `gen_state.py` step could not run** (`NOTE-NP-004`):
+  its target, `docs/handover/AI_PROJECT_STATE.md`, has not existed since a
+  `docs/` restructure at commit `a6823c3` archived it to
+  `docs/archive/gen1/handover/AI_PROJECT_STATE.md`, and `gen_state.py` only
+  updates an existing file in place. Left unfixed (out of write scope; and
+  hand-writing the target myself would violate the "only sanctioned way to
+  touch it" rule the same step depends on) — every session's DERIVED status
+  rows (test count, journal count, branch) have therefore been stale since
+  that restructure, not just this one.
 - I did not run the state machine's own CI check on `sprint/NP-S2` — that
   happens after push, outside this session's visibility.
