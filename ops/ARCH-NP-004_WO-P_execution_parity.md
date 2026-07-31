@@ -68,3 +68,23 @@ Byte-identity in AC-1 unreachable · the EventFrame column spec cannot carry a p
 
 ---
 *Anchor: **the engine judged a strategy nobody registered, because it could not express the one that was. Parity is what makes the next comparison mean what it says.***
+
+---
+## 9. ADDENDUM — position in the sprint state machine (appended 2026-07-31, P5; §§1–8 unedited)
+
+This instruction was written before `ops\SPRINT_STATE_MACHINE_v1.1.md` existed and referenced none of it. Reconciled here rather than reissued.
+
+**Phase:** WO-P is a **P2 BUILD lane**, concurrency class `PARALLEL`, role **DEV**, write scope `qrf/**` and `tests/**`. It runs alongside the other NP-S2 tracks and shares no files with them.
+
+**Branch:** work goes to the shared sprint branch **`sprint/NP-S2`**, not to `main` and not to a private branch. Commit early, push often — **uncommitted means nonexistent**, and a session that has not pushed is invisible to every other session. `main` stays untouched until the sprint's single merge at P8.
+
+**Handover:** on completion, publish `ops/aro/handovers/WO-P/HANDOVER.md` in the standard ten-section shape. Section 9, *how to verify me*, must give exact commands a stranger can run. **A completion without a handover is not a completion.**
+
+**Mechanical exit check** (the form §9 of the state machine requires):
+> the handover exists, CI is green on `sprint/NP-S2`, and a test named for AC-1 passes proving byte-identical reproduction of every existing sealed verdict under the bumped engine version.
+
+**No ledger writes.** P2 forbids them by rule. WO-P touches no record in `datastore/**` at any point — consistent with §6's non-goals.
+
+**Preflight status:** `ops/preflight/PFR_NP-S2.md` returns **NOT GREEN** on three blockers, **none of which touches WO-P** — it needs no scope, no data and no lab unpause, and its specification is complete. **WO-P may proceed now; the collection track waits for G1.**
+
+**Finding recorded against the Architect:** NP-S2 was opened by issuing this instruction directly, with no P0 preflight and no G1 — violating the state machine's first rule on its first use. Corrected by running the preflight retrospectively; recorded rather than quietly repaired.
