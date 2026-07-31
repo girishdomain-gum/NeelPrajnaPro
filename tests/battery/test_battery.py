@@ -235,7 +235,9 @@ def test_verdict_payload_completeness_and_thresholds_byte_equal(tmp_path):
     assert p["thresholds"] == hyp.payload["thresholds"]
     assert verdict.parents == (hyp_ref, window)
     assert len(p["folds"]) == 4
-    assert p["engine_version"] == "engine.s5.1"
+    # Provenance stamp tracks EventEngine.engine_version, not a frozen literal —
+    # ARCH-NP-004 bumped s5.1 -> s5.2 (per-trade stop + R-multiple target).
+    assert p["engine_version"] == EventEngine.engine_version
     # Correction fields reconstruct the deflation.
     c = p["corrections"]
     assert c["base_alpha"] == 0.05 and c["method"] == "bonferroni"

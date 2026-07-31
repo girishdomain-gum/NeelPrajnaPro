@@ -195,6 +195,79 @@ def test_missing_or_wrong_window_refused(store):
         reg.register(_config("01KYNONEXISTENT00000000000"), cost_model_refs=COST_MODELS)
 
 
+# --- ARCH-NP-004 §4.5 — per-trade stop / R-multiple target registration refusals ---
+def test_target_r_multiple_without_stop_refused(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    cfg = _config(w, execution={
+        "hold_bars": 4, "size": 1.0, "target_r_multiple": 1.5,
+    })
+    with pytest.raises(SchemaViolation, match="target_r_multiple requires a stop"):
+        reg.register(cfg, cost_model_refs=COST_MODELS)
+
+
+def test_event_stop_column_unsupported_by_eventframe_refused(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    cfg = _config(w, execution={
+        "hold_bars": 4, "size": 1.0, "event_stop_column": "strength",
+    })
+    with pytest.raises(SchemaViolation, match="EventFrame cannot supply it"):
+        reg.register(cfg, cost_model_refs=COST_MODELS)
+
+
+def test_non_positive_stop_offset_refused(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    cfg = _config(w, execution={
+        "hold_bars": 4, "size": 1.0, "stop_offset": 0.0,
+    })
+    with pytest.raises(SchemaViolation, match="stop_offset"):
+        reg.register(cfg, cost_model_refs=COST_MODELS)
+
+
+def test_non_finite_stop_offset_refused(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    cfg = _config(w, execution={
+        "hold_bars": 4, "size": 1.0, "stop_offset": float("inf"),
+    })
+    with pytest.raises(SchemaViolation, match="stop_offset"):
+        reg.register(cfg, cost_model_refs=COST_MODELS)
+
+
+def test_event_stop_column_and_stop_offset_mutually_exclusive(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    cfg = _config(w, execution={
+        "hold_bars": 4, "size": 1.0, "stop_offset": 2.0, "event_stop_column": "level",
+    })
+    with pytest.raises(SchemaViolation, match="mutually exclusive"):
+        reg.register(cfg, cost_model_refs=COST_MODELS)
+
+
+def test_target_offset_and_target_r_multiple_mutually_exclusive(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    cfg = _config(w, execution={
+        "hold_bars": 4, "size": 1.0, "stop_offset": 2.0,
+        "target_offset": 3.0, "target_r_multiple": 1.5,
+    })
+    with pytest.raises(SchemaViolation, match="mutually exclusive"):
+        reg.register(cfg, cost_model_refs=COST_MODELS)
+
+
+def test_valid_per_trade_stop_and_r_multiple_target_registers(store):
+    reg = HypothesisRegistry(store)
+    w = _window(store)
+    cfg = _config(w, execution={
+        "hold_bars": 4, "size": 1.0, "event_stop_column": "level", "target_r_multiple": 1.5,
+    })
+    rec = reg.register(cfg, cost_model_refs=COST_MODELS)
+    assert rec.payload["execution"]["event_stop_column"] == "level"
+    assert rec.payload["execution"]["target_r_multiple"] == 1.5
+
+
 def test_verify_frozen_detects_tamper(store):
     reg = HypothesisRegistry(store)
     w = _window(store)

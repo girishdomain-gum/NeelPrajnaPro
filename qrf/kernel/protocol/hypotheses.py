@@ -55,8 +55,13 @@ from qrf.kernel.records.store import RecordStore
 _RESTATEMENT_GATED_PREFIX = "smc.order_block"
 
 # The execution keys the record carries, in ExecutionSpec.as_dict() shape.
+# event_stop_column / target_r_multiple: ARCH-NP-004 §4 per-trade stop + R-multiple
+# target; shape/consistency enforced by qrf.kernel.records.schemas._validate_execution
+# at append time (§4.5 — R-multiple without a stop, an unsupported event column,
+# a non-positive/non-finite distance are all refused there).
 _EXECUTION_KEYS = (
-    "hold_bars", "strength_min", "stop_offset", "target_offset", "size", "exit_rule"
+    "hold_bars", "strength_min", "stop_offset", "target_offset", "size", "exit_rule",
+    "event_stop_column", "target_r_multiple",
 )
 
 # The v2 pre-commitments (DEVQ-014/015): the plain-words claim, the conclusion to
