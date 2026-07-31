@@ -70,3 +70,23 @@ name, not a property of `rebuild_bulk.py`.
 
 ---
 *Anchor: **a command a document tells you to run is part of that document's claim; if the command binds elsewhere, so does the claim.***
+
+## Addendum — 2026-07-31: the binding is repository-wide (ARCH-NP-009 T5)
+
+*Appended under P5. Corrects nothing above; the generalization stated in the section
+above is confirmed and quantified here.*
+
+The F-27 sweep run under ARCH-NP-009 T5 found the `F:/QRF` archived-origin pattern in
+**13 further files** across `ivf/` and `scripts/`, beyond `rebuild_bulk.py`. Full list
+in `ops/aro/handovers/ARCH-NP-009/HANDOVER.md`. They were deliberately not fixed —
+outside that work order's named scope, correctly reported rather than silently
+widened.
+
+**Escalation.** Occurrences under `ivf/` are of a different order from the rest. The
+IVF is the apparatus that judges evidence; Roles §2.3 requires it be drilled with
+planted frauds before judging anything real. A documented invocation binding the IVF
+to the retired Kernel is a claim about the judge, not about a utility. This is carried
+into the NP-S3 preflight as a blocker, not left as cleanup.
+
+Not established: whether any of the 13 were ever run that way, or whether all 13 are
+documentation rather than executable defaults. Both require reading the files.
