@@ -313,3 +313,218 @@ it touches a file CLAUDE.md calls normative.
 **Standing rule (extends J-037 retro (d)):** **a verification pattern is copied from the artifact it verifies, never retyped** — and where a script must be ASCII-only, it matches on an ASCII-safe substring rather than on punctuation it cannot reproduce.
 
 **Disposition:** no rewrite. T-046's log stands as written, with its FAILED line intact — P5. The correction is this record and T-047's corrected re-verification. **The sprint close itself is unaffected: NP-S1 is closed and accepted, and the content T-046 committed is correct.**
+
+## J-041 — 2026-07-31 — ARCH-NP-005 accepted; the AC-1 vacuity concern investigated and closed; P8 executed; six Architect findings recorded
+
+**Disposition: ARCH-NP-005 ACCEPTED. NP-S2 CLOSED at `8ad7bab`. Written after P8, not before — see §7.**
+
+### 1. The concern that prompted this entry
+
+The Developer's ARCH-NP-005 completion report stated it had "fixed one knock-on
+breakage the fix caused in the WO-P AC-1 test (its skip condition relied on h007 not
+being registered yet)." If AC-1 had passed only because h007 was excluded from it,
+J-039's "WO-P complete" rested on an acceptance criterion green by omission, and P8
+would have merged a sprint whose sole scope item was unproven.
+
+Raised before verification, not after. Recorded whether or not borne out. It was not.
+
+### 2. What was found
+
+- The pre-fix exclusion in `test_ac1_h001_through_h004_reproduce_byte_identically` was
+  `_LINEAGE_DATASET.get(lineage) is None -> continue` — an implicit proxy for "is h007"
+  that held only while h007 was unregistered. Registering h007 would have pulled it
+  into the loop and broken `assert checked == 4`.
+- The Developer replaced the proxy with an explicit `if lineage == H007_LINEAGE:
+  continue`. The invariant is unchanged and still binds.
+- h007's AC-1 was never carried by that exclusion. It has its own dedicated test,
+  `test_ac1_h007_reproduces_byte_identically`, predating this work order, which
+  byte-compares against the recorded manifest sha256.
+- That test's real guard is `TICK_DIR.exists()`. The source is present: 60 tick files,
+  310 MB, matching the count in the ingest docstring.
+
+**The concern is closed on evidence, not assumed away.** AC-1 was not vacuous: the
+exclusion of h007 from the h001-h004 loop was never what carried h007's acceptance
+criterion.
+
+Scope: this answers only the question raised in §1. It is not a re-verification of
+J-039, whose other conclusions were accepted on their own evidence and are neither
+reopened nor re-endorsed here.
+
+This investigation strengthens, rather than corrects, the evidentiary basis for AC-1.
+J-039 recorded the construction argument: AC-1 "holds BY CONSTRUCTION, not merely by
+test." This session additionally obtained execution evidence — the h007 AC-1 test ran
+against the real tick source and byte-compared to the recorded manifest sha256, with
+zero skips. Recorded as an addition to J-039's evidentiary basis, not a correction.
+
+### 3. Independent verification, and its limits
+
+Confirmed by direct read of source and git plumbing: `main` untouched at `908a3f0`
+from sprint open to P8; two commits landed (`a8ef7e3`, `f1bcfeb`); `_LINEAGE_DATASET`
+and `_events_for_lineage` both carry h007 with the sweep event type derived from
+`LiquiditySweepDetector.instrument_id` rather than retyped; the named regression test
+asserts dispatch and byte identity, reusing the imported `_sha256_file`; the handover
+is ten sections and self-disclosed its scope excursion unprompted.
+
+Confirmed by execution:
+- Targeted run — DIRECT evidence. `pytest tests/scripts/test_ac1_engine_parity_np004.py
+  -v -rs` -> `3 passed in 10.45s`. Three tests in the file, one of them the h007 AC-1
+  test. None skipped. The §2 conclusion rests on this, not on inference.
+- Full suite at that time: 888 collected, 887 passed, 1 failed (stale CSV path).
+- Full suite after ARCH-NP-009: **888 passed, 0 failed, 0 skipped**, quoted from the
+  runner. First fully green run in this repository's history.
+
+Limits: the Architect session had file-read access only and executed nothing. Every
+claim is a source read or a reading of Owner-side output. That connector failed five
+times during this session; the Developer's own tooling failed zero times.
+
+### 4. Findings against the Architect (session: Claude Opus 5, claude.ai)
+
+**F-25 — An instruction named a commit that did not exist when its recipient was
+launched.** The ARCH-NP-005 boot prompt named `2c82ff0` and required
+`git merge-base --is-ancestor 2c82ff0`. The Developer worktree was created at 13:05:03
+IST and reset to `origin/sprint/NP-S2` at 13:05:30, when that ref was `2a59e9d`.
+`2c82ff0` was not pushed until 13:16:24. The check could not have passed at launch and
+no failure was reported. The Developer rebased onto `2c82ff0` at 13:43:26 before
+pushing, so delivered commits do sit on it. Substantively harmless — `2a59e9d` already
+contained the work order, which is what J-037(a) protects. Second occurrence of the
+J-037(a) family; this time the Architect's own.
+*Rule earned: the commit must exist and contain the instruction BEFORE the session is
+launched, not before it pushes.*
+
+**F-26 — A work order's scope line contradicted its own acceptance criteria.**
+ARCH-NP-005 said "Scope: `scripts/**` only" while requiring a regression test and a
+handover, neither of which can live there. The Developer resolved it in its handover
+with reasoning and an invitation to be corrected. Accepted; defect recorded as the
+Architect's. NP-D-012 in miniature.
+*Rule earned: scope by artifact class — production code, tests, handover, named
+separately.*
+
+**F-27 — Three verification commands could not answer the questions they were written
+for.** (1) The Q-NP-001 probe used `python -c`, which places cwd on `sys.path[0]`,
+where a script invocation places `scripts/`. (2) The Gen-1 sweep combined PowerShell
+`-Include` with `-Exclude`, returning an empty set while CLAUDE.md still contained the
+reference. (3) The Constitution §6 lookup matched `^#{1,3}\s*6` against headings of the
+form `## Section 6`. **Two of the three returned false clean results** — the failure
+direction that does not announce itself — in a session that had read and quoted the
+standing warning at ARCHITECT_BOOT §6.
+*Rule earned: a negative result is not evidence until the check has been shown able to
+return a positive one. Validate every sweep against a known-positive case first.*
+
+**F-28 — A work order specified a task with no output artifact.** ARCH-NP-007 §4
+listed four artifact classes and four tasks and never mapped T3 to one. The Developer
+filed DEVQ-NP-005 rather than guessing. Third scope/acceptance defect in two days. The
+pattern: task list and scope table written as separate passes, never reconciled.
+*Rule earned: every task names its output file in the scope table, and the two lists
+are checked against each other before issue.*
+
+**F-29 — A ruling tested self-declaration where the facts were asymmetric.** Rule A
+for ADR numbering read "a document that declares itself SUPERSEDED..." The asymmetric
+supersession cases — which the same registry had just flagged as a priority finding —
+are precisely where self-declaration fails. The Developer applied the rule correctly
+and NP-ADR-011 was assigned to a superseded predecessor draft of an already-ratified
+ADR. Withdrawn on correction.
+*Rule earned: supersession is a fact about the lineage, not a property the document
+admits to. Corrected Rule A recorded in `ops/ADR_REGISTRY.md`.*
+
+**F-30 — Two work orders were executed with no committed instruction.** ARCH-NP-006
+was issued in chat and superseded by ARCH-NP-009 before any file existed. ARCH-NP-008
+was executed from pasted text; no instruction file was committed. Under this estate's
+own rule — the repository is the only source of truth — those authorizations do not
+exist where the work does. Same class as F-25. No renumbering: the Developer's commits
+already cite ARCH-NP-008, and renumbering would break that link. The gap is recorded
+here instead.
+*Rule earned: an instruction that authorizes a commit is committed before that commit,
+not narrated.*
+
+**Tally: six Architect findings, zero Developer findings, across four work orders
+(ARCH-NP-005, 007, 008, 009).** Every defect this sprint originated in an instruction,
+not in an execution. Two DEVQ-worthy ambiguities were caught by the Developer and
+filed rather than guessed.
+
+### 5. Q-NP-001 — resolved, and widened
+
+`scripts/rebuild_bulk.py` documented its own invocation as
+`F:/QRF/.venv/Scripts/python.exe scripts/rebuild_bulk.py --check`. Constitution §1.1
+designates `F:\QRF` the archived origin.
+
+That command failed with `ModuleNotFoundError: No module named
+'qrf.trading.concepts.neelprajna'` — resolving `qrf.trading.concepts`, failing only on
+`.neelprajna`. A script invocation places `scripts/` on `sys.path[0]`, and `scripts/`
+holds no `qrf`, so the package came from elsewhere. Direct read of
+`F:\QRF\qrf\trading\concepts` confirms: `classical`, `hand_audit.py`, `seasonality`,
+`smc` — no `neelprajna`.
+
+The documented command binds the live rebuild script to the archived origin's Kernel
+while reading this repository's journal. It failed loudly only because
+`LiquiditySweepDetector` is new; `SMCFVGDetector` and `SeasonalityDetector` exist in
+the archived origin, so before h007 the same command would have run to completion,
+producing sha-verified rebuild output for h001-h004 from retired-stack code.
+
+**Widened by ARCH-NP-009 T5: 13 further files in `ivf/` and `scripts/` carry the same
+pattern.** Occurrences under `ivf/` are the escalation — that is the apparatus which
+judges evidence. Recorded in NOTE-NP-005 and its addendum; carried into NP-S3 preflight
+as a blocker.
+
+Not established: whether the command was ever run that way. Not implied: no accepted
+verdict is retroactively invalidated; h001-h004 evidence predates NP-S2 and was not
+re-derived.
+
+### 6. Gen-1 residue — closed and outstanding
+
+Closed this sprint: CLAUDE.md rev 5 (project name, roles pointer, and the DoD line
+that instructed the Developer to merge to `main` — the rule T-051 broke);
+`rebuild_bulk.py` run-line; the `IVF_S2_XAUUSD_PERIOD_H1.csv` path constant, carried as
+"pre-existing, unrelated" through two session logs before anyone located the file; two
+asymmetric supersession traps closed with banners; NP-ADR-008 Appendix C.
+
+Outstanding: 13 archived-origin bindings (§5); the Constitution stored as
+`..._Constitution-v1.0.md` while containing "Constitution v2.0" RATIFIED and FROZEN —
+flagged for the Owner, not renamed unilaterally.
+
+### 7. P8 — executed, and a record defect it produced
+
+`main` merged `sprint/NP-S2` at `8ad7bab` (`--no-ff`), pushed;
+`git diff --stat main origin/sprint/NP-S2` empty. NP-S2 closed.
+
+**Constitution §6 checked after the fact, and clears it.** Permanently-human powers are
+VIRGIN reserve designation and unlock, verdict authority, freeze and charter
+amendments, alpha-budget ceilings, promotion, and the findings tally. A branch merge is
+not among them. P8 was not an assumed power.
+
+Recorded honestly: §6 was intended to be read before P8 and was read after. The lookup
+command failed silently (F-27.3), the merge proceeded, the confirmation followed. The
+outcome is correct; the order was not.
+
+**Record defect.** `8ad7bab`'s message states "J-041 records the AC-1 investigation."
+At the moment that commit was written and pushed, J-041 did not exist — the intervening
+`git commit` returned "nothing to commit, working tree clean" and no T-059 was created.
+Per P5 the merge commit is not rewritten; this entry is the correction and this
+paragraph its pointer. `8ad7bab`'s claim should be read as forward-looking, satisfied
+here.
+
+### 8. Disposition
+
+**Owner action required — Constitution §6, the findings tally.** F-25 through F-30 and
+the §5 finding enter the tally by the Owner's hand. This entry proposes them; it does
+not seal them.
+
+Carried forward: the 13 archived-origin bindings, into NP-S3 preflight as a blocker.
+The Constitution filename mismatch, for the Owner. NP-S3's three existing preflight
+blockers from `ops/preflight/PFR_NP-S2.md` §5 — R6 scope unnamed, a DST transition
+inside a 3-6 month collection window, and NPSU-migration and windows.json checks with
+no written specification, which NP-D-012 forbids.
+
+Unblocked this sprint: **NP-ADR-009 (ARO) and NP-ADR-010 (organization/roles) are
+assigned**, clearing the registry blocker that held both out of Chief Scientist review.
+That review is now the only step between this estate and the autonomous
+Architect-Developer loop.
+
+### 9. What changed in the shape of this sprint
+
+The question at session open was whether WO-P's evidence base could be trusted. It can,
+and AC-1's basis is stronger than when it was accepted. The suite is fully green for
+the first time. Six Architect defects were recorded and none were softened. Integrated
+verdicts remain at 1.
+
+---
+*Architect role · session: Claude Opus 5, claude.ai · 2026-07-31.*

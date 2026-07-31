@@ -11,8 +11,12 @@ Parquet to the manifest's path, and asserts the rebuilt file's sha256 EQUALS the
 manifest's ``file_sha256``. A rebuild that "mostly matches" is a fabrication —
 any mismatch is a loud, fatal failure, not a warning.
 
-    F:/QRF/.venv/Scripts/python.exe scripts/rebuild_bulk.py            # rebuild + assert
-    F:/QRF/.venv/Scripts/python.exe scripts/rebuild_bulk.py --check    # same; explicit
+    .venv/Scripts/python.exe scripts/rebuild_bulk.py            # rebuild + assert
+    .venv/Scripts/python.exe scripts/rebuild_bulk.py --check    # same; explicit
+
+This repository's own venv is required: the archived origin's interpreter
+resolves ``qrf`` to the retired Kernel, silently, for any lineage that predates
+the split (NOTE-NP-005).
 
 Appends NOTHING (asserted). The bars parquets are rebuilt first from their source
 (reusing each ingest's own rebuild path so there is one bars-rebuild code path per
