@@ -14,6 +14,14 @@ columns added, and the NP-namespace number assignment below applied, per the
 Architect's ruling on `DEVQ-NP-005` (`docs/coordination/inbox/CLOSED/DEVQ-NP-005_arch_np_007_task3_no_output_file.md`).
 Developer role · session: Claude Sonnet 5, Claude Code CLI · 2026-07-31.
 
+**Corrected 2026-07-31** (same session date, third pass): NP-ADR-011 WITHDRAWN. The
+Architect's follow-up ruling on `DEVQ-NP-005` corrects the original Rule A (recorded
+as F-29 against the Architect) and withdraws the NP-ADR-011 assignment made in the
+second pass. See "Correction — 2026-07-31 (third pass): NP-ADR-011 WITHDRAWN (F-29)"
+at the end of this document. No prior row above is rewritten; this is an appended
+correction (P5).
+Developer role · session: Claude Sonnet 5, Claude Code CLI · 2026-07-31.
+
 ---
 
 ## Method note (F-27 compliance)
@@ -238,3 +246,64 @@ into each ADR file's own text is reserved to the Architect.
 | QRF (Gen-1) | 14 | 001–011 | 2 (ADR-009, ADR-010 — both known/already resolved) |
 | Book A | 9 | 001–008 | 1 (ADR-004 — not previously flagged; self-described as companion, not contest) |
 | NP | 7 | 008, 009, 010, 011 (as of 2026-07-31) | 0 numeric; 1 placeholder-token reuse (0YY, same lineage, resolved by number assignment above) |
+
+*(The NP row above is the second-pass figure. It is corrected below — not rewritten
+here, per P5.)*
+
+---
+
+## Correction — 2026-07-31 (third pass): NP-ADR-011 WITHDRAWN (F-29)
+
+**This section corrects, by appending — it does not edit — the "Number assignment"
+table, the "Occupied vs. free NP numbers" list, and the Summary table's NP row, all
+above, all dated 2026-07-31 (second pass). Where this section's figures disagree with
+those above, this section is the current record; the earlier text is left in place as
+the provenance of the withdrawn assignment (P5).**
+
+**F-29 (against the Architect, per the Architect's own ruling):** the original Rule A
+tested self-declaration ("a document that declares itself SUPERSEDED and was never
+ratified keeps its placeholder permanently"). The asymmetric case this registry itself
+flagged in §3 ("Asymmetric supersession — priority finding") is exactly where
+self-declaration fails: `NP-ADR-H07_definition_v1.1_draft_v1.0.md` is named as
+superseded by its successor's own preamble but carries no self-banner. Under the
+original Rule A this file tested "No" on self-declaration and fell to Rule B, taking
+**NP-ADR-011**. The Architect ruled that test wrong.
+
+**Rule A, corrected (Architect ruling, 2026-07-31):**
+> A document that is superseded — whether or not it says so — and was never ratified
+> is provenance-only and consumes no number. Supersession is established by any
+> document naming it superseded, not by self-declaration. Where a lineage terminates
+> in a ratified document, that number covers the lineage; predecessor drafts take
+> none.
+
+**Applied:**
+
+| Placeholder | File | Superseded (by any naming, corrected test) | Rule applied | Result |
+|---|---|---|---|---|
+| `0ZZ` | `NP-ADR-H07_definition_v1.1_draft_v1.0.md` | Yes — named superseded by `NP-ADR-H07_definition_v1.1_draft_v2.0.md`'s (NP-ADR-008) own preamble: *"Supersedes `ops\NP-ADR-H07_definition_v1.1_draft_v1.0.md`."* Lineage terminates in NP-ADR-008, RATIFIED. | A (corrected) | **NP-ADR-011 WITHDRAWN.** Retains `0ZZ` permanently. No number assigned. |
+
+**NP-ADR-009 and NP-ADR-010 stand — no change.** Neither `NP-ADR-ARO_draft_v1.0.md`
+(0XX) nor `NP-ADR-organization_and_roles_v1.0.md` (0YY, live) is named superseded by
+any document under either the original or the corrected Rule A test; Rule B applied to
+both, unaffected by this correction.
+
+**Occupied vs. free NP numbers — corrected, 2026-07-31 (third pass):**
+- **Occupied:** NP-ADR-**008** (H07 Detector Definition §5 v1.1, RATIFIED),
+  NP-ADR-**009** (ARO draft, DRAFT), NP-ADR-**010** (Organization/Roles final draft,
+  DRAFT).
+- **Permanently retired, no number:** `0YY` (`NP-ADR-model_agnostic_roles_draft_v1.0.md`
+  — self-declared SUPERSEDED, never ratified) and, as of this correction, `0ZZ`
+  (`NP-ADR-H07_definition_v1.1_draft_v1.0.md` — named superseded by its successor,
+  never ratified). Both provenance-only under corrected Rule A.
+- **Free:** NP-ADR-001 through NP-ADR-007, and NP-ADR-011 onward. **NP-ADR-011 is free
+  again** — it was assigned to `NP-ADR-H07_definition_v1.1_draft_v1.0.md` in the
+  second pass above and is withdrawn by this correction; it is not reused for anything
+  else in this pass, and the next assignment to occupy it is a future Architect
+  decision.
+
+No ADR file was edited by this correction, and no supersession banner was added to
+`NP-ADR-H07_definition_v1.1_draft_v1.0.md` — both reserved to the Architect per this
+ruling. `NP-ADR-H07_definition_v1.1_draft_v2.0.md` (NP-ADR-008, RATIFIED) was not
+touched.
+
+Developer role · session: Claude Sonnet 5, Claude Code CLI · 2026-07-31.
