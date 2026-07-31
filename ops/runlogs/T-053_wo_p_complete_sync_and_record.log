@@ -1,12 +1,12 @@
 ﻿**********************
 Windows PowerShell transcript start
-Start time: 20260731083825
+Start time: 20260731121856
 Username: GIRISH-KUMAR\giris
 RunAs User: GIRISH-KUMAR\giris
 Configuration Name: 
 Machine: GIRISH-KUMAR (Microsoft Windows NT 10.0.19045.0)
 Host Application: C:\WINDOWS\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File F:\NeelPrajnaPro\ops\T-053_wo_p_complete_sync_and_record.ps1
-Process ID: 11496
+Process ID: 3296
 PSVersion: 5.1.19041.6456
 PSEdition: Desktop
 PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.19041.6456
@@ -30,7 +30,7 @@ OK: untouched - ops/NP-ADR-008_APPENDIX-A_provenance_correction.md
 OK: untouched - ops/NP-ADR-008_APPENDIX-B_pinned_detector_mechanics.md
 --- [5] commit and push to sprint/NP-S2 ONLY - never main ---
 
-[sprint/NP-S2 f3b3221] T-053: J-039 - WO-P complete (execution-model parity). CI confirmed by Owner. AC-1 verified by direct read to hold by construction. Two pre-existing gaps documented (NOTE-NP-003 rebuild_bulk.py, NOTE-NP-004 gen_state.py target missing since this session's own T-009). Two self-caught findings: T-051 committed to main mid-sprint against the branch model's own first rule; T-052 numbering near-collision with the Developer's independent commit. G1 scope decision remains open. Committed to sprint/NP-S2 ONLY per the branch model - main stays untouched until P8
+[sprint/NP-S2 c75486c] T-053: J-039 - WO-P complete (execution-model parity). CI confirmed by Owner. AC-1 verified by direct read to hold by construction. Two pre-existing gaps documented (NOTE-NP-003 rebuild_bulk.py, NOTE-NP-004 gen_state.py target missing since this session's own T-009). Two self-caught findings: T-051 committed to main mid-sprint against the branch model's own first rule; T-052 numbering near-collision with the Developer's independent commit. G1 scope decision remains open. Committed to sprint/NP-S2 ONLY per the branch model - main stays untouched until P8
  1 file changed, 56 insertions(+)
 git : To https://github.com/girishdomain-gum/NeelPrajnaPro.git
 At F:\NeelPrajnaPro\ops\T-053_wo_p_complete_sync_and_record.ps1:141 char:5
@@ -39,21 +39,24 @@ At F:\NeelPrajnaPro\ops\T-053_wo_p_complete_sync_and_record.ps1:141 char:5
     + CategoryInfo          : NotSpecified: (To https://gith...elPrajnaPro.git:String) [], RemoteException
     + FullyQualifiedErrorId : NativeCommandError
  
-   12efa3f..f3b3221  sprint/NP-S2 -> sprint/NP-S2
-f3b3221 (HEAD -> sprint/NP-S2, origin/sprint/NP-S2) T-053: J-039 - WO-P complete (execution-model parity). CI confirmed by Owner. AC-1 verifie
+   3dcca56..c75486c  sprint/NP-S2 -> sprint/NP-S2
+c75486c (HEAD -> sprint/NP-S2, origin/sprint/NP-S2) T-053: J-039 - WO-P complete (execution-model parity). CI confirmed by Owner. AC-1 verifie
 d by direct read to hold by construction. Two pre-existing gaps documented (NOTE-NP-003 rebuild_bulk.py, NOTE-NP-004 gen_state.py target missi
 ng since this session's own T-009). Two self-caught findings: T-051 committed to main mid-sprint against the branch model's own first rule; T-
 052 numbering near-collision with the Developer's independent commit. G1 scope decision remains open. Committed to sprint/NP-S2 ONLY per the b
 ranch model - main stays untouched until P8
-12efa3f (claude/sprint-np-s2-wo-p-e3177d) T-052: record gen_state.py session-close gap (NOTE-NP-004)
-d399840 ARCH-NP-004: WO-P execution-model parity - per-trade stop + R-multiple target
+3dcca56 T-053: attach run log (sprint/NP-S2)
+f3b3221 T-053: J-039 - WO-P complete (execution-model parity). CI confirmed by Owner. AC-1 verified by direct read to hold by construction. Tw
+o pre-existing gaps documented (NOTE-NP-003 rebuild_bulk.py, NOTE-NP-004 gen_state.py target missing since this session's own T-009). Two self
+-caught findings: T-051 committed to main mid-sprint against the branch model's own first rule; T-052 numbering near-collision with the Develo
+per's independent commit. G1 scope decision remains open. Committed to sprint/NP-S2 ONLY per the branch model - main stays untouched until P8
 ## sprint/NP-S2...origin/sprint/NP-S2
+ M ops/runlogs/T-053_wo_p_complete_sync_and_record.log
 ?? ops/T-051_commit_developer_boot_wo_p.ps1
 ?? ops/T-053_wo_p_complete_sync_and_record.ps1
-?? ops/runlogs/T-053_wo_p_complete_sync_and_record.log
 
 RESULT: OK - J-039 recorded on sprint/NP-S2 only. main untouched, as designed.
 **********************
 Windows PowerShell transcript end
-End time: 20260731083828
+End time: 20260731121900
 **********************
