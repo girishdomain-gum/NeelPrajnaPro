@@ -1,9 +1,19 @@
 # GIT_WORKFLOW.md — version control rules for NeelPrajnaPro
-Authoritative for all git activity. Referenced by COMMS_PROTOCOL.md v1.3.
+Authoritative for all git activity. Referenced by COMMS_PROTOCOL.md.
 Repo: https://github.com/girishdomain-gum/NeelPrajnaPro (PRIVATE — never make public,
 never add collaborators without the Owner's explicit say). Repo root: F:\NeelPrajnaPro
-(code + docs + comms all versioned — the append-only comms files give a
-tamper-evident audit trail for free).
+(code + docs versioned; comms\ is NOT versioned — COMMS_PROTOCOL v1.4 law: the ONE
+live copy is the absolute path F:\NeelPrajnaPro\comms\, gitignored from commit
+a150574).
+
+*NeelPrajnaPro adaptation (D-5, Owner-accepted 2026-08-01; deltas in
+ADOPTION_ADAPTATIONS.md): this is a pure-Python repo — no MT5 terminal, no
+deploy.bat, no bridge. "Compile" = `.venv/Scripts/python.exe -m pytest tests/`
+(no extra -q — incident I-02) + the firewall test. §3.6 baseline-deploys and §10
+are kept verbatim from the kit but are N/A here until MT5 jobs enter this loop;
+baselines here are named COMMIT IDs the Developer checks out in a read-only
+worktree for comparison runs. All other rules apply verbatim, D-004 path fix
+applied (the kit's /f/Fable checkpoints are /f/NeelPrajnaPro here).*
 
 ## 1. Branch model
 - `main`  — owned by the ARCHITECT. Receives code ONLY via the merge ritual (§4).
@@ -18,6 +28,8 @@ tamper-evident audit trail for free).
             git fetch origin && git merge origin/main && git push origin dev.
 - No other long-lived branches. Short experiment branches off dev are allowed
   (`dev-tryX`), must merge back to dev or be deleted within the same session.
+  (Legacy branches — claude/*, maint/*, sprint/NP-S2 — are retired pointers;
+  cleanup is WO-04.)
 
 ## 2. Who runs git
 - DEVELOPER: runs git itself in Claude Code (commit, push, diff, log — on dev only).
@@ -26,9 +38,9 @@ tamper-evident audit trail for free).
   it does and cites the authorizing message id. The Owner never improvises git
   commands for main; if unsure, ask the Architect first.
 - COMMAND-BLOCK SAFETY (binding, from incident O-005): Architect blocks use
-  BASH-style paths (/f/Fable — the Owner's shell is Git Bash); the first line is
-  always a location checkpoint (cd + pwd with the expected output stated); the
-  Owner runs blocks ONE LINE AT A TIME and STOPS on any error or unexpected
+  BASH-style paths (/f/NeelPrajnaPro — the Owner's shell is Git Bash); the first
+  line is always a location checkpoint (cd + pwd with the expected output stated);
+  the Owner runs blocks ONE LINE AT A TIME and STOPS on any error or unexpected
   checkpoint output.
 - OWNER: also free to run read-only commands anytime (git log, git status, git diff).
 
@@ -45,10 +57,9 @@ tamper-evident audit trail for free).
    broker data, commit tester CSVs (gitignored), or bypass .gitignore with -f.
 5. If a commit was wrong: fix forward with a new commit (revert if needed). History
    is never rewritten once pushed.
-6. BASELINE BUILDS (AM-05 convention, superseding the earlier worktree-only
-   form): every before/after acceptance test names its baseline as a COMMIT ID
-   in the session's MY ACTIONS ("before = <hash>"). The Owner deploys it with
-   deploy.bat (§10) — no worktree, no git commands for the Owner. A read-only
+6. BASELINE BUILDS (AM-05 convention; NeelPrajnaPro form): every before/after
+   acceptance test names its baseline as a COMMIT ID in the session's MY ACTIONS
+   ("before = <hash>"). [Kit's deploy.bat leg N/A here — D-5.] A read-only
    baseline worktree remains allowed when the DEVELOPER itself needs to run
    analysis on the old code, and is removed after that WO's tests.
 7. SYNC DUTY: at the start of every session that follows an accept-merge:
@@ -58,13 +69,14 @@ tamper-evident audit trail for free).
 ## 4. Merge ritual (dev -> main) — acceptance made executable
 Preconditions, ALL required:
   (a) the session's WO(s) show DONE on STATE.md with TEST-RESULT message(s) on file;
-  (b) for gated sessions (S4, S5-S7, S11, S16): an Architect REVIEW-RESULT APPROVED;
+  (b) for gated sessions (marked REVIEW-GATED on the board): an Architect
+      REVIEW-RESULT APPROVED;
   (c) the Architect has reviewed the actual diff (see §6).
 Then the Architect issues the Owner a block of this shape (never run it without the
 cited message id existing):
 
     :: Accept S<nn> — authorized by <A-xxx APPROVED / A-xxx ratification>
-    cd /f/Fable && pwd
+    cd /f/NeelPrajnaPro && pwd
     git checkout main
     git pull origin main
     git merge --no-ff dev -m "Accept S<nn>/WO-<xx> - <A-xxx>"
@@ -91,11 +103,9 @@ conditional the Owner can check ("if you see bridge/ files staged, STOP").
 Claims need evidence; the Owner executes literally.
 
 ## 5. Tags (annotated, Architect-authorized, Owner-executed)
-- `s02-import`   — the initial import commit (set during one-time setup, §7)
-- `s07-fireseq`  — after Session 7's WO-03 regression checks pass
-- `v3.17.0-rc`   — Session 16 code-done, before the release gate
-- `v3.17.0`      — release gate passed
-Command shape:  git tag -a <name> -m "<why, refs message id>" && git push origin <name>
+Tags are created at milestones the board names (first candidate: adoption
+completion). Command shape:
+  git tag -a <name> -m "<why, refs message id>" && git push origin <name>
 
 ## 6. How the Architect reviews diffs (no shell)
 Preferred: the Architect asks the DEVELOPER (who has a shell) to run
@@ -106,21 +116,19 @@ same commands and pastes to the Architect's chat. The Architect can always read 
 working tree directly via the filesystem; the diff output is for change-scope
 verification (nothing changed outside the session's declared files).
 
-## 7. One-time setup (HISTORICAL — completed by the Owner on 2026-08-01)
-git init -b main at F:\NeelPrajnaPro; add .gitignore; single honest import commit of the
-current tree ("v3.16.4 baseline in backups/before_session_01 + S01 + S02 as
-applied"); remote add; push main; create+push dev; tag s02-import. Per-session diff
-granularity is mandatory from Session 3 onward.
+## 7. One-time setup (HISTORICAL — adoption completed 2026-08-01)
+Repo predates adoption with full history preserved. Adoption commits: a150574
+(gitignore comms/+bridge/ FIRST, O-044 law) and 170d141 (process layer retired
+to docs/legacy/ as git renames). dev fast-forwarded 263cd75→170d141 = main.
 
 ## 8. Explore later, one step at a time (Owner's standing wish — do NOT self-start)
-- Developer self-compile via metaeditor64.exe /compile + log read (after git proves
-  stable across S3-S4; before the S5-S7 gates at the earliest; Owner decides).
 - GitHub MCP for the Architect (PR-based review).
-- Simple CI (a push-triggered compile check) — far future.
+- Simple CI gate on push (pytest + firewall) — .github/ exists; far future,
+  Owner decides.
 
 ## 9. Owner quick reference (read-only — safe anytime; still one line at a time)
 ```
-cd /f/Fable && pwd                  # always first — must print /f/Fable
+cd /f/NeelPrajnaPro && pwd          # always first — must print /f/NeelPrajnaPro
 git status                          # clean tree? right branch?
 git log --oneline -10               # recent history
 git log --oneline main..dev         # what dev has that main doesn't (pending work)
@@ -132,27 +140,9 @@ These change nothing and can never break the repo. If any output looks wrong or
 surprising: touch nothing, paste the output to the Architect. Never run reset,
 revert, merge, rebase, or any --force/--hard command without an Architect block.
 
-## 10. Deploying code into the MT5 terminal (deploy.bat — THE compile path)
-STANDARD (Owner decision O-019, permanent): deploy.bat is the ONE compile path
-for every build — dev, main, baselines, historical refs. Chosen for simplicity
-and for cross-project consistency (the Owner's parallel projects that will merge
-here all use this pattern). The junction/live-link alternative was evaluated and
-DECLINED; revisiting it requires a new Owner decision. No session instruction
-may ask the Owner to compile from a working directory or worktree path.
-
-MetaEditor/tester only see code inside the terminal's MQL5\Experts folder, and
-F:\NeelPrajnaPro holds main while dev lives in a session-named worktree — so builds are
-NEVER compiled from working directories. Instead `F:\NeelPrajnaPro\deploy.bat REF [slot]`
-exports any COMMITTED branch/commit/tag from git history (git archive — immune
-to worktree paths and uncommitted files; comms is gitignored so it never reaches
-the terminal) and mirrors the EA source into
-`...\MQL5\Experts\NeelPrajnaPro\<slot>\`. Slots coexist — e.g. `deploy.bat dev`
-and `deploy.bat <baseline-hash> baseline` give the tester two side-by-side EAs
-(NeelPrajnaPro\dev\NeelPrajna vs NeelPrajnaPro\baseline\NeelPrajna): no .ex5
-copying or renaming, ever. Rules: the Owner runs it in cmd; never edit code
-inside the terminal mirror (/MIR overwrites); recompile (F7) after every deploy;
-sessions' MY ACTIONS must name the exact REF (and baseline hash) to deploy.
-Pure v3.16.4 for the S16 whole-release comparison = `deploy.bat 9c1b72e s164`
-(the import commit) — note it contains WO-06+WO-01; the true pristine tree is
-backups/before_session_01, deployable by hand if ever needed.
-
+## 10. Deploying code into the MT5 terminal — [N/A in NeelPrajnaPro, D-5]
+Kept as kit reference for the day MT5 jobs enter this loop: deploy.bat exports
+any COMMITTED ref via git archive into the terminal's MQL5\Experts slot folders;
+one compile path for every build; never compile from working directories; never
+edit code inside the terminal mirror. Until then, this section gates nothing
+here — the "compile" path is the pytest+firewall ritual in the header note.
