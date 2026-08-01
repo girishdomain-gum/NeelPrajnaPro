@@ -45,3 +45,6 @@ ops/incoming/
 # Word lock files
 ~$*
 docs/**/~$*
+
+comms/
+bridge/
