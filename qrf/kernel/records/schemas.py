@@ -6,7 +6,10 @@ Sprint 3 (ARCH-003) adds the data-plane types ``bulk_manifest``,
 ``ingest_report``, ``window`` and ``window_burn``; the DEVQ-006 ruling adds
 ``ingest_report`` schema **version 2** (v1 plus a required ``params`` object) —
 additively, so existing v1 records are never touched; Sprint 4 (ARCH-004) adds
-``trial_count`` (the multiple-testing burden, §4.8). Every
+``trial_count`` (the multiple-testing burden, §4.8); WO-03 (S3, refs A-007)
+adds ``dataset_scope`` (a data-collection scope's registration record — pinned
+IANA zone + evidence, pinned ingest path, batch-forward protocol, OOS
+designation, all in one place). Every
 ``RecordStore.append`` validates the payload against the schema registered for
 ``(record_type, schema_version)`` before writing (I-4); an unregistered pair is
 itself a :class:`SchemaViolation`.
@@ -1024,6 +1027,64 @@ def _validate_promotion(payload: dict) -> None:
         _require(payload[k].strip(), f"promotion.{k} must be non-empty")
 
 
+def _validate_dataset_scope(payload: dict) -> None:
+    """dataset_scope v1 (WO-03, refs A-007 ruling (d)(1)) — a data-collection
+    scope's registration record: the one place carrying a dataset's pinned
+    IANA zone (+ the evidence it was determined from), its pinned ingest
+    path, the batch-forward collection protocol in one paragraph, and its
+    OOS designation. Every field is required and non-empty — the ceremony
+    this record captures (typed at registration, per J-029/030) has no
+    silent-default form; an incomplete registration is refused, not filled in.
+    """
+    _check_keys(
+        payload,
+        {
+            "dataset",
+            "iana_zone",
+            "zone_evidence",
+            "ingest_path",
+            "batch_forward_protocol",
+            "oos_designation",
+            "anchor_ts",
+        },
+        set(),
+        "dataset_scope",
+    )
+    for k in (
+        "dataset", "iana_zone", "zone_evidence", "ingest_path",
+        "batch_forward_protocol", "oos_designation",
+    ):
+        _require_str(payload, k, "dataset_scope")
+        _require(payload[k].strip(), f"dataset_scope.{k} must be non-empty")
+    _require_int(payload, "anchor_ts", "dataset_scope")
+
+
+def _validate_r6_ingest_batch(payload: dict) -> None:
+    """r6_ingest_batch v1 (WO-03, refs A-007 ruling (b)) — the mechanical
+    record of one batch-forward ingest run: journals every ingest batch so
+    the journal itself IS the collection record, and gives ``ingest_r6.py``
+    something to query for its own idempotency guard (strictly-newer-only,
+    no overlap/duplicate/backwards batches).
+    """
+    _check_keys(
+        payload,
+        {"dataset", "ts_start", "ts_end", "row_count", "source"},
+        set(),
+        "r6_ingest_batch",
+    )
+    _require_str(payload, "dataset", "r6_ingest_batch")
+    _require(payload["dataset"].strip(), "r6_ingest_batch.dataset must be non-empty")
+    _require_int(payload, "ts_start", "r6_ingest_batch")
+    _require_int(payload, "ts_end", "r6_ingest_batch")
+    _require(
+        payload["ts_end"] > payload["ts_start"],
+        "r6_ingest_batch.ts_end must be > ts_start",
+    )
+    _require_int(payload, "row_count", "r6_ingest_batch", non_negative=True)
+    _require_str(payload, "source", "r6_ingest_batch")
+    _require(payload["source"].strip(), "r6_ingest_batch.source must be non-empty")
+
+
 # Registry keyed by (record_type, schema_version). Additive schema evolution
 # bumps the version (Blueprint §2); removals never happen.
 SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
@@ -1051,6 +1112,8 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("placebo_run", 1): _validate_placebo_run,
     ("second_lens", 1): _validate_second_lens,
     ("promotion", 1): _validate_promotion,
+    ("dataset_scope", 1): _validate_dataset_scope,
+    ("r6_ingest_batch", 1): _validate_r6_ingest_batch,
 }
 
 
