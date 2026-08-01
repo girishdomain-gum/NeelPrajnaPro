@@ -13,7 +13,7 @@ Caught by the Developer, D-006. Rule: NO extra -q, ever.*
 | Project root | F:\NeelPrajnaPro |
 | Project/product name | NeelPrajnaPro |
 | Git remote | github.com/girishdomain-gum/NeelPrajnaPro (private) |
-| EA folder / MT5 terminal / TERMID | N/A — pure Python research repo (D-5) |
+| EA folder / MT5 terminal / TERMID | N/A in the loop today (D-5) — but the Vantage MT5 INSTALL path is PINNED for the day MT5 jobs enter (Owner-provided screenshot, O-010, 2026-08-01): `C:\Program Files\Vantage International MT5\` — terminal64.exe (terminal), MetaEditor64.exe (compiler), metatester64.exe (tester). NOTE for that future day: this is the INSTALL folder; the terminal DATA folder (MQL5\Experts slot, TERMID under %APPDATA%\MetaQuotes\Terminal\) is a SEPARATE path, obtained via File→Open Data Folder in the terminal, and gets pinned from evidence when first needed — never assumed. |
 | deploy.bat | NOT installed. No terminal to deploy to. |
 | Automation bridge (np_agent) | NOT installed now (D-5). Installed later only if MT5 jobs enter this repo's loop; if installed, the KIT's simple watcher, never the legacy heavy agent (quarry in docs\legacy\). |
 | "Compile" in the cycle | Full test run via the repo's own venv, NO extra -q flags: `.venv\Scripts\python.exe -m pytest tests\` THEN `.venv\Scripts\python.exe -m pytest tests\test_kernel_firewall.py`. Owner pastes both summary lines verbatim. Baseline: "884 passed, 1 warning" / "8 passed". |
