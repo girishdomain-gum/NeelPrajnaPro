@@ -128,7 +128,9 @@ def test_ac1_h001_through_h004_reproduce_byte_identically():
         checked += 1
 
     assert checked == 4, "expected h001, h002, h003, h004 — every anchored trades dataset"
-    assert len(RecordStore(rebuild_bulk.JOURNAL)) == n_before, "AC-1 check must not write the ledger"
+    assert len(RecordStore(rebuild_bulk.JOURNAL)) == n_before, (
+        "AC-1 check must not write the ledger"
+    )
 
 
 def _h007_hypotheses(store: RecordStore) -> list:
@@ -149,7 +151,9 @@ def test_ac1_h007_reproduces_byte_identically():
 
     hyps = {h.record_id: h for h in _h007_hypotheses(store)}
     assert len(hyps) == 2, "expected both h007 registrations in the journal"
-    verdicts = [v for v in store.query(record_type="verdict") if v.payload["hypothesis_ref"] in hyps]
+    verdicts = [
+        v for v in store.query(record_type="verdict") if v.payload["hypothesis_ref"] in hyps
+    ]
     assert len(verdicts) == 1, "expected exactly one JUDGED h007 registration"
     verdict = verdicts[0]
     manifest_ref = verdict.payload["trades_manifest"]
@@ -180,7 +184,9 @@ def test_ac1_h007_reproduces_byte_identically():
         hyp.record_id, simulator=EventEngine(), cost_model=cost_model, bars=bars, events=events,
     )
     table = EvidenceBattery.trades_table(result.outcomes)
-    assert table is not None, "h007 rebuild produced 0 trades but the manifest anchors a non-empty dataset"
+    assert table is not None, (
+        "h007 rebuild produced 0 trades but the manifest anchors a non-empty dataset"
+    )
 
     path = BULK_ROOT / "_ac1_h007_rebuild_check.parquet"
     path.parent.mkdir(parents=True, exist_ok=True)
