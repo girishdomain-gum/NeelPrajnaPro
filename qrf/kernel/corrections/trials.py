@@ -28,7 +28,8 @@ trading words), and never judges anything.
 
 from __future__ import annotations
 
-from qrf.kernel.errors import SchemaViolation
+from qrf.kernel.errors import SchemaViolation, UnknownRecordError
+from qrf.kernel.records.epistemic import refuse_if_tainted
 from qrf.kernel.records.record import Record, now_ns
 from qrf.kernel.records.store import RecordStore
 
@@ -78,6 +79,18 @@ class TrialCountLedger:
             raise SchemaViolation(
                 f"trial_count source {source!r} must be one of {sorted(_SOURCES)}"
             )
+        # Closed-write-authority gate (Architecture B.1, WO-07): refuse if any
+        # named parent traces to zero-epistemic-weight NPSU data. `scope` is
+        # usually a window_ref but may also be a plain dataset-name string
+        # (not a record id) — checked too, best-effort, when it resolves.
+        for pid in parents:
+            refuse_if_tainted(self._store, pid, context="TrialCountLedger.bump")
+        try:
+            self._store.get(scope)
+        except UnknownRecordError:
+            pass
+        else:
+            refuse_if_tainted(self._store, scope, context="TrialCountLedger.bump")
         payload: dict = {
             "data_scope": scope,
             "lineage": lineage,

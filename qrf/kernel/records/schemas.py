@@ -1085,6 +1085,46 @@ def _validate_r6_ingest_batch(payload: dict) -> None:
     _require(payload["source"].strip(), "r6_ingest_batch.source must be non-empty")
 
 
+def _validate_npsu_legacy_import(payload: dict, where: str) -> None:
+    """npsu_legacy_import_trade / _shadow v1 (WO-07 stage B, refs A-020) — one
+    record per SOURCE FILE BATCH (D-019 decision (b), ratified A-020): the
+    journal records the migration EVENT, the actual rows live in BulkStore/
+    Parquet (``bulk_manifest_ref``). ``epistemic_weight`` must be the exact
+    literal ``"zero"`` — a structural marker (Architecture B.1), not free text
+    — so ``qrf.kernel.records.epistemic.is_tainted`` can key on record TYPE
+    alone; the field exists for human-readable audit, not as the gate itself.
+    """
+    _check_keys(
+        payload,
+        {"source", "file_sha256", "row_count", "bulk_manifest_ref", "epistemic_weight"},
+        set(),
+        where,
+    )
+    _require_str(payload, "source", where)
+    _require(payload["source"].strip(), f"{where}.source must be non-empty")
+    _require_str(payload, "file_sha256", where)
+    _require(
+        len(payload["file_sha256"]) == 64,
+        f"{where}.file_sha256 must be a 64-char sha256 hex digest",
+    )
+    _require_int(payload, "row_count", where, non_negative=True)
+    _require_str(payload, "bulk_manifest_ref", where)
+    _require(payload["bulk_manifest_ref"].strip(), f"{where}.bulk_manifest_ref must be non-empty")
+    _require_str(payload, "epistemic_weight", where)
+    _require(
+        payload["epistemic_weight"] == "zero",
+        f'{where}.epistemic_weight must be exactly "zero" (Architecture B.1)',
+    )
+
+
+def _validate_npsu_legacy_import_trade(payload: dict) -> None:
+    _validate_npsu_legacy_import(payload, "npsu_legacy_import_trade")
+
+
+def _validate_npsu_legacy_import_shadow(payload: dict) -> None:
+    _validate_npsu_legacy_import(payload, "npsu_legacy_import_shadow")
+
+
 # Registry keyed by (record_type, schema_version). Additive schema evolution
 # bumps the version (Blueprint §2); removals never happen.
 SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
@@ -1114,6 +1154,8 @@ SCHEMAS: dict[tuple[str, int], Callable[[dict], None]] = {
     ("promotion", 1): _validate_promotion,
     ("dataset_scope", 1): _validate_dataset_scope,
     ("r6_ingest_batch", 1): _validate_r6_ingest_batch,
+    ("npsu_legacy_import_trade", 1): _validate_npsu_legacy_import_trade,
+    ("npsu_legacy_import_shadow", 1): _validate_npsu_legacy_import_shadow,
 }
 
 
