@@ -132,6 +132,24 @@ def test_refuses_non_whitelisted_line(tmp_path):
     assert not (work / "comms" / "jobs" / "done" / "JOB-001.job").exists()
 
 
+def test_refuses_line_with_shell_metacharacters(tmp_path):
+    """A-011 required sharpening: the whitelist only checks prefixes, so
+    chaining a second command after a whitelisted prefix must be refused
+    separately (`bash -c` would otherwise happily run both)."""
+    work = _build_scratch_repo(tmp_path)
+    job = _write_job(
+        work, "JOB-001", "A-100", "git_block", ["git status && rm -rf /"]
+    )
+    result = _run(work)
+    assert result.returncode != 0
+    assert "REFUSED" in result.stderr
+    assert "metacharacters" in result.stderr
+    # refused BEFORE executing anything: job untouched, nothing moved/logged
+    assert job.exists()
+    assert not (work / "comms" / "jobs" / "done" / "JOB-001.log").exists()
+    assert not (work / "comms" / "jobs" / "done" / "JOB-001.job").exists()
+
+
 # --- oldest-first selection ----------------------------------------------------
 def test_picks_oldest_pending_job_by_mtime(tmp_path):
     work = _build_scratch_repo(tmp_path)
