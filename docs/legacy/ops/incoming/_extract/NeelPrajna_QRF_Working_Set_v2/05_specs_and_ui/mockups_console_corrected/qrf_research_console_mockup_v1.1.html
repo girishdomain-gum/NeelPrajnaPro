@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRF Research Console v1.1 — Expanded States &amp; Detail Views</title>
+<style>
+  :root{
+    --bg:#0C0E12; --surface:#12151C; --surface2:#171B24; --hair:#262C3A; --rowrule:#161A22;
+    --text:#C6CEDC; --muted:#66718A; --label:#49536B;
+    --accent:#46C8C0; --accent2:#508CFF; --green:#4FC98F; --red:#E06060; --gold:#D9A93E; --meta:#A582C8;
+    --greenbg:#0E2A1D; --redbg:#2E1414; --goldbg:#2E240E; --accent2bg:#101E36;
+    --bd-green:#1E4A34; --bd-red:#4A2424; --bd-gold:#4A3A16; --bd-accent2:#20375E;
+    --canvas:#07080B;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--canvas);color:var(--text);font-family:"Segoe UI",-apple-system,sans-serif;padding:34px 28px 90px}
+  .mono{font-family:Consolas,"IBM Plex Mono","Cascadia Mono",monospace}
+  .wrap{max-width:1720px;margin:0 auto}
+  .intro{margin-bottom:22px}
+  .intro h1{font-size:15px;font-weight:700;letter-spacing:.1em;color:var(--text)}
+  .intro h1 b{color:var(--accent)}
+  .intro p{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;max-width:1080px}
+  .tag{display:inline-block;font-size:9.5px;letter-spacing:.1em;color:var(--gold);border:1px solid var(--bd-gold);background:var(--goldbg);padding:2px 8px;margin-top:10px;margin-right:6px}
+  .tag.b{color:var(--accent);border-color:#1c4a46;background:#0d1f1e}
+
+  .sechead{display:flex;align-items:baseline;gap:12px;margin:40px 0 6px;padding-top:18px;border-top:1px solid var(--hair)}
+  .sechead .idx{font-family:Consolas,monospace;font-size:20px;color:var(--label)}
+  .sechead h2{font-size:13px;letter-spacing:.08em;color:var(--text)}
+  .secnote{font-size:11px;color:var(--muted);max-width:1080px;line-height:1.6;margin-bottom:18px}
+
+  .board{display:flex;gap:22px;flex-wrap:wrap}
+  .col{width:400px}
+  .caption{font-size:10px;color:var(--label);letter-spacing:.04em;margin:10px 2px 0;line-height:1.7;font-family:"Segoe UI",sans-serif}
+  .caption b{color:var(--muted);font-weight:600}
+
+  .panel{border:1px solid var(--hair);background:var(--bg)}
+  .ph{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--hair);background:var(--surface)}
+  .ph .h{font-size:10.5px;letter-spacing:.1em;color:var(--text);font-weight:700}
+  .ph .tagr{font-size:8.5px;color:var(--label)}
+  .ph .tagr.warn{color:var(--gold)}
+  .pbody{padding:12px;min-height:60px}
+
+  .rule{display:flex;align-items:center;gap:8px;margin:14px 0 7px}
+  .rule:first-child{margin-top:0}
+  .rule .lbl{font-size:8.5px;letter-spacing:.12em;color:var(--label);text-transform:uppercase;white-space:nowrap}
+  .rule .line{flex:1;height:1px;background:var(--hair)}
+  .rule.danger .lbl{color:var(--red)}
+  .rule.danger .line{background:var(--bd-red)}
+
+  .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--hair)}
+  .kpi .cell{background:var(--surface);padding:8px 10px}
+  .kpi .cell .l{font-size:7.5px;letter-spacing:.08em;color:var(--label);text-transform:uppercase}
+  .kpi .cell .v{font-family:Consolas,monospace;font-size:13px;color:var(--text);margin-top:3px}
+  .kpi .v.green{color:var(--green)} .kpi .v.red{color:var(--red)} .kpi .v.gold{color:var(--gold)} .kpi .v.muted{color:var(--muted)}
+
+  table{width:100%;border-collapse:collapse;font-family:Consolas,monospace;font-size:10.5px}
+  th{font-size:8px;letter-spacing:.08em;color:var(--label);text-transform:uppercase;text-align:left;padding:5px 6px;border-bottom:1px solid var(--hair)}
+  th.num,td.num{text-align:right}
+  td{padding:6px 6px;border-bottom:1px solid var(--rowrule);color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  tr.hover td{background:var(--accent2bg)}
+  .scopechip{font-size:8.5px;color:var(--muted);border:1px solid var(--hair);padding:1px 5px;white-space:nowrap}
+  .hash{color:var(--label)}
+  .meta{color:var(--meta)}
+  .g{color:var(--green)} .r{color:var(--red)} .gd{color:var(--gold)} .ac{color:var(--accent)} .ac2{color:var(--accent2)}
+
+  .pill{display:inline-block;font-size:8.5px;letter-spacing:.06em;padding:2px 7px;border:1px solid var(--hair)}
+  .pill.pass{color:var(--green);border-color:var(--bd-green);background:var(--greenbg)}
+  .pill.fail{color:var(--red);border-color:var(--bd-red);background:var(--redbg)}
+  .pill.insuf{color:var(--gold);border-color:var(--bd-gold);background:var(--goldbg)}
+  .pill.run{color:var(--muted)}
+
+  .banner{font-size:9.5px;letter-spacing:.05em;padding:7px 10px;border:1px solid var(--bd-gold);background:var(--goldbg);color:var(--gold);margin-bottom:10px}
+  .banner.red{border-color:var(--bd-red);background:var(--redbg);color:var(--red)}
+  .banner.blue{border-color:var(--bd-accent2);background:var(--accent2bg);color:var(--accent2)}
+
+  .feedrow{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--rowrule);font-size:10px}
+  .feedrow:last-child{border-bottom:none}
+  .feedrow .rail{width:3px;align-self:stretch;background:var(--hair)}
+  .feedrow .rail.gold{background:var(--gold)}
+  .feedrow .txt{flex:1;color:var(--text)}
+  .feedrow .meta2{color:var(--label);font-size:8.5px;margin-top:2px}
+  .actbtn{font-size:8.5px;color:var(--accent);border:1px solid var(--hair);padding:2px 6px;white-space:nowrap;height:fit-content;background:none;font-family:Consolas,monospace;cursor:default}
+
+  .ladder{display:flex;gap:4px;margin:6px 0 10px}
+  .ladder .seg{flex:1;height:20px;border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--label);background:var(--surface)}
+  .ladder .seg.lit{color:var(--bg);background:var(--accent);border-color:var(--accent);font-weight:700}
+
+  .touchgrid{display:flex;gap:1px;background:var(--hair);margin-top:8px}
+  .touchgrid .t{flex:1;background:var(--surface);padding:10px;text-align:center}
+  .touchgrid .t .num{font-family:Consolas,monospace;font-size:20px;color:var(--text)}
+  .touchgrid .t .num.z{color:var(--green)}
+  .touchgrid .t .lbl{font-size:8px;color:var(--label);letter-spacing:.08em;margin-top:3px}
+
+  .footerline{font-size:9px;color:var(--label);margin-top:8px;line-height:1.6;font-family:Consolas,monospace}
+  .hatch{background-image:repeating-linear-gradient(135deg,var(--hair),var(--hair) 3px,transparent 3px,transparent 7px)}
+
+  /* empty state well */
+  .well{border:1px dashed var(--hair);padding:16px 10px;text-align:center;color:var(--label);font-size:10px;font-family:Consolas,monospace;margin:4px 0 8px}
+
+  /* degraded marks */
+  .deg{color:var(--muted) !important}
+  .deg-mark{color:var(--gold);font-size:9px}
+  .degnote{font-size:9px;color:var(--gold);margin-top:8px;font-family:Consolas,monospace}
+
+  /* Book selector */
+  .topbar{display:flex;align-items:center;gap:18px;padding:10px 16px;border-bottom:1px solid var(--hair);background:var(--bg);position:relative}
+  .booksel{font-size:11px;padding:4px 10px;border:1px solid var(--hair);background:var(--surface);color:var(--text);cursor:default}
+  .booksel .car{color:var(--label);margin-left:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px}
+  .healthchip{font-size:10px;color:var(--muted);margin-left:auto;display:flex;align-items:center}
+  .clock{font-size:10px;color:var(--label);margin-left:18px}
+  .title{font-size:11px;letter-spacing:.12em;color:var(--muted)}
+
+  .bookdrop{position:absolute;top:44px;left:150px;width:340px;border:1px solid var(--hair);background:var(--surface);box-shadow:0 10px 30px rgba(0,0,0,.5);z-index:5}
+  .bookrow{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--rowrule);font-size:10.5px}
+  .bookrow:last-child{border-bottom:none}
+  .bookrow .name{color:var(--text)}
+  .bookrow .status{font-size:9px;color:var(--muted)}
+  .bookrow.notopen{opacity:.5}
+  .bookrow.notopen .name{color:var(--label)}
+  .bookrow.notopen .status{color:var(--label);border:1px solid var(--hair);padding:1px 6px}
+  .bookrow.active .name{color:var(--accent)}
+  .bookrow.active::before{content:"●";color:var(--accent);margin-right:6px;font-size:8px}
+  .bookrow:not(.active)::before{content:"";display:inline-block;width:14px}
+
+  /* modal */
+  .modalwrap{max-width:1160px}
+  .modal{border:1px solid var(--hair);background:var(--bg);box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .mh{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--hair);background:var(--surface)}
+  .mh .t{font-size:12px;color:var(--text);font-weight:700}
+  .mh .t .hash{font-weight:400}
+  .mclose{font-size:9px;color:var(--muted);border:1px solid var(--hair);padding:3px 9px;font-family:Consolas,monospace}
+  .mbody{padding:18px;display:flex;gap:24px}
+  .mcol{flex:1}
+  .eyebrow{font-size:9.5px;color:var(--muted);margin-bottom:10px;font-family:Consolas,monospace}
+  .reminder{border:1px solid var(--bd-accent2);background:var(--accent2bg);color:var(--accent2);font-size:9.5px;padding:8px 10px;line-height:1.6;margin:8px 0}
+  .reminder b{letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div style="margin:0 0 18px 0;padding:12px 16px;border:1.5px solid #b8860b;background:#211a08;color:#e6c96a;font-family:Consolas,monospace;font-size:13px;line-height:1.55;border-radius:6px;">
+<b style="color:#ffd75e;">NOTE — 2026-07-29.</b> This mockup uses only illustrative placeholder data (e.g. fictional pattern
+IDs); no factual claim in it was wrong. Context has changed since it was drawn: the QRF Kernel it sketches a console for is
+now known to be <b>real</b> — a ten-sprint, Generation-1-closed repository (F:\QRF). The design shell remains reasonable;
+the eventual data binding should be the real Kernel's (<code>RecordStore</code>, <code>battery.py</code>,
+<code>WindowLedger</code>, <code>TrialCountLedger</code>), per <code>QRF_Research_Console_spec_v1.0.md</code> &sect;v1.3
+Amendment. Preserved unedited beneath this note.
+</div>
+
+<div class="wrap">
+
+<div class="intro">
+  <h1>QRF RESEARCH CONSOLE — <b>v1.1 EXPANDED STATES &amp; DETAIL VIEWS</b></h1>
+  <p>Extends the v1.0 board (populated states only) with the three states every lens actually needs
+     (cold-start, degraded, populated), the Book selector's real behavior including an unopened Book,
+     and the two detail views opened from a row click. Grounded in a closer read of the live EA panel's
+     shipped code (<span class="mono">Panel.mqh</span>, <span class="mono">Config.mqh</span>,
+     <span class="mono">ScopeTab.mqh</span>) rather than only its spec text — see spec v1.1 Amendment §A
+     for the drift this surfaced between the written spec and the current implementation.</p>
+  <span class="tag">STATUS: PROPOSAL — NOT YET IMPLEMENTED</span>
+  <span class="tag b">COMPANION: QRF_Research_Console_spec_v1.0.md (§ v1.1 Amendment)</span>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">A</span><h2 class="mono">PRIMARY LENSES — POPULATED STATE</h2></div>
+<div class="secnote">Unchanged from v1.0, included here for completeness so the full state set is visible in
+  one document. Note the hover row in KNOWLEDGE now uses <span class="ac2" style="font-family:Consolas">ACCENT2</span>
+  (electric blue) rather than teal — teal stays reserved for "currently applied / active" per amendment §B.</div>
+
+<div class="board">
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">KNOWLEDGE</div><div class="tagr mono">Book A</div></div>
+      <div class="pbody">
+        <div class="banner">1 CONTRADICTION — review before citing</div>
+        <div class="rule"><span class="lbl">Pattern library</span><span class="line"></span></div>
+        <table>
+          <tr><th>Pattern</th><th class="num">Win%</th><th class="num">Conf.</th><th>Scope</th></tr>
+          <tr class="hover"><td>Liquidity Sweep <span class="hash">#a3f9</span></td><td class="num g">63%</td><td class="num">0.87</td>
+              <td><span class="scopechip">XAUUSD·M5·London·trend</span></td></tr>
+          <tr><td>VWAP Compression <span class="hash">#c112</span></td><td class="num g">58%</td><td class="num">0.71</td>
+              <td><span class="scopechip">XAUUSD·M1·NY·range</span></td></tr>
+        </table>
+        <div class="footerline">row hovered (not yet opened) → <span class="ac2">accent2</span> tint · row clicked → opens Section E modal</div>
+      </div>
+    </div>
+    <div class="caption"><b>Hover vs. active.</b> ACCENT2 added in v1.1 for "hovered, not yet committed to" —
+      keeps teal meaning one thing only: applied/active, matching the EA panel's own color restraint rule.</div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">EVIDENCE</div><div class="tagr mono">Book A</div></div>
+      <div class="pbody">
+        <div class="rule"><span class="lbl">Hypothesis queue</span><span class="line"></span></div>
+        <table>
+          <tr><th>Hypothesis</th><th>Source</th><th>Status</th></tr>
+          <tr class="hover"><td>Spread↓+Tick↑+Vol↓+VWAP</td><td class="mono" style="color:var(--muted)">screener</td>
+              <td><span class="pill run">RUNNING</span></td></tr>
+          <tr><td>B6 as addition (T1_B1B6)</td><td class="mono" style="color:var(--muted)">human</td>
+              <td><span class="pill pass">PASS</span></td></tr>
+        </table>
+        <div class="footerline">row click → Section E.1 Hypothesis detail modal</div>
+      </div>
+    </div>
+    <div class="caption"><b>Entry point for E.1.</b> Clicking any row here opens the full hypothesis
+      history — never navigates away from EVIDENCE, an overlay per amendment §E.</div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">GOVERNANCE</div><div class="tagr mono">Programme-wide</div></div>
+      <div class="pbody">
+        <div class="rule"><span class="lbl">Autonomy ladder</span><span class="line"></span></div>
+        <div class="ladder mono"><div class="seg">L0</div><div class="seg">L1</div><div class="seg lit">L2</div><div class="seg">L3</div></div>
+        <div class="rule"><span class="lbl">Touch counters (this week)</span><span class="line"></span></div>
+        <div class="touchgrid mono">
+          <div class="t"><div class="num z">0</div><div class="lbl">ROUTINE</div></div>
+          <div class="t"><div class="num" style="color:var(--gold)">1</div><div class="lbl">EXCEPTION</div></div>
+        </div>
+        <div class="footerline">"Programme-wide" tag never changes with the Book selector — amendment §D.</div>
+      </div>
+    </div>
+    <div class="caption"><b>Book-invariant lens.</b> The one lens whose header tag is a constant, not a
+      variable — proof the Book selector genuinely does not apply here.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">B</span><h2 class="mono">COLD-START / EMPTY STATES</h2></div>
+<div class="secnote">What every lens looks like before a Book has produced anything in that category —
+  a fresh Book B on its first day, or Book A immediately after opening a brand-new Observation Space.
+  Wording follows the live EA panel's own convention exactly ("no {noun} {past-participle} yet") rather
+  than inventing new copy for the Kernel side.</div>
+
+<div class="board">
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">OBSERVE</div><div class="tagr mono">Book B (day 1)</div></div>
+      <div class="pbody">
+        <div class="rule"><span class="lbl">Feed status</span><span class="line"></span></div>
+        <div class="well">no instruments registered yet</div>
+        <div class="rule"><span class="lbl">Anti-hindsight tripwire</span><span class="line"></span></div>
+        <div class="footerline">ANTI-HINDSIGHT: 0 checks today · nothing to check yet</div>
+      </div>
+    </div>
+    <div class="caption"><b>OBSERVE cold-start.</b> Explicitly distinguished from degraded (Section C) —
+      "nothing registered" is a normal, honest state, never rendered with a warning color.</div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">DISCOVER</div><div class="tagr mono">Book A</div></div>
+      <div class="pbody">
+        <div class="banner"><b>NO VERDICT LIVES ON THIS SCREEN</b></div>
+        <div class="rule"><span class="lbl">Screener shortlist</span><span class="line"></span></div>
+        <div class="well">no candidates shortlisted yet</div>
+        <div class="rule"><span class="lbl">Observatory questions</span><span class="line"></span></div>
+        <div class="well">no anomalies raised yet</div>
+      </div>
+    </div>
+    <div class="caption"><b>The banner stays even when empty.</b> The "no verdict" warning is not
+      content-dependent — it is a permanent property of this lens, not a message about current data.</div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">EVIDENCE</div><div class="tagr mono">Book B (day 1)</div></div>
+      <div class="pbody">
+        <div class="rule"><span class="lbl">Hypothesis queue</span><span class="line"></span></div>
+        <div class="well">no hypotheses queued yet</div>
+        <div class="rule"><span class="lbl">Window ledger</span><span class="line"></span></div>
+        <div class="well">no windows designated yet</div>
+      </div>
+    </div>
+    <div class="caption"><b>Nothing to hide.</b> An empty Window Ledger is not a bug state — a Book with
+      no designated windows yet has produced no claims, which is exactly correct.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">C</span><h2 class="mono">DEGRADED STATE</h2></div>
+<div class="secnote">What the console looks like when a dependency is unhealthy — never a silently
+  frozen-looking stale number. Every value that cannot currently be trusted is muted grey with a
+  trailing <span class="mono deg-mark">‡</span> and a named cause in the footer, matching the
+  Supervisor's own "traceable" invariant (G-7): never a bare "unhealthy."</div>
+
+<div class="board">
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">OBSERVE</div><div class="tagr mono warn">Book A · DEGRADED</div></div>
+      <div class="pbody">
+        <div class="banner red">KERNEL STATE BUS STALE — last update 47s ago (threshold 5s)</div>
+        <div class="rule"><span class="lbl">Feed status</span><span class="line"></span></div>
+        <table>
+          <tr><th>Instrument</th><th>Source</th><th class="num">Lag</th><th class="num">Obs/min</th></tr>
+          <tr><td class="deg">XAUUSDm</td><td class="deg mono">MT5 tick</td><td class="num deg mono">0.2s <span class="deg-mark">‡</span></td><td class="num deg">1,840 <span class="deg-mark">‡</span></td></tr>
+        </table>
+        <div class="degnote">‡ last confirmed 47s ago — not necessarily current</div>
+      </div>
+    </div>
+    <div class="caption"><b>Muted, not hidden.</b> Old data stays visible (it may still be useful context)
+      but is unmistakably marked as unconfirmed — never quietly presented as live.</div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">GOVERNANCE</div><div class="tagr mono warn">DEGRADED</div></div>
+      <div class="pbody">
+        <div class="rule"><span class="lbl">Supervisor / Runner</span><span class="line"></span></div>
+        <div class="kpi">
+          <div class="cell"><div class="l">Supervisor</div><div class="v green">HEALTHY</div></div>
+          <div class="cell"><div class="l">Runner</div><div class="v gold">DEGRADED</div></div>
+        </div>
+        <div class="degnote">Runner DEGRADED: heartbeat age 38s (threshold 20s) — cause named per G-7, never bare</div>
+        <div class="rule danger"><span class="lbl">Consequence</span><span class="line"></span></div>
+        <div class="footerline r">New experiments refused while DEGRADED — fail-closed (ADR-005 §9.2).</div>
+      </div>
+    </div>
+    <div class="caption"><b>Degraded has teeth.</b> Shown alongside the actual behavioral consequence
+      (refusing new experiments), not just a colored status word.</div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="ph"><div class="h mono">EVIDENCE</div><div class="tagr mono warn">Book A · DEGRADED</div></div>
+      <div class="pbody">
+        <div class="rule"><span class="lbl">Hypothesis queue</span><span class="line"></span></div>
+        <table>
+          <tr><th>Hypothesis</th><th>Source</th><th>Status</th></tr>
+          <tr><td class="deg">Spread↓+Tick↑+Vol↓+VWAP</td><td class="deg mono">screener</td><td><span class="pill run deg">PAUSED ‡</span></td></tr>
+        </table>
+        <div class="degnote">EvidenceBattery runs are paused while the Runner is DEGRADED — no new Verdicts until healthy.</div>
+      </div>
+    </div>
+    <div class="caption"><b>Verdicts don't run degraded.</b> A running Hypothesis becomes PAUSED, never
+      silently continues on data whose freshness cannot currently be attested.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">D</span><h2 class="mono">BOOK SELECTOR — EXPANDED, INCLUDING AN UNOPENED BOOK</h2></div>
+<div class="secnote">The dropdown's actual contents: Book A populated and selected, Book B shown as a
+  real but empty Book (its first day — see Section B), and Book C rendered as <b>NOT YET OPENED</b> —
+  greyed and non-clickable, because no <span class="mono">docs/books/</span> folder exists for it yet.
+  This is "growth by mitosis, never pre-allocation" made visible in the UI, not just written in the docs.</div>
+
+<div style="position:relative;max-width:900px">
+  <div class="topbar" style="border:1px solid var(--hair)">
+    <div class="title mono">QRF RESEARCH CONSOLE</div>
+    <div class="booksel mono">Book A: NeelPrajna <span class="car">▾</span></div>
+    <div class="healthchip mono"><span class="dot"></span>KERNEL HEALTHY · bus updated 0.4s ago</div>
+    <div class="clock mono">14:32:07 UTC</div>
+  </div>
+  <div class="bookdrop">
+    <div class="bookrow active"><div class="name mono">Book A: NeelPrajna</div><div class="status mono g">healthy · 3 patterns · v5.9.0</div></div>
+    <div class="bookrow"><div class="name mono">Book B: (unnamed — opened 2026-07-28)</div><div class="status mono">day 1 · 0 patterns yet</div></div>
+    <div class="bookrow notopen"><div class="name mono">Book C</div><div class="status mono">NOT YET OPENED</div></div>
+  </div>
+</div>
+<div class="caption" style="max-width:900px"><b>Selecting Book B</b> re-renders OBSERVE/KNOWLEDGE/DISCOVER/EVIDENCE
+  from its own (currently empty, per Section B) state slice. GOVERNANCE does not change — see the Book-invariant
+  card in Section A.</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">E</span><h2 class="mono">DETAIL VIEW — HYPOTHESIS (opened from EVIDENCE)</h2></div>
+<div class="secnote">Full history for one hypothesis: origin, every window it ran against, the specific
+  epistemic-rule reminder relevant to its shape, and — only once a Verdict exists — the exact BeliefLayer
+  diff. Closed by an explicit control only, never click-outside (amendment §E).</div>
+
+<div class="modalwrap">
+  <div class="modal">
+    <div class="mh">
+      <div class="t mono">HYPOTHESIS — B6 as addition (T1_B1B6) <span class="hash">#h-2291</span></div>
+      <div class="mclose">✕ CLOSE</div>
+    </div>
+    <div class="mbody">
+      <div class="mcol">
+        <div class="eyebrow">ORIGIN</div>
+        <div class="footerline" style="margin-top:0">source: human (Girish) · submitted 2026-07-23 · via ADR-004 amendment review</div>
+
+        <div class="reminder"><b>R2 REMINDER</b> — this hypothesis compares T1_B1B6 against T1_base. Confirm
+          the arms differ in exactly one thing (the B6 gate) before trusting the result below.</div>
+
+        <div class="eyebrow" style="margin-top:16px">WINDOWS RUN AGAINST</div>
+        <table>
+          <tr><th>Window</th><th>Designated</th><th>Status</th></tr>
+          <tr><td class="mono">w-2026-07a</td><td class="mono">Jul 01</td><td class="mono g">VIRGIN</td></tr>
+          <tr><td class="mono hatch">w-2026-06c</td><td class="mono">Jun 14</td><td class="mono r">BURNED</td></tr>
+        </table>
+      </div>
+      <div class="mcol">
+        <div class="eyebrow">VERDICT</div>
+        <div class="pill pass" style="font-size:10px;padding:4px 10px">PASS</div>
+        <div class="rule" style="margin-top:14px"><span class="lbl">BeliefLayer diff</span><span class="line"></span></div>
+        <div class="kpi">
+          <div class="cell"><div class="l">Confidence before</div><div class="v">0.52</div></div>
+          <div class="cell"><div class="l">Confidence after</div><div class="v green">0.71 ▲</div></div>
+          <div class="cell"><div class="l">Win rate (window)</div><div class="v">n=11, +0.34R/trade</div></div>
+          <div class="cell"><div class="l">Max DD (window)</div><div class="v gold">1.2R</div></div>
+        </div>
+        <div class="footerline">Verdict recorded 2026-07-23 · evidence bundle sealed (ADR-005 §7) · cited in DR-011</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<div class="sechead"><span class="idx mono">F</span><h2 class="mono">DETAIL VIEW — CONTRADICTION (opened from KNOWLEDGE)</h2></div>
+<div class="secnote">Two contradicting patterns shown side by side for a human to weigh — deliberately
+  <b>no resolve button, no suggested winner</b>. The Kernel does not adjudicate its own contradictions.</div>
+
+<div class="modalwrap">
+  <div class="modal">
+    <div class="mh">
+      <div class="t mono">CONTRADICTION — <span class="hash">#a3f9</span> vs <span class="hash">#f004</span></div>
+      <div class="mclose">✕ CLOSE</div>
+    </div>
+    <div class="mbody">
+      <div class="mcol">
+        <div class="eyebrow">PATTERN #A3F9 — Liquidity Sweep</div>
+        <div class="scopechip" style="margin-bottom:8px;display:inline-block">XAUUSD·M5·London·trend</div>
+        <div class="kpi">
+          <div class="cell"><div class="l">Win rate</div><div class="v green">63%</div></div>
+          <div class="cell"><div class="l">Confidence</div><div class="v">0.87</div></div>
+          <div class="cell"><div class="l">Supporting evidence</div><div class="v">4 verdicts</div></div>
+          <div class="cell"><div class="l">Last updated</div><div class="v muted">2d ago</div></div>
+        </div>
+      </div>
+      <div class="mcol">
+        <div class="eyebrow">PATTERN #F004 — Tue 09:45 Anomaly</div>
+        <div class="scopechip" style="margin-bottom:8px;display:inline-block">XAUUSD·M15·all·all</div>
+        <div class="kpi">
+          <div class="cell"><div class="l">Win rate</div><div class="v red">44%</div></div>
+          <div class="cell"><div class="l">Confidence</div><div class="v">0.39</div></div>
+          <div class="cell"><div class="l">Supporting evidence</div><div class="v">1 verdict</div></div>
+          <div class="cell"><div class="l">Last updated</div><div class="v muted">2h ago</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="mbody" style="padding-top:0">
+      <div class="mcol">
+        <div class="banner blue">Overlapping scope: both patterns claim London-session XAUUSD behavior on
+          overlapping timeframes. Neither is retracted automatically.</div>
+        <div style="text-align:right;margin-top:10px"><span class="actbtn" style="padding:5px 12px">OPEN RESOLVING HYPOTHESIS →</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
