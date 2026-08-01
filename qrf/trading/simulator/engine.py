@@ -332,7 +332,10 @@ class EventEngine:
         for c in ("ts", "direction", "strength"):
             if c not in events.columns:
                 raise SchemaViolation(f"events missing column {c!r}")
-        if execution.event_stop_column is not None and execution.event_stop_column not in events.columns:
+        if (
+            execution.event_stop_column is not None
+            and execution.event_stop_column not in events.columns
+        ):
             raise SchemaViolation(
                 f"events missing column {execution.event_stop_column!r} required by "
                 "execution.event_stop_column"

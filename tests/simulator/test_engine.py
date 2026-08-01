@@ -463,7 +463,10 @@ def test_execspec_event_stop_column_and_target_r_multiple_roundtrip_through_dict
 def test_execspec_legacy_dict_without_new_keys_still_parses():
     # A dict shaped exactly like every sealed hypothesis's execution (AC-1): no
     # event_stop_column / target_r_multiple keys at all.
-    d = {"hold_bars": 4, "size": 1.0, "strength_min": 0.0, "stop_offset": None, "target_offset": None}
+    d = {
+        "hold_bars": 4, "size": 1.0, "strength_min": 0.0,
+        "stop_offset": None, "target_offset": None,
+    }
     exe = ExecutionSpec.from_dict(d)
     assert exe.event_stop_column is None and exe.target_r_multiple is None
 
