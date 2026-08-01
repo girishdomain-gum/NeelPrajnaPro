@@ -117,6 +117,18 @@ for CMD in "${COMMANDS[@]}"; do
   esac
 done
 
+# --- guard: no shell metacharacters (A-011 required sharpening) --------------
+# The whitelist above validates PREFIXES only, so `git status && rm -rf /`
+# would ride through `bash -c` unchecked. Refuse any command line containing
+# ; & | ` $( ) — chaining, backgrounding, piping, or substitution — loudly,
+# before executing anything. Job files are plain single-command lines by
+# design; this guard just enforces that design intent mechanically.
+for CMD in "${COMMANDS[@]}"; do
+  if [[ "$CMD" =~ [\;\&\|\`\$\(\)] ]]; then
+    refuse "$JOB_ID: command line contains shell metacharacters: $CMD"
+  fi
+done
+
 echo "PROCESSING: $JOB_ID (refs $REFS_ID, type $JOB_TYPE)"
 echo "--- job file content ---"
 cat "$JOB_FILE"
