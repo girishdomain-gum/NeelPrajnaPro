@@ -17,8 +17,6 @@ import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import probe_mt5_terminal as probe_mod  # noqa: E402
 
@@ -150,6 +148,22 @@ def test_module_importable_standalone():
     assert hasattr(probe_mod, "main")
 
 
+def test_pinned_identity_constants_match_adoption_adaptations_doc():
+    """A-044 point 3: the pin must not drift from ADOPTION_ADAPTATIONS.md
+    again. Rather than parsing that doc's free-text table cell into
+    structured config (fragile against innocuous wording edits), this
+    pins the relationship the other way: the doc's recorded row must
+    still CONTAIN the exact strings this file hardcodes as constants —
+    if a future repin edits one and not the other, this fails loudly."""
+    doc_path = Path(__file__).resolve().parents[2] / "ADOPTION_ADAPTATIONS.md"
+    text = doc_path.read_text(encoding="utf-8")
+    assert probe_mod.TERMINAL_INSTALL_DIR in text
+    assert probe_mod.SUPERSEDED_TERMINAL_INSTALL_DIR in text
+    # the doc records the company with its full legal suffix; the code's
+    # token is a deliberately shorter case-insensitive substring of it
+    assert probe_mod.VANTAGE_COMPANY_TOKEN in text.lower()
+
+
 # --- A-039 VANTAGE-ONLY identity check: drilled RED before trusted GREEN ---
 
 class _FakeTerminalInfo:
@@ -161,13 +175,20 @@ class _FakeTerminalInfo:
 
 
 VANTAGE_INFO = _FakeTerminalInfo(
-    path=probe_mod.TERMINAL_INSTALL_DIR, company="Vantage International Group Limited",
+    path=probe_mod.TERMINAL_INSTALL_DIR, company="Vantage Markets (Pty) Ltd",
 )
 # A-039 rule 4: no OTHER broker's real name/path/server ever appears in
 # this repo, including in a drill fixture — a generic placeholder proves
 # the refusal on ANY mismatch just as well as a real name would.
 OTHER_BROKER_INFO = _FakeTerminalInfo(
     path=r"C:\Program Files\Some Other Broker MT5", company="Some Other Broker Ltd",
+)
+# A-044: the OLD Vantage install is now a plausible-but-unpinned
+# neighbour, not a competitor — same brand family, wrong build, wrong
+# path. This is exactly the case an identity check exists to catch, so
+# it gets its own drill distinct from OTHER_BROKER_INFO above.
+SUPERSEDED_VANTAGE_INFO = _FakeTerminalInfo(
+    path=probe_mod.SUPERSEDED_TERMINAL_INSTALL_DIR, company="Vantage International Group Limited",
 )
 
 
@@ -185,13 +206,17 @@ def test_identity_matches_vantage_rejects_wrong_path_and_company():
 
 
 def test_identity_matches_vantage_rejects_right_path_wrong_company():
-    mismatched = _FakeTerminalInfo(path=probe_mod.TERMINAL_INSTALL_DIR, company="Some Other Broker Ltd")
+    mismatched = _FakeTerminalInfo(
+        path=probe_mod.TERMINAL_INSTALL_DIR, company="Some Other Broker Ltd",
+    )
     ok, _ = probe_mod._identity_matches_vantage(mismatched)
     assert ok is False
 
 
 def test_identity_matches_vantage_rejects_right_company_wrong_path():
-    mismatched = _FakeTerminalInfo(path=r"C:\Somewhere\Else", company="Vantage International Group Limited")
+    mismatched = _FakeTerminalInfo(
+        path=r"C:\Somewhere\Else", company="Vantage Markets (Pty) Ltd",
+    )
     ok, _ = probe_mod._identity_matches_vantage(mismatched)
     assert ok is False
 
@@ -202,13 +227,29 @@ def test_identity_matches_vantage_rejects_none():
     assert "None" in detail
 
 
+def test_identity_matches_vantage_rejects_superseded_install(monkeypatch):
+    """A-044 drill: the OLD Vantage install must now be treated as a
+    refusal like any other mismatch, even though it still says
+    'Vantage' — the pin decides which install is THIS project's, not
+    the brand name alone."""
+    ok, detail = probe_mod._identity_matches_vantage(SUPERSEDED_VANTAGE_INFO)
+    assert ok is False
+    assert "WRONG TERMINAL ATTACHED" in detail
+
+
+def test_pin_and_superseded_pin_are_distinct_paths():
+    assert probe_mod.TERMINAL_INSTALL_DIR != probe_mod.SUPERSEDED_TERMINAL_INSTALL_DIR
+
+
 class _FakeMT5:
     """Simulates the MetaTrader5 module surface probe() touches. Tracks
     which data-reading calls actually happened, so the drill can prove
     the identity refusal reads NOTHING beyond terminal_info()."""
 
-    def __init__(self, term_info):
+    def __init__(self, term_info, init_ok=True, init_error=(0, "no error")):
         self._term_info = term_info
+        self._init_ok = init_ok
+        self._init_error = init_error
         self.symbols_get_called = False
         self.account_info_called = False
         self.copy_rates_called = False
@@ -217,10 +258,10 @@ class _FakeMT5:
 
     def initialize(self, path=None):
         assert path == probe_mod.TERMINAL_EXE  # A-039 rule 2: path always supplied
-        return True
+        return self._init_ok
 
     def last_error(self):
-        return (0, "no error")
+        return self._init_error
 
     def terminal_info(self):
         return self._term_info
@@ -284,6 +325,65 @@ def test_probe_green_control_reads_data_when_vantage_identity_matches(monkeypatc
     assert report["matching_symbols"] == ["XAUUSDm"]
     assert report["depth_check"] == {"XAUUSDm": 10}
     assert fake.shutdown_called is True
+
+
+def test_probe_refuses_superseded_vantage_install(monkeypatch):
+    """A-044 end-to-end drill: a terminal at the OLD pinned path answers
+    (plausible — it still says 'Vantage') and the probe must refuse it
+    exactly like any other mismatch, reading nothing further."""
+    fake = _FakeMT5(SUPERSEDED_VANTAGE_INFO)
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    monkeypatch.setattr(probe_mod, "TERMINAL_EXE", __file__)
+    monkeypatch.setattr(probe_mod, "_running_pids_by_path", lambda exe: set())
+    monkeypatch.setattr(probe_mod, "LAUNCH_WAIT_SECONDS", 0)
+
+    report = probe_mod.probe("XAUUSD")
+
+    assert report["vantage_identity_ok"] is False
+    assert "WRONG TERMINAL ATTACHED" in report["vantage_identity_detail"]
+    assert fake.account_info_called is False
+    assert fake.symbols_get_called is False
+    assert fake.copy_rates_called is False
+
+
+def test_fprobe1_orphan_detected_and_closed_when_initialize_fails_after_launch(monkeypatch):
+    """F-PROBE-1 (A-043) drill: initialize() STARTS the terminal and THEN
+    fails (e.g. no stored auto-login — exactly JOB-018's real finding).
+    Before the fix, the launch-detection re-scan only ran on the success
+    path, so we_launched_it/closed_by_probe stayed False even though a
+    real orphaned process was left running. This proves the fix: the
+    re-scan (and therefore the leave-as-found close) runs on the FAILURE
+    path too."""
+    fake = _FakeMT5(VANTAGE_INFO, init_ok=False, init_error=(-6, "Terminal: Authorization failed"))
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    monkeypatch.setattr(probe_mod, "TERMINAL_EXE", __file__)
+    monkeypatch.setattr(probe_mod, "LAUNCH_WAIT_SECONDS", 5)
+    monkeypatch.setattr(probe_mod, "LAUNCH_POLL_SECONDS", 0)
+
+    calls = {"n": 0}
+    launched_pid = 424242
+
+    def fake_pid_scan(exe):
+        calls["n"] += 1
+        # 1st call = pre-launch scan (before initialize): nothing running.
+        # every call after = the terminal initialize() itself started.
+        return set() if calls["n"] == 1 else {launched_pid}
+
+    monkeypatch.setattr(probe_mod, "_running_pids_by_path", fake_pid_scan)
+    killed = []
+    monkeypatch.setattr(probe_mod, "_kill_pids", lambda pids: killed.extend(pids))
+
+    report = probe_mod.probe("XAUUSD")
+
+    assert report["initialize_ok"] is False
+    assert "Authorization failed" in report["initialize_error"]
+    # the fix: launch was detected DESPITE the auth failure...
+    assert report["we_launched_it"] is True
+    # ...and leave-as-found closed the orphan rather than abandoning it
+    assert report["closed_by_probe"] is True
+    assert killed == [launched_pid]
+    # identity check never runs — initialize() itself failed first
+    assert report["vantage_identity_ok"] is None
 
 
 def test_print_report_red_and_refused_detail_shown_on_wrong_terminal(monkeypatch):

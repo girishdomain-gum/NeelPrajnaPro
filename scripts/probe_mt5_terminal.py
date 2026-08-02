@@ -32,6 +32,18 @@ credential is ever referenced anywhere in this repo, including here.
 
 Usage: python scripts/probe_mt5_terminal.py [SYMBOL_PREFIX]
   SYMBOL_PREFIX defaults to "XAUUSD".
+
+PIN HISTORY (A-044/O-022): the Owner reinstalled the Vantage terminal
+under a new build; the install path changed and the old one is now a
+DIFFERENT, unpinned installation that happens to still say "Vantage" —
+exactly the plausible-but-wrong neighbour an identity check exists to
+catch, not a broker mismatch. Both constants below are read off the
+Owner's own screenshots (ADOPTION_ADAPTATIONS.md's "EA folder / MT5
+terminal / TERMID" row is the single recorded source — test_probe_
+mt5_terminal.py's drift guard fails if this file and that doc ever
+disagree again).
+  CURRENT (pinned):  C:\\Program Files\\Vantage Markets MT5 Terminal\\
+  SUPERSEDED (must now REFUSE): C:\\Program Files\\Vantage International MT5\\
 """
 
 from __future__ import annotations
@@ -46,9 +58,14 @@ try:
 except ImportError:
     mt5 = None
 
-TERMINAL_EXE = r"C:\Program Files\Vantage International MT5\terminal64.exe"
-TERMINAL_INSTALL_DIR = r"C:\Program Files\Vantage International MT5"
-VANTAGE_COMPANY_TOKEN = "vantage"  # case-insensitive substring of terminal_info().company
+TERMINAL_INSTALL_DIR = r"C:\Program Files\Vantage Markets MT5 Terminal"
+TERMINAL_EXE = TERMINAL_INSTALL_DIR + r"\terminal64.exe"
+VANTAGE_COMPANY_TOKEN = "vantage markets"  # case-insensitive substring of terminal_info().company
+# Superseded install (O-010's original pin) — kept ONLY so the identity
+# check's "plausible-but-unpinned neighbour" drill has a real, project-
+# owned path to test against. Not a competitor's name (A-039 rule 4
+# concerns OTHER brokers; this is this project's own retired pin).
+SUPERSEDED_TERMINAL_INSTALL_DIR = r"C:\Program Files\Vantage International MT5"
 PROBE_TIMEFRAME = "M5"
 PROBE_BAR_COUNT = 10  # depth-presence check only, never a real pull
 LAUNCH_WAIT_SECONDS = 30
@@ -71,7 +88,11 @@ def _identity_matches_vantage(term_info):
     company_ok = VANTAGE_COMPANY_TOKEN in company.lower()
     if path_ok and company_ok:
         return True, f"path={path!r} company={company!r}"
-    return False, f"WRONG TERMINAL ATTACHED — path={path!r} company={company!r}, expected install {TERMINAL_INSTALL_DIR!r} and company containing {VANTAGE_COMPANY_TOKEN!r}"
+    return False, (
+        f"WRONG TERMINAL ATTACHED — path={path!r} company={company!r}, "
+        f"expected install {TERMINAL_INSTALL_DIR!r} "
+        f"and company containing {VANTAGE_COMPANY_TOKEN!r}"
+    )
 
 
 def _running_pids_by_path(target_exe):
@@ -161,13 +182,12 @@ def probe(symbol_prefix="XAUUSD"):
         # a bare initialize() attaches to whatever is running.
         ok = mt5.initialize(path=TERMINAL_EXE)
         report["initialize_ok"] = bool(ok)
-        if not ok:
-            err = mt5.last_error()
-            report["initialize_error"] = f"{err}"
-            return report
 
-        # Detect whether THIS call launched a new process, by polling for
-        # a PID that was not present before initialize() was called.
+        # F-PROBE-1 (A-043): initialize() can START the terminal process
+        # and THEN fail (e.g. no stored auto-login) — the launch already
+        # happened regardless of ok/not-ok, so this re-scan must run on
+        # EVERY exit from initialize(), not only the success path, or a
+        # failed run leaves an undetected, unclosed orphan.
         new_pids = set()
         deadline = time.time() + LAUNCH_WAIT_SECONDS
         while time.time() < deadline:
@@ -178,6 +198,11 @@ def probe(symbol_prefix="XAUUSD"):
             time.sleep(LAUNCH_POLL_SECONDS)
         report["we_launched_it"] = bool(new_pids) and not pre_pids
         report["_new_pids_for_shutdown"] = sorted(new_pids) if report["we_launched_it"] else []
+
+        if not ok:
+            err = mt5.last_error()
+            report["initialize_error"] = f"{err}"
+            return report
 
         # A-039, rule 1: IDENTITY CHECK BEFORE ANY DATA READ. initialize()
         # succeeding proves SOME terminal answered — not that it is
@@ -197,7 +222,8 @@ def probe(symbol_prefix="XAUUSD"):
         report["account_present"] = acct_info is not None  # presence only, no fields
 
         all_symbols = mt5.symbols_get() or ()
-        matches = sorted(s.name for s in all_symbols if s.name.upper().startswith(symbol_prefix.upper()))
+        prefix = symbol_prefix.upper()
+        matches = sorted(s.name for s in all_symbols if s.name.upper().startswith(prefix))
         report["matching_symbols"] = matches
 
         timeframe = getattr(mt5, f"TIMEFRAME_{PROBE_TIMEFRAME}")
