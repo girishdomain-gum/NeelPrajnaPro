@@ -27,6 +27,7 @@ from qrf.kernel.errors import (
     SchemaViolation,
     WindowBurnedError,
 )
+from qrf.kernel.records.epistemic import refuse_if_tainted
 from qrf.kernel.records.record import Record, now_ns
 from qrf.kernel.records.store import RecordStore
 
@@ -121,8 +122,14 @@ class WindowLedger:
 
         Parents are the window and the consuming verdict. Both must exist (I-3).
         In production this is called only by the battery (§4.7 step 9).
+
+        Refuses (:class:`qrf.kernel.errors.EpistemicTaintError`) if
+        ``window_ref`` traces to zero-epistemic-weight NPSU-migrated data
+        (Architecture B.1, WO-07) — a closed-write-authority gate, checked
+        before anything is appended.
         """
         self._window(window_ref)  # existence + type check
+        refuse_if_tainted(self._store, window_ref, context="WindowLedger.burn")
         payload = {
             "window_ref": window_ref,
             "lineage": lineage,

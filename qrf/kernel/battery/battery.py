@@ -55,6 +55,7 @@ from qrf.kernel.protocol import seeds
 from qrf.kernel.protocol.splits import SplitSpec, walk_forward_multi
 from qrf.kernel.protocol.windows import WindowLedger
 from qrf.kernel.records.bulk import BulkStore
+from qrf.kernel.records.epistemic import refuse_if_tainted
 from qrf.kernel.records.record import Record, now_ns
 from qrf.kernel.records.store import RecordStore
 
@@ -152,6 +153,16 @@ class EvidenceBattery:
                 f"found {len(windows)}"
             )
         return [self._store.get(windows[0])]
+
+    def _check_not_tainted(self, hyp: Record, windows: list[Record]) -> None:
+        """Closed-write-authority gate (Architecture B.1, WO-07): refuse if the
+        hypothesis or any of its judged windows traces to zero-epistemic-
+        weight NPSU-migrated data. Applied to BOTH evaluate() and run() —
+        even a placebo dry-run must never touch tainted data on principle,
+        not only the write path."""
+        refuse_if_tainted(self._store, hyp.record_id, context="EvidenceBattery")
+        for w in windows:
+            refuse_if_tainted(self._store, w.record_id, context="EvidenceBattery")
 
     def _check_designations(self, windows: list[Record]) -> None:
         """Every judged window must be TRAINING/EXPLORATION (VIRGIN → refuse)."""
@@ -439,6 +450,7 @@ class EvidenceBattery:
             )
         windows = self._hypothesis_windows(hyp)
         self._check_designations(windows)
+        self._check_not_tainted(hyp, windows)
         if engine_seed is None:
             # Seed anchored on the first window (deterministic; same for run/evaluate).
             engine_seed = seeds.for_run(hypothesis_ref, windows[0].record_id)
@@ -487,6 +499,7 @@ class EvidenceBattery:
 
         # 3. window checks: EVERY window TRAINING/EXPLORATION + none burned for this lineage.
         self._check_designations(windows)
+        self._check_not_tainted(hyp, windows)
         for wref in window_refs:
             self._windows.check_available(wref, lineage)  # WindowBurnedError on re-run
 

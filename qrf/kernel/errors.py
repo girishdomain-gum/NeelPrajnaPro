@@ -71,6 +71,11 @@ class GraduationRefused(QRFError):
     """A promotion was refused: one of its four graduation gates did not hold."""
 
 
+class EpistemicTaintError(QRFError):
+    """A verdict/burn/trial/belief write was refused: the input traces to
+    zero-epistemic-weight NPSU-migrated data (Architecture B.1, WO-07)."""
+
+
 # --- Firewall (CI-time) ------------------------------------------------------
 class FirewallViolation(QRFError):
     """Kernel code imported domain code, or used forbidden domain vocabulary."""

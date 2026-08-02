@@ -40,6 +40,7 @@ read back into a verdict — firewall-style, Blueprint §4.8).
 from __future__ import annotations
 
 from qrf.kernel.errors import SchemaViolation, UnknownRecordError
+from qrf.kernel.records.epistemic import refuse_if_tainted
 from qrf.kernel.records.record import Record, now_ns
 from qrf.kernel.records.store import RecordStore
 
@@ -138,6 +139,9 @@ class BeliefLayer:
         ``belief`` record is appended pointing back at the prior state.
         """
         self._verdict(verdict_ref)  # arrow-8 audit: refuse a non-verdict ref
+        # Closed-write-authority gate (Architecture B.1, WO-07): a belief must
+        # never trace to zero-epistemic-weight NPSU-migrated data.
+        refuse_if_tainted(self._store, verdict_ref, context="BeliefLayer.update")
 
         prior = self.latest(family, claim)
         prior_refs: list[str] = list(prior.payload["verdict_refs"]) if prior else []
