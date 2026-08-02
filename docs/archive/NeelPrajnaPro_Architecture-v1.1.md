@@ -34,6 +34,31 @@ evidence: 17 script-registered + H-07 separate = 18 distinct) and F-DOC-2
 
 ## Part A — The Destination (Owner vision ruling 2026-07-29; cycle re-cut 2026-08-02)
 
+### A.0 The extension relationship (clarification, 2026-08-02, Owner order O-055)
+
+**NeelPrajnaPro is an extension OF NeelPrajna (F:\Fable), not a sibling and
+not a replacement.** The dependency direction is asymmetric and permanent:
+NeelPrajna can trade without Pro but cannot KNOW; Pro cannot exist without
+NeelPrajna — it would have no candidates, no data, and no consumer. Concretely,
+NeelPrajna is, to this repository:
+1. **The ORIGIN of every hypothesis.** H-07 (liquidity sweep) came from its
+   playbook; the 18 founding hypotheses from its research; H-08 (CCC/MML)
+   from its field-proven chart indicator. Pro has never judged a claim that
+   was not born at F:\Fable, and the pipeline assumes it never will until
+   Pattern Evolution passes Gate A.
+2. **The SOURCE of the evidence base.** The scientific memory's NP records
+   ARE NeelPrajna's output: the NPSU trade estate (migrated, journal
+   112→152), the 324 H-07 trades NP-S1 judged, and the R6 feed on the same
+   Vantage terminal, symbol, and clock NeelPrajna trades.
+3. **The GENERATOR of execution feedback** — fills, outcomes, performance —
+   which re-enter the Kernel as observations (§A.1 row 13) and seed the next
+   round of candidates. The loop is hands → observations → judge → knowledge
+   → hands, always through the wall, never around it.
+4. **The CONSUMER of everything Pro produces** (NS6–NS8).
+The wall is unchanged by this clarification — extension describes lineage and
+dependency, not permission: QRF still never trades, NeelPrajna still never
+learns on its own, and no NS sprint modifies F:\Fable's code.
+
 The two-organ architecture is the TARGET: Market → Observation Engine (one
 shared reality) → Core QRF Brain (domain-blind, this repository) ‖ Book-A
 NeelPrajna Runtime (trading organ, F:\Fable) → Knowledge+Evidence /
@@ -59,6 +84,7 @@ can compound.
 | 10 | Consumption design + runtime integration ruling | PLANNED (Owner ceremony NP-S4-class) | NS8 |
 | 11 | R6 forward collection (calendar-long) | RECURRING background thread, not a sprint | NS2→NS8 |
 | 12 | Pattern Evolution Wave-2 | HARD-LOCKED (Gate A + ECF survival + row-10 ruling) | outside the cycle |
+| 13 | Execution Feedback → Core (Performance Store) — NeelPrajna's fills/outcomes as observations | TARGET (runtime CSVs exist; the NPSU estate migration IS this row's historical half, DONE) | NS7 builds the ingestion path with Contract v2's Execution-Feedback/Performance objects; recurring once the runtime resumes |
 
 **The plan's acceptance test is unchanged:** when no row still reads TARGET/
 PLANNED/DESIGNED, the architecture is built. Rows 5 and 6 are parallel
@@ -75,7 +101,7 @@ alpha, or windows.
 | NS4 | H-08 pre-registration: statistic, N2 block-length re-derivation (§3.8), frozen thresholds → registration | two-key + Owner |
 | NS5 | H-08 judgment: Battery + N2 alongside, atomic verdict+burn, IVF re-derivation | Owner V9 |
 | NS6 | Belief update from Verdicts + Knowledge release format v1 (byte-reproducible) | — |
-| NS7 | Contract v2 objects + Publication Boundary implementation (leak drill RED) | — |
+| NS7 | Contract v2 objects + Publication Boundary implementation (leak drill RED) + Execution-Feedback/Performance ingestion path (runtime fills/outcomes → observations; §A.1 row 13) | — |
 | NS8 | Consumption design packet + Owner's runtime-integration ruling | Owner ceremony |
 
 ## Part B — The Binding Architecture (ratified 2026-07-29; §3 amended v1.1)
@@ -228,6 +254,17 @@ F:\Fable by this text; Diagram 7's "TARGET null library" is now BUILT (WO-15).
   corrected to F:\Fable and its integration scheduled (NS6–NS8). The wall,
   the Publication Boundary, the write-authority list, window law, and
   real-account safety are UNTOUCHED.
+- **Clarification (2026-08-02b, Owner order O-055; recorded as a
+  clarification, not an amendment, per the F-24 precedent — no requirement
+  changes):** the v1.1 re-cut DROPPED the ratified docx's "Execution feedback
+  → Core" box — restored as §A.1 row 13, scheduled at NS7, its historical
+  half (the NPSU estate migration) acknowledged as already DONE. Added §A.0
+  stating the extension relationship the ratified docx implies throughout:
+  NeelPrajnaPro is an extension of NeelPrajna (F:\Fable) — origin of every
+  hypothesis, source of the evidence base, generator of execution feedback,
+  consumer of all knowledge. Found by the Owner's own review; the Architect's
+  v1.1 under-stated the dependency direction and this entry records that
+  honestly.
 
 ---
 *Anchor: **execution stays where the hands are; truth moves to where the
