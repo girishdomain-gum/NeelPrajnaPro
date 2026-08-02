@@ -24,7 +24,21 @@ duplication; drilled RED exactly like the probe's originals.
 Writes NO journal record and performs NO scope registration or OOS
 designation -- those remain the Owner's two-key ceremony
 (A-025/A-037). This tool's only writes are a CSV and a provenance
-sidecar under data/incoming/.
+sidecar under the external evidence store (AM-07/O-049).
+
+EXTERNAL EVIDENCE STORE (AM-07, Owner order O-049): raw bulk market
+data is NEVER git-tracked (WO-14 is recurring, calendar-long collection
+-- tracking batches makes the repo grow without bound). The CSV +
+provenance twin land in EXTERNAL_EVIDENCE_STORE, outside the repo root,
+so no future .gitignore mismatch can pull them back in. The provenance
+twin now carries the CSV's own sha256 (``csv_sha256``) -- the whole
+point being that git stops holding the data and starts holding the
+PROOF of what the data was; a dataset that cannot be shown byte-
+identical to the one a verdict was computed from is not evidence,
+wherever it sits. Hash VERIFICATION against that recorded value is
+scripts/verify_csv_provenance.py's job, not this file's -- see this
+module's own SCOPE note above: collecting a hash is recording, judging
+one is verifying, and this file only does the former.
 
 Run:  .venv\\Scripts\\python.exe ivf\\mt5\\export_xauusd_m5.py \\
           <YYYY-MM-DD> <YYYY-MM-DD> [--tag TAG] [--out-dir DIR]
@@ -33,6 +47,7 @@ Run:  .venv\\Scripts\\python.exe ivf\\mt5\\export_xauusd_m5.py \\
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import sys
 from datetime import datetime, timedelta, timezone
@@ -49,6 +64,23 @@ SYMBOL_PIN = "XAUUSD"
 PERIOD_SECONDS = 300  # M5
 INCOMPLETE_SLACK = timedelta(days=7)  # a request's start may legitimately
 # land a few days late (weekend/holiday) without being a truncated pull
+
+# AM-07/O-049: the ONE named constant for the external (never-git-tracked)
+# evidence store. Every reader/writer of raw bulk market data imports this
+# rather than repeating the path as a string -- a location repeated in two
+# files is exactly what let O-044's bridge/-vs-.gitignore mismatch happen.
+EXTERNAL_EVIDENCE_STORE = r"F:\NeelPrajnaProData\incoming"
+
+
+def _sha256_file(path) -> str:
+    """The CSV's own content hash -- recorded into its provenance twin so
+    the twin can later prove (or disprove) byte-identity, never trusted
+    from memory or a filename."""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _identity_matches_vantage(term_info):
@@ -180,6 +212,8 @@ def export(symbol, date_from, date_to, tag, out_dir):
                     f"{_dow_of(t)}\n"
                 )
 
+        csv_sha256 = _sha256_file(csv_path)
+
         # symbol_info_tick's `time` is the LAST TICK, not a live clock -- when
         # the market is closed (weekend/holiday) that tick can be a day or
         # more stale, and naively subtracting wall-clock "now" from it then
@@ -225,6 +259,7 @@ def export(symbol, date_from, date_to, tag, out_dir):
             "max_gap_seconds": max_gap,
             "max_gap_after_server": _bar_time_to_server_str(max_gap_at) if max_gap_at else None,
             "history_complete_vs_request": "YES" if complete else "NO -- INCOMPLETE",
+            "csv_sha256": csv_sha256,
             "owner_provenance_statement": "(Owner fills: where does this feed's price come from?)",
             "declared_independence_tier": "(Owner fills: broker | lp | venue | unknown)",
         }
@@ -245,7 +280,7 @@ def main(argv=None):
     parser.add_argument("date_from", help="YYYY-MM-DD, UTC, inclusive-ish (server time, raw)")
     parser.add_argument("date_to", help="YYYY-MM-DD, UTC, exclusive-ish (server time, raw)")
     parser.add_argument("--tag", default="r6", help="filename tag (default: r6)")
-    parser.add_argument("--out-dir", default=os.path.join("data", "incoming"))
+    parser.add_argument("--out-dir", default=EXTERNAL_EVIDENCE_STORE)
     args = parser.parse_args(argv)
 
     date_from = datetime.strptime(args.date_from, "%Y-%m-%d").replace(tzinfo=timezone.utc)

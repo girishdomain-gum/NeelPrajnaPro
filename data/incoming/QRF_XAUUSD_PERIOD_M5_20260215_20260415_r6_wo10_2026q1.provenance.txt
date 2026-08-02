@@ -20,5 +20,6 @@ gaps_gt_1_period: 41
 max_gap_seconds: 263100
 max_gap_after_server: 2026.04.02 23:55:00
 history_complete_vs_request: YES
+csv_sha256: 638d5289e95bac36fea5e6fd69863438d1c2c0d9bab30977e371c0b4a405ee9e
 owner_provenance_statement: (Owner fills: where does this feed's price come from?)
 declared_independence_tier: (Owner fills: broker | lp | venue | unknown)

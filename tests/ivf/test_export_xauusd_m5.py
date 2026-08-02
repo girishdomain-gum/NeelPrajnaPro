@@ -242,6 +242,43 @@ def test_export_writes_csv_and_provenance_on_success(monkeypatch, tmp_path):
     assert prov["server_vs_gmt_offset_seconds_NOW"] is not None
     assert prov["server_vs_gmt_offset_NOW_unavailable_reason"] is None
 
+    # AM-07 item 3: the provenance twin carries the CSV's own sha256.
+    assert prov["csv_sha256"] == export_mod._sha256_file(csv_path)
+    assert f"csv_sha256: {prov['csv_sha256']}" in prov_text
+
+
+def test_sha256_file_matches_hashlib_directly(tmp_path):
+    p = tmp_path / "sample.csv"
+    p.write_bytes(b"time_open_sec,close\n1,2\n")
+    import hashlib
+    expected = hashlib.sha256(p.read_bytes()).hexdigest()
+    assert export_mod._sha256_file(p) == expected
+
+
+def test_sha256_file_detects_a_single_byte_change(tmp_path):
+    p = tmp_path / "sample.csv"
+    p.write_bytes(b"time_open_sec,close\n1,2\n")
+    original = export_mod._sha256_file(p)
+    p.write_bytes(b"time_open_sec,close\n1,3\n")  # one byte different
+    assert export_mod._sha256_file(p) != original
+
+
+def test_out_dir_defaults_to_the_external_evidence_store(monkeypatch):
+    """AM-07 item 2/6: the store is a single named constant, not a string
+    repeated in two files -- main()'s CLI default must read FROM it."""
+    captured = {}
+
+    def _fake_export(symbol, date_from, date_to, tag, out_dir):
+        captured["out_dir"] = out_dir
+        return {"csv_path": "x", "provenance_path": "y", "bars_written": 0,
+                 "first_bar_open_server": "", "last_bar_open_server": "",
+                 "gaps_gt_1_period": 0, "history_complete_vs_request": "YES"}
+
+    monkeypatch.setattr(export_mod, "export", _fake_export)
+    export_mod.main(["2025-10-01", "2025-11-01"])  # no --out-dir given
+    assert captured["out_dir"] == export_mod.EXTERNAL_EVIDENCE_STORE
+    assert export_mod.EXTERNAL_EVIDENCE_STORE == r"F:\NeelPrajnaProData\incoming"
+
 
 def test_export_does_not_report_nonsense_offset_from_a_stale_tick(monkeypatch, tmp_path):
     """F-EXPORT-1 (self-caught, real run, Sunday 2026-08-02): the market
