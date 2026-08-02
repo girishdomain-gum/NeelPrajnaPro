@@ -88,7 +88,13 @@ GREEN after migration.
 
 ──────── V-GATE P2 ────────
 Both DONE · WO-08 checker GREEN post-migration · F-DOC-1 (17 vs 18 founding)
-resolved by counting journal records, one-line doc correction committed.
+resolved BY EVIDENCE — counted from the journal's own records (D-014): 17
+script-registered + H-07's separate registrations = 18 distinct hypotheses,
+19 counted attempts. The two texts named different things; NO doc edit was
+required, and "resolved" here means the count was verified, not that a
+correction was committed (wording corrected 2026-08-02 per D-028's flag) ·
+The real NPSU migration's journal delta COMMITTED and pushed on main — a
+verified write that exists only in a working tree is not durably recorded.
 
 ════════ PHASE P3 — FIRST NP EXISTENCE JUDGMENT (the NP-S3 window; Sessions S6-S7) ════════
 Maps_to: "Pattern Learning — first NP existence judgment" + Scientific Model
