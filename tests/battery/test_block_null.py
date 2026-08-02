@@ -18,8 +18,11 @@ import pytest
 
 from qrf.kernel.battery.block_null import (
     BLOCK_BARS,
+    empirical_one_sided_p,
+    n_local_sweeps,
     resample_bar_blocks,
     run_block_null,
+    run_block_null_local,
 )
 from qrf.kernel.errors import SchemaViolation
 from qrf.trading.concepts.neelprajna.detector import LiquiditySweepDetector
@@ -265,3 +268,166 @@ def test_real_burned_window_matches_the_quoted_gap_evidence(tmp_path):
     assert len(gaps) == 325
     assert over_7 == 181
     assert over_7 / len(gaps) == pytest.approx(0.556923076923077)
+
+
+# --- WO-16/C2: n_local_sweeps statistic (A-024's open item, D-041) --------
+def test_n_local_sweeps_counts_only_sweeps_within_block_bars():
+    """Mechanical: the statistic reads each SWEEP's own pool_age_bars meta
+    field and filters on it -- F-27 (a check must be shown able to return a
+    positive before its clean is trusted): plant one LOCAL and one LONG-RANGE
+    sweep in the same table, confirm only the local one is counted."""
+    events = pa.table(
+        {
+            "ts": pa.array([1, 2], type=pa.int64()),
+            "event_type": pa.array(
+                ["neelprajna.liquidity_sweep.sweep", "neelprajna.liquidity_sweep.sweep"]
+            ),
+            "direction": pa.array([-1, -1]),
+            "level": pa.array([100.0, 101.0]),
+            "meta": pa.array(
+                [
+                    __import__("json").dumps({"pool_age_bars": 3}),
+                    __import__("json").dumps({"pool_age_bars": 15}),
+                ]
+            ),
+        }
+    )
+    assert n_local_sweeps(events) == 1
+    assert n_local_sweeps(events, block_bars=20) == 2
+
+
+def test_n_local_sweeps_ignores_pool_formed_events():
+    events = pa.table(
+        {
+            "ts": pa.array([1], type=pa.int64()),
+            "event_type": pa.array(["neelprajna.liquidity_sweep.pool_formed"]),
+            "direction": pa.array([-1]),
+            "level": pa.array([100.0]),
+            "meta": pa.array([__import__("json").dumps({"pool_members": 2})]),
+        }
+    )
+    assert n_local_sweeps(events) == 0
+
+
+def test_n_local_sweeps_empty_table_is_zero():
+    events = pa.table(
+        {
+            "ts": pa.array([], type=pa.int64()),
+            "event_type": pa.array([], type=pa.string()),
+            "direction": pa.array([], type=pa.int64()),
+            "level": pa.array([], type=pa.float64()),
+            "meta": pa.array([], type=pa.string()),
+        }
+    )
+    assert n_local_sweeps(events) == 0
+
+
+def test_run_block_null_local_rejects_bad_params():
+    day = _flat_day(100, 40)
+    with pytest.raises(SchemaViolation):
+        run_block_null_local(day, LiquiditySweepDetector(), base_seed=1, n_runs=0)
+    with pytest.raises(SchemaViolation):
+        run_block_null_local(day, LiquiditySweepDetector(), base_seed=-1, n_runs=5)
+
+
+def test_planted_long_range_pair_is_excluded_by_the_local_statistic_on_real_data():
+    """The exact fixture whose only event is the planted LONG-RANGE (gap=15)
+    pair: n_local_sweeps on the REAL (undisturbed) detection must be 0 -- the
+    raw statistic (run_block_null) would count this event; the local
+    statistic (C2's whole point) must not."""
+    bars = _planted_pair_bars()
+    table = pa.table(
+        {
+            "ts": pa.array(bars["ts"].tolist(), type=pa.int64()),
+            "high": pa.array(bars["high"].tolist(), type=pa.float64()),
+            "low": pa.array(bars["low"].tolist(), type=pa.float64()),
+            "close": pa.array(bars["close"].tolist(), type=pa.float64()),
+        }
+    )
+    events = LiquiditySweepDetector().detect(table)
+    assert events.num_rows >= 1  # the raw statistic sees it
+    assert n_local_sweeps(events) == 0  # the local statistic correctly excludes it
+
+
+def test_local_statistic_reduces_but_does_not_eliminate_recombination_contamination():
+    """Measured, not assumed (real runs find what review cannot, HARD-WON
+    RULE 4): a long-range pair CAN recombine at a shorter gap under
+    resampling, so the local statistic is not immune to A-024's
+    contamination, only LESS exposed to it. On this exact planted-pair
+    fixture (200 seeds, matching A-024's own measurement protocol): the raw
+    statistic's survival rate is the already-established 23.5% (47/200); the
+    local statistic must show a STRICTLY LOWER contamination rate on the same
+    seeds, not zero -- asserting zero would assert something this drill does
+    not show."""
+    bars = _planted_pair_bars()
+    n_seeds = 200
+    raw_survivals = 0
+    local_contaminations = 0
+    for seed in range(n_seeds):
+        surrogate = resample_bar_blocks(bars, seed=seed)
+        sigs_present = (-1, 100.35) in _sweep_signatures(surrogate)
+        if sigs_present:
+            raw_survivals += 1
+        table = pa.table(
+            {
+                "ts": pa.array(surrogate["ts"].tolist(), type=pa.int64()),
+                "high": pa.array(surrogate["high"].tolist(), type=pa.float64()),
+                "low": pa.array(surrogate["low"].tolist(), type=pa.float64()),
+                "close": pa.array(surrogate["close"].tolist(), type=pa.float64()),
+            }
+        )
+        events = LiquiditySweepDetector().detect(table)
+        for r in events.to_pylist():
+            if (
+                r["event_type"].endswith(".sweep")
+                and r["direction"] == -1
+                and r["level"] == 100.35
+                and __import__("json").loads(r["meta"])["pool_age_bars"] <= BLOCK_BARS
+            ):
+                local_contaminations += 1
+                break
+
+    assert raw_survivals == 47, (
+        f"raw survivals drifted from A-024's measured 47/200: {raw_survivals}"
+    )
+    assert local_contaminations < raw_survivals, (
+        f"local statistic ({local_contaminations}/{n_seeds}) must contaminate LESS than the "
+        f"raw statistic ({raw_survivals}/{n_seeds}), or it buys nothing over C2's concern"
+    )
+    assert local_contaminations == 11, (
+        f"measured contamination drifted from the recorded 11/200: {local_contaminations}"
+    )
+
+
+def test_run_block_null_local_end_to_end_on_planted_fixture():
+    bars = _planted_pair_bars()
+    result = run_block_null_local(bars, LiquiditySweepDetector(), base_seed=100, n_runs=10)
+    assert result.n_runs == 10
+    assert result.base_seed == 100
+    assert result.block_bars == 7
+    assert len(result.event_counts) == 10
+    assert all(isinstance(c, int) and c >= 0 for c in result.event_counts)
+    # The real (undisturbed) count is 0 -- the planted pair is long-range, so
+    # the local statistic correctly reports no local sweeps on the real data.
+    real_table = pa.table(
+        {
+            "ts": pa.array(bars["ts"].tolist(), type=pa.int64()),
+            "high": pa.array(bars["high"].tolist(), type=pa.float64()),
+            "low": pa.array(bars["low"].tolist(), type=pa.float64()),
+            "close": pa.array(bars["close"].tolist(), type=pa.float64()),
+        }
+    )
+    real_local = n_local_sweeps(LiquiditySweepDetector().detect(real_table))
+    assert real_local == 0
+
+
+# --- empirical_one_sided_p --------------------------------------------------
+def test_empirical_one_sided_p_basic():
+    assert empirical_one_sided_p(5, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) == pytest.approx(0.6)
+    assert empirical_one_sided_p(11, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) == 0.0
+    assert empirical_one_sided_p(0, [1, 2, 3]) == 1.0
+
+
+def test_empirical_one_sided_p_rejects_empty_null():
+    with pytest.raises(SchemaViolation):
+        empirical_one_sided_p(1, [])

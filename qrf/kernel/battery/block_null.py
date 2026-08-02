@@ -35,6 +35,7 @@ block-resampling its bar input and re-running it produces a null event set.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -142,8 +143,11 @@ def _to_detector_table(surrogate: pd.DataFrame) -> pa.Table:
 @dataclass
 class BlockNullResult:
     """``n_runs`` seeded N2 surrogates' event counts — a null CONSTRUCTION
-    result, not a verdict. The caller (WO-16, not this module) builds
-    whatever concentration/arrangement statistic the claim actually tests."""
+    result, not a verdict. Produced by either :func:`run_block_null` (raw
+    event count) or :func:`run_block_null_local` (WO-16/C2's
+    :func:`n_local_sweeps` statistic); :func:`empirical_one_sided_p` turns
+    either into a p-value against a real value. Still not itself a verdict —
+    that judgment stays WO-16's to make and report."""
 
     base_seed: int
     n_runs: int
@@ -181,3 +185,77 @@ def run_block_null(
         base_seed=int(base_seed), n_runs=int(n_runs), block_bars=int(block_bars),
         event_counts=counts,
     )
+
+
+def n_local_sweeps(events: pa.Table, *, block_bars: int = BLOCK_BARS) -> int:
+    """WO-16/C2 statistic: count of ``.sweep`` events whose own recorded
+    ``pool_age_bars`` (the pool-confirmation-to-sweep gap, the same field
+    WO-15's 55.7%-over-7 evidence was measured from) is ``<= block_bars``.
+
+    WHY, per A-024 ruling C2: raw event count (``events.num_rows``) mixes a
+    LONG-RANGE component that N2's block-resampling only PARTIALLY destroys
+    (measured 23.5% survival of a planted long-range pair, A-024) with a
+    LOCAL component the block geometry is sealed to act on directly. Anchoring
+    the statistic on the local sub-population is intended to be LESS exposed
+    to that specific contamination — not immune to it (see the module-level
+    NAMED LIMITATION below, measured, not assumed).
+
+    NAMED LIMITATION (measured on the WO-15 planted-pair fixture, 200 seeds):
+    a long-range pair CAN recombine, under resampling, at a shorter gap than
+    it had in the real data — 11/200 (5.5%) of this statistic's own null runs
+    counted the fixture's single long-range (gap=15) planted pair as LOCAL,
+    against 47/200 (23.5%) for the raw-count statistic counting it at all.
+    A ~4.3x reduction in this fixture, not elimination — stated here so no
+    reader assumes a stronger guarantee than what was shown.
+    """
+    if events.num_rows == 0:
+        return 0
+    count = 0
+    for event_type, meta_json in zip(
+        events.column("event_type").to_pylist(), events.column("meta").to_pylist(), strict=True
+    ):
+        if not event_type.endswith(".sweep"):
+            continue
+        if json.loads(meta_json)["pool_age_bars"] <= block_bars:
+            count += 1
+    return count
+
+
+def run_block_null_local(
+    bars: pd.DataFrame,
+    detector,
+    *,
+    base_seed: int,
+    n_runs: int = 200,  # sealed, R2 (A-022) — same n_runs convention as run_block_null
+    block_bars: int = BLOCK_BARS,
+) -> BlockNullResult:
+    """Same seeding/surrogate construction as :func:`run_block_null`, but each
+    run's recorded count is :func:`n_local_sweeps`, not raw ``num_rows`` — the
+    WO-16/C2 statistic. Returns the same :class:`BlockNullResult` shape so
+    downstream (empirical p-value, reporting) code is shared."""
+    if not isinstance(n_runs, int) or isinstance(n_runs, bool) or n_runs < 1:
+        raise SchemaViolation("run_block_null_local: n_runs must be an int >= 1")
+    if not isinstance(base_seed, int) or isinstance(base_seed, bool) or base_seed < 0:
+        raise SchemaViolation("run_block_null_local: base_seed must be an int >= 0")
+
+    counts: list[int] = []
+    for i in range(n_runs):
+        surrogate = resample_bar_blocks(bars, seed=base_seed + i, block_bars=block_bars)
+        events = detector.detect(_to_detector_table(surrogate))
+        counts.append(n_local_sweeps(events, block_bars=block_bars))
+    return BlockNullResult(
+        base_seed=int(base_seed), n_runs=int(n_runs), block_bars=int(block_bars),
+        event_counts=counts,
+    )
+
+
+def empirical_one_sided_p(real_value: int, null_counts: list[int]) -> float:
+    """P(null >= real) under the empirical null distribution — conservative
+    (ties count against significance). ``null_counts`` is a
+    :class:`BlockNullResult`'s own ``event_counts`` (raw or local statistic,
+    caller's choice); this function does not care which statistic produced
+    them."""
+    if not null_counts:
+        raise SchemaViolation("empirical_one_sided_p: null_counts must be non-empty")
+    ge = sum(1 for c in null_counts if c >= real_value)
+    return ge / len(null_counts)
