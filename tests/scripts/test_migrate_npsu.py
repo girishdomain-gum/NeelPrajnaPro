@@ -16,7 +16,7 @@ from qrf.kernel.errors import SchemaViolation
 from qrf.kernel.records.bulk import BulkStore
 from qrf.kernel.records.epistemic import is_tainted
 from qrf.kernel.records.store import RecordStore
-from scripts.migrate_npsu import dry_run, migrate_one
+from scripts.migrate_npsu import _group_by_sha256, dry_run, migrate_group, migrate_one
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "scripts" / "migrate_npsu.py"
@@ -98,6 +98,92 @@ def test_two_different_files_both_migrate(tmp_path):
     assert rec_a is not None and rec_b is not None
     assert rec_a.record_id != rec_b.record_id
     assert rec_a.payload["file_sha256"] != rec_b.payload["file_sha256"]
+
+
+def test_migrate_one_always_carries_empty_duplicate_list(tmp_path):
+    store, bulk = _store_and_bulk(tmp_path)
+    csv_path = _write_csv(tmp_path, "trade.csv", TRADE_COLUMNS)
+    rec = migrate_one(store, bulk, csv_path)
+    assert rec.payload["duplicate_source_paths"] == []
+
+
+# --- F-MIG-1 (A-030): content duplicates under DIFFERENT basenames ------------
+def _write_identical_content_csv(tmp_path, name, columns, n_rows=3):
+    """A second file with the SAME bytes as one built by _write_csv with the
+    same (columns, n_rows) — simulates the real estate's byte-identical
+    cross-basename pairs (F-MIG-1), not the already-handled bridge/results
+    vs runs/*/csv MIRROR (same basename, collapsed earlier by
+    _discover_estate_files)."""
+    return _write_csv(tmp_path, name, columns, n_rows=n_rows)
+
+
+def test_group_by_sha256_finds_cross_basename_content_duplicates(tmp_path):
+    a = _write_csv(tmp_path, "0006_backtest.NP_Trades_x.csv", TRADE_COLUMNS)
+    b = _write_identical_content_csv(tmp_path, "0007_backtest.NP_Trades_y.csv", TRADE_COLUMNS)
+    c = _write_csv(tmp_path, "trade_different.csv", TRADE_COLUMNS, n_rows=9)
+
+    groups = _group_by_sha256([a, b, c])
+    assert len(groups) == 2  # a+b share content; c is its own group
+    ab_group = next(g for g in groups if len(g.paths) == 2)
+    assert {ab_group.primary, *ab_group.duplicates} == {a, b}
+    assert ab_group.primary == min(a, b, key=str)  # deterministic: path-sorted
+
+
+def test_dry_run_reports_duplicate_as_would_skip_not_would_migrate(tmp_path):
+    store, _ = _store_and_bulk(tmp_path)
+    a = _write_csv(tmp_path, "0006_backtest.NP_Trades_x.csv", TRADE_COLUMNS)
+    b = _write_identical_content_csv(tmp_path, "0007_backtest.NP_Trades_y.csv", TRADE_COLUMNS)
+
+    plans = dry_run(store, [a, b])
+
+    assert len(plans) == 1  # one group, not two independent "would migrate" plans
+    assert plans[0].already_migrated is False
+    assert set(plans[0].duplicate_paths) == {a, b} - {plans[0].primary_path}
+
+
+def test_dry_run_predicted_equals_real_run_actual(tmp_path):
+    """A-030's own required test: two identical-content, different-named
+    fixture files -- what the dry-run predicts must equal what the real run
+    then does, exactly (F-MIG-1's gap, closed)."""
+    store, bulk = _store_and_bulk(tmp_path)
+    a = _write_csv(tmp_path, "0006_backtest.NP_Trades_x.csv", TRADE_COLUMNS, n_rows=4)
+    b = _write_identical_content_csv(
+        tmp_path, "0007_backtest.NP_Trades_y.csv", TRADE_COLUMNS, n_rows=4
+    )
+
+    predicted = dry_run(store, [a, b])
+    n_before = len(store)
+    predicted_would_migrate = sum(1 for p in predicted if not p.already_migrated)
+    predicted_rows = sum(p.row_count for p in predicted if not p.already_migrated)
+
+    groups = _group_by_sha256([a, b])
+    actual_migrated = [g for g in groups if migrate_group(store, bulk, g) is not None]
+
+    assert len(actual_migrated) == predicted_would_migrate == 1
+    assert len(store) == n_before + 2  # exactly one group's worth: manifest + record
+    rec = next(iter(store.query(record_type="npsu_legacy_import_trade")))
+    assert rec.payload["row_count"] == predicted_rows == 4
+    # The provenance decision (A-030 option (b)): the skipped path survives
+    # in the migrated record, never silently dropped.
+    assert set(rec.payload["duplicate_source_paths"]) | {rec.payload["source"]} == {
+        str(a), str(b),
+    }
+
+
+def test_dry_run_predicted_equals_real_run_actual_when_already_migrated(tmp_path):
+    store, bulk = _store_and_bulk(tmp_path)
+    a = _write_csv(tmp_path, "0006_backtest.NP_Trades_x.csv", TRADE_COLUMNS)
+    b = _write_identical_content_csv(tmp_path, "0007_backtest.NP_Trades_y.csv", TRADE_COLUMNS)
+    migrate_group(store, bulk, _group_by_sha256([a, b])[0])  # migrate once, for real
+    n_after_first = len(store)
+
+    plans = dry_run(store, [a, b])
+    assert plans[0].already_migrated is True
+
+    groups = _group_by_sha256([a, b])
+    result = migrate_group(store, bulk, groups[0])
+    assert result is None  # nothing newly written, matching the dry-run's prediction
+    assert len(store) == n_after_first
 
 
 # --- addendum (A-028): --dry-run must be provably a no-op --------------------

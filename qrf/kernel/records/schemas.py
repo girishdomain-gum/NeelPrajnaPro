@@ -1093,10 +1093,20 @@ def _validate_npsu_legacy_import(payload: dict, where: str) -> None:
     literal ``"zero"`` — a structural marker (Architecture B.1), not free text
     — so ``qrf.kernel.records.epistemic.is_tainted`` can key on record TYPE
     alone; the field exists for human-readable audit, not as the gate itself.
+
+    ``duplicate_source_paths`` (F-MIG-1, A-030): OTHER known source paths
+    whose bytes are IDENTICAL (same sha256) to ``source`` — content migrates
+    once, but every path it was ever known under stays reconstructable from
+    the journal alone (never a silent drop). REQUIRED, always a list (empty
+    when the file was unique in its migration batch) — explicit, not an
+    optional field a caller could forget.
     """
     _check_keys(
         payload,
-        {"source", "file_sha256", "row_count", "bulk_manifest_ref", "epistemic_weight"},
+        {
+            "source", "file_sha256", "row_count", "bulk_manifest_ref",
+            "epistemic_weight", "duplicate_source_paths",
+        },
         set(),
         where,
     )
@@ -1114,6 +1124,11 @@ def _validate_npsu_legacy_import(payload: dict, where: str) -> None:
     _require(
         payload["epistemic_weight"] == "zero",
         f'{where}.epistemic_weight must be exactly "zero" (Architecture B.1)',
+    )
+    _require(
+        isinstance(payload["duplicate_source_paths"], list)
+        and all(isinstance(p, str) and p.strip() for p in payload["duplicate_source_paths"]),
+        f"{where}.duplicate_source_paths must be a list of non-empty strings",
     )
 
 

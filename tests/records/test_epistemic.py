@@ -41,6 +41,7 @@ def _npsu_record(store: RecordStore, *, record_type="npsu_legacy_import_trade"):
         {
             "source": "x.csv", "file_sha256": "0" * 64, "row_count": 1,
             "bulk_manifest_ref": "stub", "epistemic_weight": "zero",
+            "duplicate_source_paths": [],
         },
         producer="test", event_ts=now_ns(),
     )
