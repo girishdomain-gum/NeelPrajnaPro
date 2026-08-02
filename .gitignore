@@ -42,6 +42,15 @@ experiments/
 # ops scratch area - never tracked (F-19 standing rule)
 ops/incoming/
 
+# raw bulk market data - never tracked (AM-07/O-049; near-miss O-044's own
+# class: an ignore rule is a claim about a path, so BOTH incoming/ paths are
+# named explicitly, never "tidied" into one -- see AM-07 item 4). Real
+# exports now land in the external evidence store (EXTERNAL_EVIDENCE_STORE,
+# F:\NeelPrajnaProData\incoming, outside the repo); this repo-local path is
+# legacy-only post-AM-07 (its provenance .txt twins stay tracked, see below;
+# only the .csv payloads and any NEW file here are meant to be ignored).
+data/incoming/
+
 # Word lock files
 ~$*
 docs/**/~$*
