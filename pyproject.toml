@@ -19,6 +19,14 @@ dependencies = [
     "arch>=7.0",
 ]
 
+[project.optional-dependencies]
+# WO-10 probe/export scripts only (scripts/**). Windows-only, live MT5
+# terminal control. Never imported under qrf/kernel/** (firewall AT) and
+# never a hard dependency — its own tests skip, not fail, without it.
+mt5 = [
+    "MetaTrader5>=5.0.45",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",
