@@ -20,7 +20,19 @@ anchors, binding on all work:
 - **Cost model:** registrations cite the frozen `xauusd_retail_h07` venue entry;
   any change requires a NEW name. Tests may use other entries; registrations may
   not.
-- **Data source:** Vantage only (O-009). Exness never enters this repo.
+- **Data source: VANTAGE ONLY (O-009, restated absolutely per O-021).** Every
+  bar, tick, quote, symbol, terminal, export, and dataset used by this project
+  comes from the Owner's Vantage installation at
+  `C:\Program Files\Vantage International MT5\` and from nowhere else.
+  **Exness is reserved for a different project and never enters NeelPrajnaPro**
+  — not its data, not its terminal, not its symbol names, server names, paths,
+  or credentials, in code, config, tests, fixtures, comments, job files, or
+  logs. Any MT5 connection verifies the attached terminal IS the Vantage one
+  before reading a single bar, and REFUSES otherwise (A-039, drilled RED).
+  Provenance is recorded in the artifact, never inferred from intent. If a
+  second source is ever needed, it arrives as its own registered dataset scope
+  with its own pinned timezone evidence — never mixed into an existing
+  lineage.
 - **Arming stays human, forever** (Architecture B.6). The machine recommends;
   only the Owner arms.
 
