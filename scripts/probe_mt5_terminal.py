@@ -80,7 +80,9 @@ PROBE_TIMEFRAME = "M5"
 PROBE_BAR_COUNT = 10  # depth-presence check only, never a real pull
 LAUNCH_WAIT_SECONDS = 30
 LAUNCH_POLL_SECONDS = 1
-MAX_HISTORY_PROBE_BARS = 200_000  # generous cap for an "earliest available" walk-back
+MAX_HISTORY_PROBE_BARS = 50_000  # starting point for a walk-back; _walk_back_bars
+# backs off on refusal (observed on the real Vantage terminal: a request at
+# terminal_info().maxbars's own reported ceiling can still be refused)
 # The DST-pin candidate span (A-035/A-047) — bracketed with margin either
 # side of the 2025-10-26 EU and 2025-11-02 US transitions. UTC boundaries
 # here are ONLY a coarse coverage probe (does data exist in this window
@@ -128,6 +130,29 @@ def _symbol_matches_pin(symbol):
     )
 
 
+def _walk_back_bars(symbol, timeframe, start_count):
+    """copy_rates_from_pos refuses (-2 'Invalid params') above some
+    terminal-specific ceiling that terminal_info().maxbars does NOT
+    reliably predict (observed on the real Vantage terminal: maxbars
+    reports 100000, but a request of exactly 100000 is refused while
+    50000 succeeds) — and on refusal it returns None with NO exception,
+    so a bare `if walk is not None` check silently swallows the failure.
+    This halves the count on refusal until one succeeds or the floor is
+    hit, and always returns the real mt5.last_error() alongside — never
+    a silent None. Returns (bars_or_None, count_used, last_error)."""
+    count = start_count
+    while count >= 100:
+        bars = mt5.copy_rates_from_pos(symbol, timeframe, 0, count)
+        if bars is not None:
+            return bars, count, None
+        err = mt5.last_error()
+        if err and err[0] == -2:  # Invalid params — count too large, back off
+            count //= 2
+            continue
+        return None, count, err  # a different failure — don't mask it by retrying
+    return None, count, mt5.last_error()
+
+
 def _measure_m5_extent(symbol):
     """Read-only M5 history extent measurement for the PINNED symbol
     only — the caller is responsible for gating via _symbol_matches_pin
@@ -138,8 +163,10 @@ def _measure_m5_extent(symbol):
     rule on whether the span stands or must move'."""
     extent = {
         "symbol": symbol,
-        "earliest_bar_utc": None,
+        "earliest_bar_seen_utc": None,
         "latest_bar_utc": None,
+        "earliest_bar_is_confirmed_true_earliest": None,
+        "walk_back_bars_requested": None,
         "target_span_start_utc": TARGET_SPAN_START_UTC.isoformat(),
         "target_span_end_utc": TARGET_SPAN_END_UTC.isoformat(),
         "target_span_bar_count": None,
@@ -149,10 +176,22 @@ def _measure_m5_extent(symbol):
     }
     timeframe = getattr(mt5, f"TIMEFRAME_{PROBE_TIMEFRAME}")
     try:
-        walk = mt5.copy_rates_from_pos(symbol, timeframe, 0, MAX_HISTORY_PROBE_BARS)
+        term_info = mt5.terminal_info()
+        reported_maxbars = getattr(term_info, "maxbars", None) or MAX_HISTORY_PROBE_BARS
+        start_count = min(MAX_HISTORY_PROBE_BARS, reported_maxbars)
+        walk, used_count, walk_err = _walk_back_bars(symbol, timeframe, start_count)
+        extent["walk_back_bars_requested"] = used_count
         if walk is not None and len(walk) > 0:
-            extent["earliest_bar_utc"] = _bar_time_to_iso(walk[0])
+            extent["earliest_bar_seen_utc"] = _bar_time_to_iso(walk[0])
             extent["latest_bar_utc"] = _bar_time_to_iso(walk[-1])
+            # if FEWER bars came back than requested, we hit real history's
+            # start — the earliest bar seen IS the true earliest available.
+            # If we got exactly `used_count`, there may be more further
+            # back that this single call never asked for; say so honestly
+            # rather than implying a depth we didn't actually measure.
+            extent["earliest_bar_is_confirmed_true_earliest"] = len(walk) < used_count
+        elif walk_err:
+            extent["error"] = f"extent walk-back failed: {walk_err}"
     except Exception as exc:  # noqa: BLE001 — report, don't crash the probe
         extent["error"] = f"extent walk-back failed: {exc}"
         return extent

@@ -39,11 +39,15 @@ def test_terminal_exe_missing_reports_blocker(monkeypatch):
     assert "not found" in report["initialize_error"]
 
 
-def test_real_sandbox_has_no_mt5_package():
-    """Ground truth for this venv, asserted so a future dependency
+def test_real_sandbox_mt5_package_availability_is_pinned():
+    """Ground truth for THIS venv, asserted so a future dependency
     change is caught rather than silently changing what this suite
-    covers."""
-    assert probe_mod.mt5 is None
+    covers. As of the real probe run against the live Vantage terminal
+    (2026-08-02, this machine has direct filesystem/terminal access —
+    O-024), MetaTrader5 is installed as the optional `mt5` extra
+    (pyproject.toml) and this genuinely flips to True. If this ever
+    goes back to False unexpectedly, that is itself worth noticing."""
+    assert probe_mod.mt5 is not None
 
 
 def test_report_never_contains_account_login_or_server_strings(monkeypatch):
@@ -430,11 +434,63 @@ def test_m5_extent_measured_only_for_pinned_symbol(monkeypatch):
     assert fake.copy_rates_range_calls == ["XAUUSD"]  # never the excluded symbol
     extent = report["m5_extent"]
     assert extent["symbol"] == "XAUUSD"
-    assert extent["earliest_bar_utc"] is not None
+    assert extent["earliest_bar_seen_utc"] is not None
     assert extent["latest_bar_utc"] is not None
+    assert extent["walk_back_bars_requested"] is not None
+    assert extent["earliest_bar_is_confirmed_true_earliest"] is not None
     assert extent["target_span_bar_count"] == 2
     assert extent["target_span_first_bar_utc"] is not None
     assert extent["error"] is None
+
+
+def test_walk_back_bars_backs_off_on_invalid_params_and_reports_used_count(monkeypatch):
+    """F-PROBE-2 (self-caught, real machine): copy_rates_from_pos refused
+    a request at the terminal's own reported maxbars ceiling with
+    (-2, 'Invalid params') and returned None with NO exception — the
+    old code's bare `if walk is not None` swallowed that silently,
+    leaving earliest/latest None with error=None (a false-clean report).
+    This proves the fix: back off and keep the real error visible."""
+    calls = []
+
+    class FakeMT5WithCeiling:
+        TIMEFRAME_M5 = 5
+
+        def last_error(self):
+            return (-2, "Terminal: Invalid params")
+
+        def copy_rates_from_pos(self, symbol, timeframe, start, count):
+            calls.append(count)
+            if count >= 50_000:
+                return None  # simulates the real refusal above the ceiling
+            return [_FakeBar(1_700_000_000 + i * 300) for i in range(count)]
+
+    fake = FakeMT5WithCeiling()
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    bars, used_count, err = probe_mod._walk_back_bars("XAUUSD", 5, 50_000)
+    assert bars is not None
+    assert used_count < 50_000
+    assert calls[0] == 50_000  # tried the full request first
+    assert calls[-1] == used_count
+
+
+def test_walk_back_bars_does_not_mask_a_different_error(monkeypatch):
+    """A refusal that ISN'T -2 (e.g. no connection) must be returned as
+    the real error, not treated as a size problem and retried forever."""
+    class FakeMT5Disconnected:
+        TIMEFRAME_M5 = 5
+
+        def last_error(self):
+            return (-10004, "Terminal: No connection")
+
+        def copy_rates_from_pos(self, symbol, timeframe, start, count):
+            return None
+
+    fake = FakeMT5Disconnected()
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    bars, used_count, err = probe_mod._walk_back_bars("XAUUSD", 5, 50_000)
+    assert bars is None
+    assert err == (-10004, "Terminal: No connection")
+    assert used_count == 50_000  # never retried — not a size problem
 
 
 def test_m5_extent_not_measured_when_pin_absent_from_feed(monkeypatch):
