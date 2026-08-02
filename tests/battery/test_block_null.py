@@ -309,6 +309,23 @@ def test_n_local_sweeps_ignores_pool_formed_events():
     assert n_local_sweeps(events) == 0
 
 
+def test_n_local_sweeps_refuses_a_sweep_missing_pool_age_bars():
+    """A-054 DEFECT 2, required: a malformed sweep event (meta missing
+    pool_age_bars) must raise a NAMED SchemaViolation, not a bare KeyError
+    from inside a null-construction loop."""
+    events = pa.table(
+        {
+            "ts": pa.array([1], type=pa.int64()),
+            "event_type": pa.array(["neelprajna.liquidity_sweep.sweep"]),
+            "direction": pa.array([-1]),
+            "level": pa.array([100.0]),
+            "meta": pa.array([__import__("json").dumps({"pool_members": 2})]),
+        }
+    )
+    with pytest.raises(SchemaViolation, match="pool_age_bars"):
+        n_local_sweeps(events)
+
+
 def test_n_local_sweeps_empty_table_is_zero():
     events = pa.table(
         {
@@ -421,11 +438,29 @@ def test_run_block_null_local_end_to_end_on_planted_fixture():
     assert real_local == 0
 
 
-# --- empirical_one_sided_p --------------------------------------------------
+# --- empirical_one_sided_p (add-one estimator, A-054 DEFECT 1) ------------
 def test_empirical_one_sided_p_basic():
-    assert empirical_one_sided_p(5, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) == pytest.approx(0.6)
-    assert empirical_one_sided_p(11, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) == 0.0
+    # ge=6 of 10 (values 5..10) -> (6+1)/(10+1)
+    assert empirical_one_sided_p(5, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) == pytest.approx(7 / 11)
+    # ge=0 of 10 -> (0+1)/(10+1), NOT 0.0 (A-054: a naive ge/n would be exactly 0.0 here)
+    assert empirical_one_sided_p(11, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) == pytest.approx(1 / 11)
+    # ge=3 of 3 (all >= 0) -> (3+1)/(3+1) == 1.0, the ceiling is still reachable
     assert empirical_one_sided_p(0, [1, 2, 3]) == 1.0
+
+
+def test_empirical_one_sided_p_never_returns_zero():
+    """A-054 DEFECT 1, required: 200 (or any finite n) surrogates can never
+    license an exact p=0.0 claim. Drilled across several ge=0 cases and
+    sample sizes -- the drill law applies to arithmetic too."""
+    for null_counts, real_value in [
+        ([0] * 200, 1000),
+        ([1, 2, 3], 999),
+        ([5] * 5, 6),
+        ([0], 1),
+    ]:
+        p = empirical_one_sided_p(real_value, null_counts)
+        assert p > 0.0, f"returned exactly 0.0 for {null_counts!r}/{real_value}"
+        assert p == pytest.approx(1 / (len(null_counts) + 1))
 
 
 def test_empirical_one_sided_p_rejects_empty_null():

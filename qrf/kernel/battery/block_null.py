@@ -216,7 +216,13 @@ def n_local_sweeps(events: pa.Table, *, block_bars: int = BLOCK_BARS) -> int:
     ):
         if not event_type.endswith(".sweep"):
             continue
-        if json.loads(meta_json)["pool_age_bars"] <= block_bars:
+        meta = json.loads(meta_json)
+        if "pool_age_bars" not in meta:
+            raise SchemaViolation(
+                f"n_local_sweeps: a {event_type!r} event's meta is missing "
+                f"'pool_age_bars' (meta={meta!r}) — cannot judge local vs long-range"
+            )
+        if meta["pool_age_bars"] <= block_bars:
             count += 1
     return count
 
@@ -250,12 +256,23 @@ def run_block_null_local(
 
 
 def empirical_one_sided_p(real_value: int, null_counts: list[int]) -> float:
-    """P(null >= real) under the empirical null distribution — conservative
-    (ties count against significance). ``null_counts`` is a
-    :class:`BlockNullResult`'s own ``event_counts`` (raw or local statistic,
-    caller's choice); this function does not care which statistic produced
-    them."""
+    """P(null >= real) under the empirical null distribution — the add-one
+    estimator ``(ge + 1) / (n + 1)`` (Davison & Hinkley; North et al. 2002),
+    NOT the naive ``ge / n``.
+
+    WHY (A-054 DEFECT 1, required): with ``ge = 0`` the naive form returns
+    EXACTLY 0.0 — a claim no finite resample count can license. A p-value of
+    zero says "impossible under the null," but ``n_runs`` surrogates only
+    ever observed zero-or-more extreme draws OUT OF ``n_runs`` trials; the
+    true tail probability could still be small-but-nonzero and merely
+    unobserved at this sample size. The add-one form keeps the same
+    ties-count-against-significance property (a tie still counts toward
+    ``ge``) while flooring the reported value at ``1/(n_runs + 1)`` — an
+    attainable, honest minimum instead of an impossible certainty. This
+    number, once measured, travels VERBATIM into registration-linkage text
+    (A-024 ruling C1); it must never overstate what the evidence supports.
+    """
     if not null_counts:
         raise SchemaViolation("empirical_one_sided_p: null_counts must be non-empty")
     ge = sum(1 for c in null_counts if c >= real_value)
-    return ge / len(null_counts)
+    return (ge + 1) / (len(null_counts) + 1)
