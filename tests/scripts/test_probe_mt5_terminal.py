@@ -148,3 +148,159 @@ def test_module_importable_standalone():
     importlib.reload(probe_mod)
     assert hasattr(probe_mod, "probe")
     assert hasattr(probe_mod, "main")
+
+
+# --- A-039 VANTAGE-ONLY identity check: drilled RED before trusted GREEN ---
+
+class _FakeTerminalInfo:
+    def __init__(self, path, company, connected=True, trade_allowed=False):
+        self.path = path
+        self.company = company
+        self.connected = connected
+        self.trade_allowed = trade_allowed
+
+
+VANTAGE_INFO = _FakeTerminalInfo(
+    path=probe_mod.TERMINAL_INSTALL_DIR, company="Vantage International Group Limited",
+)
+# A-039 rule 4: no OTHER broker's real name/path/server ever appears in
+# this repo, including in a drill fixture — a generic placeholder proves
+# the refusal on ANY mismatch just as well as a real name would.
+OTHER_BROKER_INFO = _FakeTerminalInfo(
+    path=r"C:\Program Files\Some Other Broker MT5", company="Some Other Broker Ltd",
+)
+
+
+def test_identity_matches_vantage_accepts_pinned_install():
+    ok, detail = probe_mod._identity_matches_vantage(VANTAGE_INFO)
+    assert ok is True
+    assert "Vantage" in detail
+
+
+def test_identity_matches_vantage_rejects_wrong_path_and_company():
+    ok, detail = probe_mod._identity_matches_vantage(OTHER_BROKER_INFO)
+    assert ok is False
+    assert "WRONG TERMINAL ATTACHED" in detail
+    assert "Some Other Broker" in detail
+
+
+def test_identity_matches_vantage_rejects_right_path_wrong_company():
+    mismatched = _FakeTerminalInfo(path=probe_mod.TERMINAL_INSTALL_DIR, company="Some Other Broker Ltd")
+    ok, _ = probe_mod._identity_matches_vantage(mismatched)
+    assert ok is False
+
+
+def test_identity_matches_vantage_rejects_right_company_wrong_path():
+    mismatched = _FakeTerminalInfo(path=r"C:\Somewhere\Else", company="Vantage International Group Limited")
+    ok, _ = probe_mod._identity_matches_vantage(mismatched)
+    assert ok is False
+
+
+def test_identity_matches_vantage_rejects_none():
+    ok, detail = probe_mod._identity_matches_vantage(None)
+    assert ok is False
+    assert "None" in detail
+
+
+class _FakeMT5:
+    """Simulates the MetaTrader5 module surface probe() touches. Tracks
+    which data-reading calls actually happened, so the drill can prove
+    the identity refusal reads NOTHING beyond terminal_info()."""
+
+    def __init__(self, term_info):
+        self._term_info = term_info
+        self.symbols_get_called = False
+        self.account_info_called = False
+        self.copy_rates_called = False
+        self.shutdown_called = False
+        self.TIMEFRAME_M5 = 5
+
+    def initialize(self, path=None):
+        assert path == probe_mod.TERMINAL_EXE  # A-039 rule 2: path always supplied
+        return True
+
+    def last_error(self):
+        return (0, "no error")
+
+    def terminal_info(self):
+        return self._term_info
+
+    def account_info(self):
+        self.account_info_called = True
+        return object()
+
+    def symbols_get(self):
+        self.symbols_get_called = True
+
+        class Sym:
+            name = "XAUUSDm"
+        return [Sym()]
+
+    def copy_rates_from_pos(self, symbol, timeframe, start, count):
+        self.copy_rates_called = True
+        return [object()] * count
+
+    def shutdown(self):
+        self.shutdown_called = True
+
+
+def test_probe_refuses_and_reads_nothing_when_wrong_terminal_attached(monkeypatch):
+    fake = _FakeMT5(OTHER_BROKER_INFO)
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    monkeypatch.setattr(probe_mod, "TERMINAL_EXE", __file__)  # any real file, exists-check passes
+    monkeypatch.setattr(probe_mod, "_running_pids_by_path", lambda exe: set())
+    monkeypatch.setattr(probe_mod, "LAUNCH_WAIT_SECONDS", 0)  # skip the poll wait in tests
+
+    report = probe_mod.probe("XAUUSD")
+
+    assert report["vantage_identity_ok"] is False
+    assert "WRONG TERMINAL ATTACHED" in report["vantage_identity_detail"]
+    assert "REFUSED" in report["initialize_error"]
+    # the drill's whole point: nothing downstream of the identity check ran
+    assert fake.account_info_called is False
+    assert fake.symbols_get_called is False
+    assert fake.copy_rates_called is False
+    assert report["account_present"] is None
+    assert report["matching_symbols"] == []
+    assert report["depth_check"] == {}
+    # leave-as-found / shutdown discipline still runs on the refusal path
+    assert fake.shutdown_called is True
+
+
+def test_probe_green_control_reads_data_when_vantage_identity_matches(monkeypatch):
+    fake = _FakeMT5(VANTAGE_INFO)
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    monkeypatch.setattr(probe_mod, "TERMINAL_EXE", __file__)
+    monkeypatch.setattr(probe_mod, "_running_pids_by_path", lambda exe: set())
+    monkeypatch.setattr(probe_mod, "LAUNCH_WAIT_SECONDS", 0)
+
+    report = probe_mod.probe("XAUUSD")
+
+    assert report["vantage_identity_ok"] is True
+    assert report["initialize_error"] is None
+    assert fake.account_info_called is True
+    assert fake.symbols_get_called is True
+    assert fake.copy_rates_called is True
+    assert report["matching_symbols"] == ["XAUUSDm"]
+    assert report["depth_check"] == {"XAUUSDm": 10}
+    assert fake.shutdown_called is True
+
+
+def test_print_report_red_and_refused_detail_shown_on_wrong_terminal(monkeypatch):
+    fake = _FakeMT5(OTHER_BROKER_INFO)
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    monkeypatch.setattr(probe_mod, "TERMINAL_EXE", __file__)
+    monkeypatch.setattr(probe_mod, "_running_pids_by_path", lambda exe: set())
+    monkeypatch.setattr(probe_mod, "LAUNCH_WAIT_SECONDS", 0)
+    report = probe_mod.probe("XAUUSD")
+
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        green = probe_mod._print_report(report)
+    assert green is False
+    out = buf.getvalue()
+    assert "RED" in out
+    assert "WRONG TERMINAL ATTACHED" in out
+    # still no credential-shaped terms leak through the refusal path
+    for term in ("login", "password", "balance", "server="):
+        assert term not in out.lower()

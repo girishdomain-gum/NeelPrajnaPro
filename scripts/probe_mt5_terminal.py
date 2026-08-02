@@ -17,6 +17,19 @@ presence/connection-state only. HUMAN-ONLY lines (chart attach, arming,
 order/position/account action) are never called, not even unreachable.
 Leave-as-found: closes the terminal only if THIS run launched it.
 
+VANTAGE ONLY, ALWAYS (A-039/A-040, O-009/O-021): MetaTrader5.initialize()
+attaches to WHATEVER terminal is already running if one is, regardless
+of the `path` argument — so a probe/export started while a DIFFERENT
+broker's terminal (the Owner runs another one for a separate, unrelated
+project) is open can silently read and label THAT broker's data as
+Vantage. This is treated as evidence contamination, not a config error.
+The identity check below runs BEFORE any data read (symbols, bars,
+account) and REFUSES LOUDLY — reads nothing, writes nothing, shuts down
+per leave-as-found — the moment the connected terminal's own
+terminal_info() does not match the pinned Vantage install. Per A-039
+rule 4, no other broker's name, path, symbol suffix, server name, or
+credential is ever referenced anywhere in this repo, including here.
+
 Usage: python scripts/probe_mt5_terminal.py [SYMBOL_PREFIX]
   SYMBOL_PREFIX defaults to "XAUUSD".
 """
@@ -34,10 +47,31 @@ except ImportError:
     mt5 = None
 
 TERMINAL_EXE = r"C:\Program Files\Vantage International MT5\terminal64.exe"
+TERMINAL_INSTALL_DIR = r"C:\Program Files\Vantage International MT5"
+VANTAGE_COMPANY_TOKEN = "vantage"  # case-insensitive substring of terminal_info().company
 PROBE_TIMEFRAME = "M5"
 PROBE_BAR_COUNT = 10  # depth-presence check only, never a real pull
 LAUNCH_WAIT_SECONDS = 30
 LAUNCH_POLL_SECONDS = 1
+
+
+def _identity_matches_vantage(term_info):
+    """A-039's binding identity check: the CONNECTED terminal's own
+    reported path and company must match the pinned Vantage install.
+    Returns (ok, reason). initialize()'s `path` argument only requests a
+    terminal — MT5 attaches to whatever is already running if one is —
+    so this is the only real proof of whose data is about to be read."""
+    if term_info is None:
+        return False, "terminal_info() returned None — cannot verify identity, refusing"
+    path = getattr(term_info, "path", "") or ""
+    company = getattr(term_info, "company", "") or ""
+    path_ok = os.path.normcase(os.path.abspath(path)) == os.path.normcase(
+        os.path.abspath(TERMINAL_INSTALL_DIR)
+    )
+    company_ok = VANTAGE_COMPANY_TOKEN in company.lower()
+    if path_ok and company_ok:
+        return True, f"path={path!r} company={company!r}"
+    return False, f"WRONG TERMINAL ATTACHED — path={path!r} company={company!r}, expected install {TERMINAL_INSTALL_DIR!r} and company containing {VANTAGE_COMPANY_TOKEN!r}"
 
 
 def _running_pids_by_path(target_exe):
@@ -102,6 +136,8 @@ def probe(symbol_prefix="XAUUSD"):
         "we_launched_it": False,
         "initialize_ok": False,
         "initialize_error": None,
+        "vantage_identity_ok": None,
+        "vantage_identity_detail": None,
         "terminal_connected": None,
         "trade_allowed": None,
         "account_present": None,
@@ -121,6 +157,8 @@ def probe(symbol_prefix="XAUUSD"):
     report["pre_launch_running_pids"] = sorted(pre_pids)
 
     try:
+        # A-039, rule 2: NEVER call initialize() without the pinned path —
+        # a bare initialize() attaches to whatever is running.
         ok = mt5.initialize(path=TERMINAL_EXE)
         report["initialize_ok"] = bool(ok)
         if not ok:
@@ -141,10 +179,19 @@ def probe(symbol_prefix="XAUUSD"):
         report["we_launched_it"] = bool(new_pids) and not pre_pids
         report["_new_pids_for_shutdown"] = sorted(new_pids) if report["we_launched_it"] else []
 
+        # A-039, rule 1: IDENTITY CHECK BEFORE ANY DATA READ. initialize()
+        # succeeding proves SOME terminal answered — not that it is
+        # Vantage. Refuse loudly and read nothing further if it is not.
         term_info = mt5.terminal_info()
-        if term_info is not None:
-            report["terminal_connected"] = bool(getattr(term_info, "connected", False))
-            report["trade_allowed"] = bool(getattr(term_info, "trade_allowed", False))
+        identity_ok, identity_detail = _identity_matches_vantage(term_info)
+        report["vantage_identity_ok"] = identity_ok
+        report["vantage_identity_detail"] = identity_detail
+        if not identity_ok:
+            report["initialize_error"] = f"REFUSED: {identity_detail}"
+            return report
+
+        report["terminal_connected"] = bool(getattr(term_info, "connected", False))
+        report["trade_allowed"] = bool(getattr(term_info, "trade_allowed", False))
 
         acct_info = mt5.account_info()
         report["account_present"] = acct_info is not None  # presence only, no fields
@@ -177,7 +224,8 @@ def _print_report(report):
     for key in (
         "mt5_package_available", "terminal_exe", "terminal_exe_exists",
         "pre_launch_running_pids", "we_launched_it", "initialize_ok",
-        "initialize_error", "terminal_connected", "trade_allowed",
+        "initialize_error", "vantage_identity_ok", "vantage_identity_detail",
+        "terminal_connected", "trade_allowed",
         "account_present", "matching_symbols", "depth_check", "closed_by_probe",
     ):
         print(f"{key}: {report.get(key)}")
@@ -185,6 +233,7 @@ def _print_report(report):
         report["mt5_package_available"]
         and report["terminal_exe_exists"]
         and report["initialize_ok"]
+        and report["vantage_identity_ok"] is True
         and bool(report["matching_symbols"])
         and any(isinstance(v, int) and v > 0 for v in report["depth_check"].values())
     )
