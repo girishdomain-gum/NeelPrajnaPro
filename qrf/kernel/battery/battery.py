@@ -15,17 +15,17 @@ window and separately writes a verdict; it calls `record_verdict()`
 exactly once, with the completed verdict already computed, and that one
 call is the only thing that can fail or succeed atomically.
 
-WHAT "SOLE VERDICT WRITER" MEANS IN PRACTICE (named honestly, not
-overclaimed): `WindowLedger.record_verdict()` is a public method on a
-shared object; nothing in Python prevents another piece of code from
-importing `WindowLedger` and calling it directly with a hand-built verdict
-dict that skips every check below. What IS true, and enforced
-structurally: no OTHER function in this codebase computes a p-value,
-checks registration/budget/provenance, or otherwise produces a verdict
-that could be passed to `record_verdict()` without going through this
-class. "Sole verdict writer" is a claim about where verdicts are
-COMPUTED, not an access-control boundary around the storage call -- see
-the sprint report's limitations section for the same point made plainly.
+A-016 R1: `record_verdict()` now REQUIRES a `VerdictCapability` token
+(`qrf.kernel.windows.ledger.VerdictCapability`) -- the Battery is the
+only code in this project that imports that class and constructs an
+instance of it. This does not make "sole verdict writer" a hard security
+boundary (Python has none across modules: anyone COULD import the token
+class too), but it makes the claim structural rather than incidental --
+calling `record_verdict()` now requires deliberately importing and
+constructing a marker built for exactly this purpose, not just happening
+to have a reference to a public method. A hand-built verdict dict passed
+without that token is refused by name (CapabilityRequired), drilled in
+tests/kernel/battery/test_battery.py.
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ from qrf.errors import UnverifiedObservations
 from qrf.kernel.detection.types import ObservationSet
 from qrf.kernel.null.resampling import run_null_test
 from qrf.kernel.registration.ledger import TrialLedger
-from qrf.kernel.windows.ledger import WindowLedger
+from qrf.kernel.windows.ledger import VerdictCapability, WindowLedger
 
 
 @dataclass(frozen=True)
@@ -57,6 +57,7 @@ class Battery:
     def __init__(self, trial_ledger: TrialLedger, window_ledger: WindowLedger):
         self._trials = trial_ledger
         self._windows = window_ledger
+        self._capability = VerdictCapability()
 
     def judge(
         self,
@@ -107,6 +108,6 @@ class Battery:
         )
 
         self._windows.record_verdict(
-            registration.window_id, hypothesis_id, verdict.__dict__
+            registration.window_id, hypothesis_id, verdict.__dict__, self._capability
         )
         return verdict

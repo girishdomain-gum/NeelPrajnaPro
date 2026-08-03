@@ -47,10 +47,21 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from qrf.errors import LedgerImbalance, SchemaViolation, WindowConflict
+from qrf.errors import CapabilityRequired, LedgerImbalance, SchemaViolation, WindowConflict
 from qrf.kernel.records.store import RecordStore
 
 LABELS = frozenset({"TRAINING", "EXPLORATION", "VIRGIN"})
+
+
+class VerdictCapability:
+    """A-016 R1: `record_verdict()` requires an instance of exactly this
+    type. This is not a hard security boundary -- Python has none across
+    modules -- but it restricts writing a verdict in practice to code
+    that deliberately imports THIS class and constructs it, rather than
+    treating `record_verdict()` as a plain public method anyone can call
+    with a hand-built dict. `qrf.kernel.battery.battery.Battery` is the
+    only code in this project that does so.
+    """
 
 
 def validate_window_payload(payload: dict) -> None:
@@ -162,7 +173,9 @@ class WindowLedger:
             )
         self._store.append({"op": "burn", "window_id": window_id, "hypothesis_id": hypothesis_id})
 
-    def record_verdict(self, window_id: str, hypothesis_id: str, verdict: dict) -> None:
+    def record_verdict(
+        self, window_id: str, hypothesis_id: str, verdict: dict, capability: VerdictCapability
+    ) -> None:
         """S05: the Battery's ONLY entry point for consuming a window with
         a judgment. Identical safety checks to `burn()` (VIRGIN,
         not-yet-burned), but the verdict and the burn are the SAME
@@ -171,7 +184,13 @@ class WindowLedger:
         verdict exactly as it does to a bare burn: there is no state in
         which a verdict exists but the window is unburned, or the
         reverse, because they are not two events.
+
+        A-016 R1: `capability` must be a `VerdictCapability` instance —
+        refused by name (CapabilityRequired) otherwise. See that class's
+        docstring for exactly what this restricts and does not.
         """
+        if not isinstance(capability, VerdictCapability):
+            raise CapabilityRequired("WindowLedger.record_verdict")
         windows = self._rebuild()
         w = windows.get(window_id)
         if w is None:

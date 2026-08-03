@@ -230,6 +230,20 @@ class CeremonyRefused(QRFError):
         super().__init__(f"ceremony refused: {reason}")
 
 
+class CapabilityRequired(QRFError):
+    """Raised when an operation requires a specific capability token and
+    none, or the wrong type, was supplied. Restricts the operation in
+    practice to code that deliberately imports and constructs the exact
+    token type -- it is not a hard security boundary (nothing in Python
+    is), but it turns "nobody else happens to call this" into "you must
+    knowingly import a marker built for exactly this purpose" (A-016 R1).
+    """
+
+    def __init__(self, operation: str) -> None:
+        self.operation = operation
+        super().__init__(f"capability required for: {operation}")
+
+
 class UnverifiedObservations(QRFError):
     """Raised when an ObservationSet's source_sha256 does not match the
     hash the caller independently verified (e.g. via S03's

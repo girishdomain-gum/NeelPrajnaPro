@@ -7,6 +7,7 @@ import os
 import pytest
 
 from qrf.errors import (
+    CapabilityRequired,
     HypothesisNotRegistered,
     UnverifiedObservations,
     WindowConflict,
@@ -16,7 +17,8 @@ from qrf.kernel.battery.battery import Battery
 from qrf.kernel.detection.types import ObservationSet
 from qrf.kernel.registration.ceremony import complete_registration
 from qrf.kernel.registration.ledger import TrialLedger
-from qrf.kernel.windows.ledger import WindowLedger
+from qrf.kernel.windows.ledger import VerdictCapability, WindowLedger
+from tests.drills.harness import DrillLog, run_drill
 
 PHRASE = "throwaway-s05-phrase"
 import hashlib  # noqa: E402
@@ -185,7 +187,41 @@ def test_b1_second_writer_refused_drill(tmp_path):
     _battery, _trials, windows, _reg = _setup(tmp_path, hid="H1")
     with windows._store:  # noqa: SLF001 -- simulate a concurrent writer holding the lock
         with pytest.raises(WriterLockHeld):
-            windows.record_verdict("W1", "H1", {"p_value": 0.01})
+            windows.record_verdict("W1", "H1", {"p_value": 0.01}, VerdictCapability())
+
+
+# --- A-016 R1: record_verdict() requires a VerdictCapability token --------
+
+
+def test_r1_record_verdict_requires_capability_token_drill(tmp_path):
+    log = DrillLog()
+    _battery, _trials, windows, _reg = _setup(tmp_path, hid="H1")
+
+    def checker(supply_capability: bool):
+        windows.record_verdict(
+            "W1",
+            "H1",
+            {"p_value": 0.01},
+            VerdictCapability() if supply_capability else object(),
+        )
+
+    result = run_drill(
+        name="R1-record-verdict-requires-capability",
+        checker=checker,
+        clean_input=True,
+        tampered_input=False,
+        expected_exception=CapabilityRequired,
+        log=log,
+    )
+    assert result.tampered_exception is CapabilityRequired
+
+
+def test_r1_hand_built_verdict_without_capability_refused(tmp_path):
+    _battery, _trials, windows, _reg = _setup(tmp_path, hid="H1")
+    with pytest.raises(CapabilityRequired):
+        windows.record_verdict("W1", "H1", {"p_value": 0.01}, None)
+    # nothing was written: the window is still virgin, unburned
+    assert windows.balances()["burned"] == 0
 
 
 # --- B2: verdict+burn atomicity, drilled HONESTLY (S02 F-02's lesson) ----
