@@ -39,11 +39,15 @@ def test_terminal_exe_missing_reports_blocker(monkeypatch):
     assert "not found" in report["initialize_error"]
 
 
-def test_real_sandbox_has_no_mt5_package():
-    """Ground truth for this venv, asserted so a future dependency
+def test_real_sandbox_mt5_package_availability_is_pinned():
+    """Ground truth for THIS venv, asserted so a future dependency
     change is caught rather than silently changing what this suite
-    covers."""
-    assert probe_mod.mt5 is None
+    covers. As of the real probe run against the live Vantage terminal
+    (2026-08-02, this machine has direct filesystem/terminal access —
+    O-024), MetaTrader5 is installed as the optional `mt5` extra
+    (pyproject.toml) and this genuinely flips to True. If this ever
+    goes back to False unexpectedly, that is itself worth noticing."""
+    assert probe_mod.mt5 is not None
 
 
 def test_report_never_contains_account_login_or_server_strings(monkeypatch):
@@ -164,6 +168,14 @@ def test_pinned_identity_constants_match_adoption_adaptations_doc():
     assert probe_mod.VANTAGE_COMPANY_TOKEN in text.lower()
 
 
+def test_pinned_symbol_matches_adoption_adaptations_doc():
+    """A-047/O-023's same drift-guard shape, for the symbol pin."""
+    doc_path = Path(__file__).resolve().parents[2] / "ADOPTION_ADAPTATIONS.md"
+    text = doc_path.read_text(encoding="utf-8")
+    assert f"`{probe_mod.SYMBOL_PIN}`" in text
+    assert "XAUUSD.crp" in text  # the doc names what's excluded, same as the code
+
+
 # --- A-039 VANTAGE-ONLY identity check: drilled RED before trusted GREEN ---
 
 class _FakeTerminalInfo:
@@ -241,20 +253,40 @@ def test_pin_and_superseded_pin_are_distinct_paths():
     assert probe_mod.TERMINAL_INSTALL_DIR != probe_mod.SUPERSEDED_TERMINAL_INSTALL_DIR
 
 
+class _FakeBar(dict):
+    """Minimal stand-in for an MT5 rate record: subscriptable by field
+    name, exactly like the real numpy structured array rows."""
+
+    def __init__(self, time):
+        super().__init__(time=time)
+
+
 class _FakeMT5:
     """Simulates the MetaTrader5 module surface probe() touches. Tracks
-    which data-reading calls actually happened, so the drill can prove
-    the identity refusal reads NOTHING beyond terminal_info()."""
+    which data-reading calls actually happened (and for which symbols),
+    so drills can prove a refusal reads NOTHING beyond terminal_info()
+    and that only the pinned symbol's bars are ever read."""
 
-    def __init__(self, term_info, init_ok=True, init_error=(0, "no error")):
+    def __init__(
+        self, term_info, init_ok=True, init_error=(0, "no error"),
+        symbols=("XAUUSD", "XAUUSD.crp"),
+    ):
         self._term_info = term_info
         self._init_ok = init_ok
         self._init_error = init_error
+        self._symbols = symbols
         self.symbols_get_called = False
         self.account_info_called = False
-        self.copy_rates_called = False
+        self.copy_rates_from_pos_calls = []  # list of symbols queried
+        self.copy_rates_range_calls = []  # list of symbols queried
         self.shutdown_called = False
         self.TIMEFRAME_M5 = 5
+
+    @property
+    def copy_rates_called(self):
+        """Back-compat alias for older tests: True if ANY bar-read
+        happened, regardless of symbol."""
+        return bool(self.copy_rates_from_pos_calls or self.copy_rates_range_calls)
 
     def initialize(self, path=None):
         assert path == probe_mod.TERMINAL_EXE  # A-039 rule 2: path always supplied
@@ -274,12 +306,17 @@ class _FakeMT5:
         self.symbols_get_called = True
 
         class Sym:
-            name = "XAUUSDm"
-        return [Sym()]
+            def __init__(self, name):
+                self.name = name
+        return [Sym(name) for name in self._symbols]
 
     def copy_rates_from_pos(self, symbol, timeframe, start, count):
-        self.copy_rates_called = True
-        return [object()] * count
+        self.copy_rates_from_pos_calls.append(symbol)
+        return [_FakeBar(1_700_000_000 + i * 300) for i in range(count)]
+
+    def copy_rates_range(self, symbol, timeframe, date_from, date_to):
+        self.copy_rates_range_calls.append(symbol)
+        return [_FakeBar(1_760_000_000), _FakeBar(1_762_000_000)]
 
     def shutdown(self):
         self.shutdown_called = True
@@ -322,9 +359,151 @@ def test_probe_green_control_reads_data_when_vantage_identity_matches(monkeypatc
     assert fake.account_info_called is True
     assert fake.symbols_get_called is True
     assert fake.copy_rates_called is True
-    assert report["matching_symbols"] == ["XAUUSDm"]
-    assert report["depth_check"] == {"XAUUSDm": 10}
+    assert report["matching_symbols"] == ["XAUUSD", "XAUUSD.crp"]
+    # A-047: the pinned symbol's bars are read for real...
+    assert report["depth_check"]["XAUUSD"] == 10
+    # ...but the excluded symbol is enumerated (inventory), never read
+    assert report["depth_check"]["XAUUSD.crp"].startswith("REFUSED")
+    # every copy_rates_from_pos call (depth-check + extent walk-back) is
+    # for the pinned symbol only — never the excluded one
+    assert set(fake.copy_rates_from_pos_calls) == {"XAUUSD"}
     assert fake.shutdown_called is True
+
+
+# --- A-047 SYMBOL PIN: exact-match refusal, drilled RED before trusted GREEN ---
+
+def test_symbol_matches_pin_accepts_exact_string():
+    ok, detail = probe_mod._symbol_matches_pin("XAUUSD")
+    assert ok is True
+    assert "matches the pin" in detail
+
+
+def test_symbol_matches_pin_rejects_crp_variant():
+    ok, detail = probe_mod._symbol_matches_pin("XAUUSD.crp")
+    assert ok is False
+    assert "REFUSED" in detail
+    assert "XAUUSD.crp" in detail
+
+
+def test_symbol_matches_pin_rejects_case_variant():
+    ok, _ = probe_mod._symbol_matches_pin("xauusd")
+    assert ok is False
+
+
+def test_symbol_matches_pin_rejects_near_miss_from_retired_estate():
+    """The historical NPSU estate's own filenames carry 'XAUUSDm' — a
+    plausible-looking near miss, exactly the kind a prefix scan would
+    readmit but an exact-match pin must not."""
+    ok, _ = probe_mod._symbol_matches_pin("XAUUSDm")
+    assert ok is False
+
+
+def test_symbol_matches_pin_rejects_trailing_whitespace():
+    ok, _ = probe_mod._symbol_matches_pin("XAUUSD ")
+    assert ok is False
+
+
+def test_probe_never_reads_bars_for_excluded_symbol(monkeypatch):
+    """A-047 end-to-end drill: XAUUSD.crp is discoverable (inventory)
+    but its bars are never requested, regardless of prefix-scan order or
+    which symbol the broker lists first."""
+    fake = _FakeMT5(VANTAGE_INFO, symbols=("XAUUSD.crp", "XAUUSD", "XAUUSDm"))
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    monkeypatch.setattr(probe_mod, "TERMINAL_EXE", __file__)
+    monkeypatch.setattr(probe_mod, "_running_pids_by_path", lambda exe: set())
+    monkeypatch.setattr(probe_mod, "LAUNCH_WAIT_SECONDS", 0)
+
+    report = probe_mod.probe("XAUUSD")
+
+    assert sorted(report["matching_symbols"]) == ["XAUUSD", "XAUUSD.crp", "XAUUSDm"]
+    assert set(fake.copy_rates_from_pos_calls) == {"XAUUSD"}  # ONLY the pin, ever
+    assert report["depth_check"]["XAUUSD.crp"].startswith("REFUSED")
+    assert report["depth_check"]["XAUUSDm"].startswith("REFUSED")
+    assert report["symbol_pin"] == "XAUUSD"
+
+
+def test_m5_extent_measured_only_for_pinned_symbol(monkeypatch):
+    fake = _FakeMT5(VANTAGE_INFO)
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    monkeypatch.setattr(probe_mod, "TERMINAL_EXE", __file__)
+    monkeypatch.setattr(probe_mod, "_running_pids_by_path", lambda exe: set())
+    monkeypatch.setattr(probe_mod, "LAUNCH_WAIT_SECONDS", 0)
+
+    report = probe_mod.probe("XAUUSD")
+
+    assert fake.copy_rates_range_calls == ["XAUUSD"]  # never the excluded symbol
+    extent = report["m5_extent"]
+    assert extent["symbol"] == "XAUUSD"
+    assert extent["earliest_bar_seen_utc"] is not None
+    assert extent["latest_bar_utc"] is not None
+    assert extent["walk_back_bars_requested"] is not None
+    assert extent["earliest_bar_is_confirmed_true_earliest"] is not None
+    assert extent["target_span_bar_count"] == 2
+    assert extent["target_span_first_bar_utc"] is not None
+    assert extent["error"] is None
+
+
+def test_walk_back_bars_backs_off_on_invalid_params_and_reports_used_count(monkeypatch):
+    """F-PROBE-2 (self-caught, real machine): copy_rates_from_pos refused
+    a request at the terminal's own reported maxbars ceiling with
+    (-2, 'Invalid params') and returned None with NO exception — the
+    old code's bare `if walk is not None` swallowed that silently,
+    leaving earliest/latest None with error=None (a false-clean report).
+    This proves the fix: back off and keep the real error visible."""
+    calls = []
+
+    class FakeMT5WithCeiling:
+        TIMEFRAME_M5 = 5
+
+        def last_error(self):
+            return (-2, "Terminal: Invalid params")
+
+        def copy_rates_from_pos(self, symbol, timeframe, start, count):
+            calls.append(count)
+            if count >= 50_000:
+                return None  # simulates the real refusal above the ceiling
+            return [_FakeBar(1_700_000_000 + i * 300) for i in range(count)]
+
+    fake = FakeMT5WithCeiling()
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    bars, used_count, err = probe_mod._walk_back_bars("XAUUSD", 5, 50_000)
+    assert bars is not None
+    assert used_count < 50_000
+    assert calls[0] == 50_000  # tried the full request first
+    assert calls[-1] == used_count
+
+
+def test_walk_back_bars_does_not_mask_a_different_error(monkeypatch):
+    """A refusal that ISN'T -2 (e.g. no connection) must be returned as
+    the real error, not treated as a size problem and retried forever."""
+    class FakeMT5Disconnected:
+        TIMEFRAME_M5 = 5
+
+        def last_error(self):
+            return (-10004, "Terminal: No connection")
+
+        def copy_rates_from_pos(self, symbol, timeframe, start, count):
+            return None
+
+    fake = FakeMT5Disconnected()
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    bars, used_count, err = probe_mod._walk_back_bars("XAUUSD", 5, 50_000)
+    assert bars is None
+    assert err == (-10004, "Terminal: No connection")
+    assert used_count == 50_000  # never retried — not a size problem
+
+
+def test_m5_extent_not_measured_when_pin_absent_from_feed(monkeypatch):
+    fake = _FakeMT5(VANTAGE_INFO, symbols=("XAUUSD.crp",))
+    monkeypatch.setattr(probe_mod, "mt5", fake)
+    monkeypatch.setattr(probe_mod, "TERMINAL_EXE", __file__)
+    monkeypatch.setattr(probe_mod, "_running_pids_by_path", lambda exe: set())
+    monkeypatch.setattr(probe_mod, "LAUNCH_WAIT_SECONDS", 0)
+
+    report = probe_mod.probe("XAUUSD")
+
+    assert report["m5_extent"] is None
+    assert fake.copy_rates_range_calls == []
 
 
 def test_probe_refuses_superseded_vantage_install(monkeypatch):

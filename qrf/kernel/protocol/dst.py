@@ -72,3 +72,71 @@ def local_to_utc_ns(naive_dt: _dt.datetime, zone_name: str) -> int:
 def _to_ns(utc_dt: _dt.datetime) -> int:
     delta = utc_dt - _EPOCH_UTC
     return (delta.days * 86_400 + delta.seconds) * 1_000_000_000 + delta.microseconds * 1_000
+
+
+def find_time_of_day_at_gaps(
+    sorted_local_times: list[_dt.datetime], gap_threshold: _dt.timedelta = _dt.timedelta(hours=1)
+) -> list[tuple[_dt.time, _dt.time]]:
+    """For a sorted sequence of (naive, local/broker-labelled) timestamps,
+    return the (close_time_of_day, reopen_time_of_day) pair at every gap
+    exceeding ``gap_threshold`` -- e.g. a daily maintenance break or a
+    weekend closure. Pure inspection; raises nothing, decides nothing."""
+    pairs: list[tuple[_dt.time, _dt.time]] = []
+    for i in range(1, len(sorted_local_times)):
+        if sorted_local_times[i] - sorted_local_times[i - 1] > gap_threshold:
+            pairs.append((sorted_local_times[i - 1].time(), sorted_local_times[i].time()))
+    return pairs
+
+
+def check_maintenance_boundary_invariant(
+    sorted_local_times: list[_dt.datetime],
+    expected_close: _dt.time,
+    expected_reopen: _dt.time,
+    tolerance: _dt.timedelta = _dt.timedelta(minutes=10),
+) -> tuple[bool, str]:
+    """WO-10's pin self-policing invariant (A-051): a broker's daily
+    maintenance-break close/reopen clock-time is a cheap, always-present
+    signature of its server's CURRENT UTC offset. If that offset ever
+    shifts (e.g. the broker changes its DST policy mid-collection), the
+    close/reopen times observed in LOCAL (broker-labelled) terms will
+    visibly drift -- this refuses loudly instead of a pin, once
+    evidenced, being trusted forever without re-checking (the exact
+    assumption this project keeps catching elsewhere).
+
+    Every gap-boundary pair found via :func:`find_time_of_day_at_gaps`
+    must sit within ``tolerance`` of BOTH ``expected_close`` and
+    ``expected_reopen``. Returns (ok, detail); raises nothing -- the
+    caller (e.g. an ingest pipeline) decides whether a violation is
+    fatal for its batch.
+
+    A batch with no gaps at all (nothing to check) is reported OK with a
+    detail saying so, not silently treated as a pass with no evidence."""
+    pairs = find_time_of_day_at_gaps(sorted_local_times)
+    if not pairs:
+        return True, "no maintenance-boundary gap observed in this batch -- nothing to check"
+
+    def _time_delta(a: _dt.time, b: _dt.time) -> _dt.timedelta:
+        da = _dt.datetime.combine(_dt.date.min, a)
+        db = _dt.datetime.combine(_dt.date.min, b)
+        diff = abs(da - db)
+        # a boundary just either side of midnight is still "close" in
+        # time-of-day terms -- take the shorter way around the 24h clock
+        return min(diff, _dt.timedelta(days=1) - diff)
+
+    violations = [
+        (close_t, reopen_t)
+        for close_t, reopen_t in pairs
+        if _time_delta(close_t, expected_close) > tolerance
+        or _time_delta(reopen_t, expected_reopen) > tolerance
+    ]
+    if violations:
+        readable = [(c.isoformat(), r.isoformat()) for c, r in violations]
+        return False, (
+            f"maintenance-boundary invariant VIOLATED: {readable} do not match "
+            f"expected close={expected_close.isoformat()} reopen={expected_reopen.isoformat()} "
+            f"within {tolerance} -- server clock offset may have shifted"
+        )
+    return True, (
+        f"{len(pairs)} boundary gap(s), all within {tolerance} of "
+        f"expected close={expected_close} reopen={expected_reopen}"
+    )

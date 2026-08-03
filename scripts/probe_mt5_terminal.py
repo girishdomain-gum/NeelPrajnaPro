@@ -44,6 +44,14 @@ mt5_terminal.py's drift guard fails if this file and that doc ever
 disagree again).
   CURRENT (pinned):  C:\\Program Files\\Vantage Markets MT5 Terminal\\
   SUPERSEDED (must now REFUSE): C:\\Program Files\\Vantage International MT5\\
+
+SYMBOL PIN (A-047/O-023): the Owner ruled directly, before any property
+comparison was run — XAUUSD only, XAUUSD.crp NEVER. Exact-match, not a
+prefix: `XAUUSD*` is fine for DISCOVERY (this probe still enumerates
+every matching symbol so the Owner can see what exists), but reading,
+exporting, or ingesting bars for anything other than the exact pinned
+string is refused before any data is read for it — same hard-stop shape
+as the Vantage identity check.
 """
 
 from __future__ import annotations
@@ -52,6 +60,7 @@ import os
 import subprocess
 import sys
 import time
+from datetime import UTC, datetime
 
 try:
     import MetaTrader5 as mt5
@@ -66,10 +75,21 @@ VANTAGE_COMPANY_TOKEN = "vantage markets"  # case-insensitive substring of termi
 # owned path to test against. Not a competitor's name (A-039 rule 4
 # concerns OTHER brokers; this is this project's own retired pin).
 SUPERSEDED_TERMINAL_INSTALL_DIR = r"C:\Program Files\Vantage International MT5"
+SYMBOL_PIN = "XAUUSD"  # O-023, EXACT string — never a prefix, never .crp
 PROBE_TIMEFRAME = "M5"
 PROBE_BAR_COUNT = 10  # depth-presence check only, never a real pull
 LAUNCH_WAIT_SECONDS = 30
 LAUNCH_POLL_SECONDS = 1
+MAX_HISTORY_PROBE_BARS = 50_000  # starting point for a walk-back; _walk_back_bars
+# backs off on refusal (observed on the real Vantage terminal: a request at
+# terminal_info().maxbars's own reported ceiling can still be refused)
+# The DST-pin candidate span (A-035/A-047) — bracketed with margin either
+# side of the 2025-10-26 EU and 2025-11-02 US transitions. UTC boundaries
+# here are ONLY a coarse coverage probe (does data exist in this window
+# at all) — they make no zone claim; that determination is a later,
+# separate step once real data is in hand.
+TARGET_SPAN_START_UTC = datetime(2025, 10, 15, tzinfo=UTC)
+TARGET_SPAN_END_UTC = datetime(2025, 11, 15, tzinfo=UTC)
 
 
 def _identity_matches_vantage(term_info):
@@ -93,6 +113,105 @@ def _identity_matches_vantage(term_info):
         f"expected install {TERMINAL_INSTALL_DIR!r} "
         f"and company containing {VANTAGE_COMPANY_TOKEN!r}"
     )
+
+
+def _symbol_matches_pin(symbol):
+    """A-047's binding symbol pin: EXACT match only, never a prefix and
+    never a near-miss/case-variant. A `XAUUSD*` scan is fine for
+    discovery (matching_symbols below still lists everything found —
+    that is inventory, not use); this gate is what stands between
+    discovery and actually reading a symbol's bars. Returns (ok, reason)
+    in the same shape as _identity_matches_vantage, for the same reason:
+    refuse loudly, name what was found, read nothing."""
+    if symbol == SYMBOL_PIN:
+        return True, f"symbol={symbol!r} matches the pin"
+    return False, (
+        f"REFUSED: symbol={symbol!r} is not the pinned symbol {SYMBOL_PIN!r} — no data read"
+    )
+
+
+def _walk_back_bars(symbol, timeframe, start_count):
+    """copy_rates_from_pos refuses (-2 'Invalid params') above some
+    terminal-specific ceiling that terminal_info().maxbars does NOT
+    reliably predict (observed on the real Vantage terminal: maxbars
+    reports 100000, but a request of exactly 100000 is refused while
+    50000 succeeds) — and on refusal it returns None with NO exception,
+    so a bare `if walk is not None` check silently swallows the failure.
+    This halves the count on refusal until one succeeds or the floor is
+    hit, and always returns the real mt5.last_error() alongside — never
+    a silent None. Returns (bars_or_None, count_used, last_error)."""
+    count = start_count
+    while count >= 100:
+        bars = mt5.copy_rates_from_pos(symbol, timeframe, 0, count)
+        if bars is not None:
+            return bars, count, None
+        err = mt5.last_error()
+        if err and err[0] == -2:  # Invalid params — count too large, back off
+            count //= 2
+            continue
+        return None, count, err  # a different failure — don't mask it by retrying
+    return None, count, mt5.last_error()
+
+
+def _measure_m5_extent(symbol):
+    """Read-only M5 history extent measurement for the PINNED symbol
+    only — the caller is responsible for gating via _symbol_matches_pin
+    before ever calling this. No file written, no journal touch; this
+    is a depth/coverage measurement, not the STEP 2 export. Reports raw
+    facts (earliest/latest bar, target-span bar count) rather than a
+    judged "covered" verdict — A-047: 'report the numbers and I will
+    rule on whether the span stands or must move'."""
+    extent = {
+        "symbol": symbol,
+        "earliest_bar_seen_utc": None,
+        "latest_bar_utc": None,
+        "earliest_bar_is_confirmed_true_earliest": None,
+        "walk_back_bars_requested": None,
+        "target_span_start_utc": TARGET_SPAN_START_UTC.isoformat(),
+        "target_span_end_utc": TARGET_SPAN_END_UTC.isoformat(),
+        "target_span_bar_count": None,
+        "target_span_first_bar_utc": None,
+        "target_span_last_bar_utc": None,
+        "error": None,
+    }
+    timeframe = getattr(mt5, f"TIMEFRAME_{PROBE_TIMEFRAME}")
+    try:
+        term_info = mt5.terminal_info()
+        reported_maxbars = getattr(term_info, "maxbars", None) or MAX_HISTORY_PROBE_BARS
+        start_count = min(MAX_HISTORY_PROBE_BARS, reported_maxbars)
+        walk, used_count, walk_err = _walk_back_bars(symbol, timeframe, start_count)
+        extent["walk_back_bars_requested"] = used_count
+        if walk is not None and len(walk) > 0:
+            extent["earliest_bar_seen_utc"] = _bar_time_to_iso(walk[0])
+            extent["latest_bar_utc"] = _bar_time_to_iso(walk[-1])
+            # if FEWER bars came back than requested, we hit real history's
+            # start — the earliest bar seen IS the true earliest available.
+            # If we got exactly `used_count`, there may be more further
+            # back that this single call never asked for; say so honestly
+            # rather than implying a depth we didn't actually measure.
+            extent["earliest_bar_is_confirmed_true_earliest"] = len(walk) < used_count
+        elif walk_err:
+            extent["error"] = f"extent walk-back failed: {walk_err}"
+    except Exception as exc:  # noqa: BLE001 — report, don't crash the probe
+        extent["error"] = f"extent walk-back failed: {exc}"
+        return extent
+
+    try:
+        span_bars = mt5.copy_rates_range(
+            symbol, timeframe, TARGET_SPAN_START_UTC, TARGET_SPAN_END_UTC,
+        )
+        extent["target_span_bar_count"] = 0 if span_bars is None else len(span_bars)
+        if span_bars is not None and len(span_bars) > 0:
+            extent["target_span_first_bar_utc"] = _bar_time_to_iso(span_bars[0])
+            extent["target_span_last_bar_utc"] = _bar_time_to_iso(span_bars[-1])
+    except Exception as exc:  # noqa: BLE001
+        extent["error"] = f"target-span range failed: {exc}"
+
+    return extent
+
+
+def _bar_time_to_iso(bar):
+    return datetime.fromtimestamp(int(bar["time"]), tz=UTC).isoformat()
 
 
 def _running_pids_by_path(target_exe):
@@ -163,7 +282,9 @@ def probe(symbol_prefix="XAUUSD"):
         "trade_allowed": None,
         "account_present": None,
         "matching_symbols": [],
+        "symbol_pin": SYMBOL_PIN,
         "depth_check": {},
+        "m5_extent": None,
         "closed_by_probe": False,
     }
 
@@ -228,11 +349,21 @@ def probe(symbol_prefix="XAUUSD"):
 
         timeframe = getattr(mt5, f"TIMEFRAME_{PROBE_TIMEFRAME}")
         for sym in matches:
+            # A-047: exact-match refusal BEFORE any bar read. The prefix
+            # scan above is discovery only — XAUUSD.crp is listed in
+            # matching_symbols (inventory) but its bars are never read.
+            pin_ok, pin_detail = _symbol_matches_pin(sym)
+            if not pin_ok:
+                report["depth_check"][sym] = pin_detail
+                continue
             try:
                 bars = mt5.copy_rates_from_pos(sym, timeframe, 0, PROBE_BAR_COUNT)
                 report["depth_check"][sym] = 0 if bars is None else len(bars)
             except Exception as exc:  # noqa: BLE001 — report, don't crash the probe
                 report["depth_check"][sym] = f"error: {exc}"
+
+        if SYMBOL_PIN in matches:
+            report["m5_extent"] = _measure_m5_extent(SYMBOL_PIN)
 
     finally:
         if mt5 is not None:
@@ -252,7 +383,8 @@ def _print_report(report):
         "pre_launch_running_pids", "we_launched_it", "initialize_ok",
         "initialize_error", "vantage_identity_ok", "vantage_identity_detail",
         "terminal_connected", "trade_allowed",
-        "account_present", "matching_symbols", "depth_check", "closed_by_probe",
+        "account_present", "matching_symbols", "symbol_pin", "depth_check",
+        "m5_extent", "closed_by_probe",
     ):
         print(f"{key}: {report.get(key)}")
     green = (

@@ -24,6 +24,18 @@ refuses a batch whose ts_start is before the dataset's last-ingested ts_end
 whose ``source`` filename was already ingested for this dataset — both
 loudly, before writing anything.
 
+PIN SELF-POLICING (WO-10, A-051): the pinned zone was determined from
+evidence (D-037/A-051) that Vantage's XAUUSD feed shows a daily
+maintenance close at 23:55 / reopen at 01:00, server-labelled time,
+confirmed unchanged across FOUR real DST transitions spanning two
+calendar years (2025-10-26, 2025-11-02, 2026-03-08, 2026-03-29). A pin
+verified once and trusted forever is exactly the assumption this
+project keeps catching elsewhere — so every batch's local timestamps
+are checked against that same invariant before ingest. If Vantage ever
+changes its server clock policy mid-collection, THIS is what catches
+it: the batch is refused loudly, naming the drifted boundary, instead
+of a silent one-hour shift being absorbed into the dataset.
+
 Run:  .venv/Scripts/python.exe scripts/ingest_r6.py <dataset> <csv_path>
 """
 
@@ -36,12 +48,19 @@ from pathlib import Path
 import pandas as pd
 
 from qrf.kernel.errors import SchemaViolation
-from qrf.kernel.protocol.dst import local_to_utc_ns
+from qrf.kernel.protocol.dst import check_maintenance_boundary_invariant, local_to_utc_ns
 from qrf.kernel.records.record import now_ns
 from qrf.kernel.records.store import RecordStore
 
 JOURNAL = "datastore/journal/journal.jsonl"
 REQUIRED_COLUMNS = ("local_time", "bid", "ask")
+
+# Vantage XAUUSD's real, evidenced daily maintenance boundary (D-037/A-051) —
+# dataset-specific, not a general R6 property. If a future dataset needs a
+# different invariant, this is the place to make it per-dataset.
+VANTAGE_R6_EXPECTED_CLOSE = datetime.time(23, 55)
+VANTAGE_R6_EXPECTED_REOPEN = datetime.time(1, 0)
+VANTAGE_R6_BOUNDARY_TOLERANCE = datetime.timedelta(minutes=10)
 
 
 def _load_scope(store: RecordStore, dataset: str) -> dict:
@@ -69,15 +88,30 @@ def _read_batch_csv(path: Path) -> pd.DataFrame:
 
 def _convert_batch_to_utc(df: pd.DataFrame, zone_name: str, source: str) -> pd.DataFrame:
     ts_ns: list[int] = []
+    local_dts: list[datetime.datetime] = []
     for i, local_str in enumerate(df["local_time"]):
         try:
             naive = datetime.datetime.strptime(local_str, "%Y-%m-%d %H:%M:%S")
         except ValueError as e:
             raise SchemaViolation(f"{source} row {i}: unparseable local_time {local_str!r}") from e
+        local_dts.append(naive)
         ts_ns.append(local_to_utc_ns(naive, zone_name))  # raises loudly on ambiguous/nonexistent
     out = df.copy()
     out["ts"] = ts_ns
+    out["_local_dt"] = local_dts
     return out.sort_values("ts").reset_index(drop=True)
+
+
+def _check_boundary_invariant(sorted_local_dts: list, source: str) -> None:
+    """A-051's pin self-policing: refuses loudly if this batch's own
+    local timestamps show the maintenance boundary somewhere other than
+    where the pin's evidence says it should be. See module docstring."""
+    ok, detail = check_maintenance_boundary_invariant(
+        sorted_local_dts, VANTAGE_R6_EXPECTED_CLOSE, VANTAGE_R6_EXPECTED_REOPEN,
+        tolerance=VANTAGE_R6_BOUNDARY_TOLERANCE,
+    )
+    if not ok:
+        raise SchemaViolation(f"{source}: pin self-policing check failed — {detail}")
 
 
 def _last_ingested_ts_end(store: RecordStore, dataset: str) -> int | None:
@@ -100,8 +134,10 @@ def ingest_batch(store: RecordStore, dataset: str, csv_path: Path):
     """Ingest one CSV batch for ``dataset``. Refuses loudly (writes nothing)
     on: an unregistered dataset scope, a malformed/empty CSV, an ambiguous or
     nonexistent local timestamp anywhere in the batch, a duplicate source
-    filename, or a batch that overlaps/duplicates/precedes the last-ingested
-    span. Returns the appended ``r6_ingest_batch`` record on success.
+    filename, a batch that overlaps/duplicates/precedes the last-ingested
+    span, or (A-051) a batch whose own local timestamps show the pinned
+    maintenance boundary has drifted from where the pin's evidence says it
+    should be. Returns the appended ``r6_ingest_batch`` record on success.
     """
     source = str(csv_path)
     scope = _load_scope(store, dataset)
@@ -111,6 +147,7 @@ def ingest_batch(store: RecordStore, dataset: str, csv_path: Path):
 
     df = _read_batch_csv(csv_path)
     df = _convert_batch_to_utc(df, scope["iana_zone"], source)
+    _check_boundary_invariant(list(df["_local_dt"]), source)
 
     ts_start = int(df["ts"].min())
     ts_end = int(df["ts"].max()) + 1  # half-open convention: [ts_start, ts_end)

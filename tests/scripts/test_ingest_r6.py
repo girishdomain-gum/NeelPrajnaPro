@@ -139,3 +139,33 @@ def test_second_strictly_newer_batch_succeeds(tmp_path):
     rec = ingest_batch(store, DATASET, second)
     assert rec.payload["row_count"] == 1
     assert len(list(store.query(record_type="r6_ingest_batch"))) == 2
+
+
+# --- A-051 pin self-policing: the maintenance-boundary invariant --------------
+def test_refuses_batch_with_drifted_maintenance_boundary(tmp_path):
+    """The drill: a batch whose own daily close/reopen sits an hour away
+    from the pinned (evidenced) boundary must be refused loudly, not
+    silently ingested as though the broker's clock hadn't moved."""
+    store = _store(tmp_path)
+    _register_scope(store)
+    # close/reopen shifted 1h earlier than the real, pinned 23:55/01:00
+    csv_path = _write_csv(
+        tmp_path, "drifted.csv",
+        [("2026-06-15 22:55:00", 100.0, 100.1), ("2026-06-16 00:00:00", 100.1, 100.2)],
+    )
+    with pytest.raises(SchemaViolation, match="pin self-policing check failed"):
+        ingest_batch(store, DATASET, csv_path)
+    assert len(list(store.query(record_type="r6_ingest_batch"))) == 0  # untouched
+
+
+def test_accepts_batch_matching_the_pinned_boundary(tmp_path):
+    """Green control for the above: the real, evidenced 23:55/01:00
+    boundary must NOT be refused."""
+    store = _store(tmp_path)
+    _register_scope(store)
+    csv_path = _write_csv(
+        tmp_path, "matching.csv",
+        [("2026-06-15 23:55:00", 100.0, 100.1), ("2026-06-16 01:00:00", 100.1, 100.2)],
+    )
+    rec = ingest_batch(store, DATASET, csv_path)
+    assert rec.payload["row_count"] == 2
