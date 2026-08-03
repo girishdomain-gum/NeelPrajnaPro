@@ -40,6 +40,48 @@ have seen, and it is why the Owner ceremony at S05 exists — the typed
 designation is the human key on a lock the machine cannot turn alone. See
 tests/windows/test_ledger.py::test_r3_unrecorded_look_is_not_detected for
 the test that proves this hole rather than leaving it implicit.
+
+CORRECTION MECHANISM — supersede() (A-024/A-025 R3, S07 F-07): the ledger
+is append-only, and a RESERVATION MISTAKE (a span designated VIRGIN that
+was, on investigation, already examined by something recorded elsewhere)
+was otherwise permanent and uncorrectable. `supersede()` adds a new,
+append-only op that retracts a reservation's occupancy of its span
+without ever editing or deleting the original record.
+
+THE GOVERNING PRINCIPLE, stated because it is binding and not obvious:
+YOU MAY RETRACT A CLAIM THAT TIME IS UNTOUCHED; YOU MAY NEVER RETRACT A
+CLAIM THAT TIME WAS TOUCHED. A VIRGIN reservation is a claim of
+innocence, and claims of innocence can be wrong about our own records --
+exactly what happened here. A TRAINING/EXPLORATION reservation is a claim
+that time WAS looked at, which is a fact about the world; facts about the
+world do not become untrue because they are inconvenient. Combined with
+the burned-window guard below, `supersede()` can only ever make the
+ledger MORE restrictive or correct a false claim of innocence -- it can
+never manufacture innocence for a span already on record as examined.
+
+RULES:
+  1. Only a VIRGIN, UNBURNED window may be superseded. Superseding a
+     TRAINING or EXPLORATION window is refused by name -- this is the
+     rule that closes the laundering hole an earlier draft of this
+     mechanism left open (contaminating a window, then "correcting" the
+     EXPLORATION record that proved it, then re-reserving the same span
+     as VIRGIN).
+  2. Superseding a BURNED window is refused by name -- a verdict's window
+     can never be retracted this way. This is the guard that stops
+     `supersede()` from being "un-burn evidence" under a different name.
+  3. A window may be superseded only ONCE -- superseding an
+     already-superseded window is refused.
+  4. `reason` is required and non-empty -- a correction with no stated
+     reason is itself a small dishonesty. It is written into the
+     append-only chain forever, for a reader years from now who has none
+     of today's context.
+  5. A superseded window's span becomes available again for a NEW
+     reservation (`reserve()`'s overlap check skips superseded windows).
+     `balances()` gains a `superseded` bucket so every window is counted
+     in exactly one bucket, always.
+Nothing is ever deleted or edited: the original `"reserve"` record and
+the `"supersede"` record both remain in the chain forever, so the
+ledger's history shows both the mistake and its correction, permanently.
 """
 
 from __future__ import annotations
