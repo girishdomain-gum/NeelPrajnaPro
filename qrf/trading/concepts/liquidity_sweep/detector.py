@@ -32,15 +32,27 @@ MECHANICS, per Appendix B (each letter below is that section):
       penetration on; invalidation fires the first bar the reclose
       window (2 bars) is exceeded without a reclose.
 
+EVENTS (A-013 R1): the definition is the two-event chain POOL_FORMED ->
+SWEEP (invalidation is silent -- resolved, no event, per B.5). Both are
+first-class `Observation`s in the SDK's `ObservationSet`, provenance-bound
+like everything else (C1) -- a pool count reachable only through a
+side channel outside the SDK would be exactly the C1 violation the SDK
+exists to forbid. `detect_with_counts()` remains as a convenience for
+parity-checking, but every count it reports is now also derivable from
+`detect()`'s own output.
+
 No significance/edge/outcome field exists anywhere in this module's
 observations (AM-01 C3) -- this detector reports what it saw, never
-whether it mattered.
+whether it mattered. The audit fields added per A-013 R2 (pool_members,
+penetration_ticks, close_back_ticks, pool_age_bars) are NEVER
+load-bearing for a verdict -- they exist only so a human can reconstruct
+why an event fired.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from qrf.kernel.detection.interface import Detector
 from qrf.kernel.detection.types import Bar, DetectorConfig, Observation, ObservationSet
@@ -64,15 +76,28 @@ LOW = "LOW"
 
 
 @dataclass(frozen=True)
+class PoolFormedObservation(Observation):
+    side: str = HIGH
+    direction: int = 0
+    level: float = 0.0
+    formation_bar: int = 0
+    pool_members: tuple[float, ...] = ()
+
+
+@dataclass(frozen=True)
 class SweepObservation(Observation):
     side: str = HIGH
     direction: int = 0
     level: float = 0.0
     pool_formation_bar: int = 0
+    pool_members: tuple[float, ...] = ()
     penetration_bar: int = 0
     sweep_bar: int = 0
     reclose_bars: int = 0
+    pool_age_bars: int = 0
     max_penetration: float = 0.0
+    penetration_ticks: float = 0.0
+    close_back_ticks: float = 0.0
 
 
 @dataclass
@@ -86,16 +111,18 @@ class _Pool:
     side: str
     level: float
     formation_bar: int
+    members: tuple[float, ...] = field(default_factory=tuple)
     penetration_bar: int | None = None
     max_penetration: float = 0.0
 
 
 @dataclass(frozen=True)
 class DetectionCounts:
-    """Diagnostic counts for parity-checking against Appendix B §B.6.
-    NOT part of the SDK's ObservationSet (that stays minimal, C3-clean);
-    this is a separate, explicitly non-authoritative side channel used
-    only to compare against the pinned reproduction numbers.
+    """Convenience counts for parity-checking against Appendix B §B.6.
+    Every number here is derivable from `detect()`'s own ObservationSet
+    (pivots aside, which are not events at all under v1.1 and so are not
+    observations) -- this is not a second source of truth, just a
+    shortcut for tooling.
     """
 
     pivots: int
@@ -117,7 +144,7 @@ def _is_pivot_low(lows: Sequence[float], i: int, k: int) -> bool:
     )
 
 
-def _run(bars: Sequence[Bar]) -> tuple[list[SweepObservation], DetectionCounts]:
+def _run(bars: Sequence[Bar]) -> tuple[list[Observation], DetectionCounts]:
     n = len(bars)
     highs = [b.high for b in bars]
     lows = [b.low for b in bars]
@@ -134,8 +161,9 @@ def _run(bars: Sequence[Bar]) -> tuple[list[SweepObservation], DetectionCounts]:
 
     history: dict[str, list[_PivotRecord]] = {HIGH: [], LOW: []}
     active: list[_Pool] = []
-    sweeps: list[SweepObservation] = []
+    observations: list[Observation] = []
     pool_count = 0
+    sweep_count = 0
 
     for i in range(n):
         # B.4: sweep/invalidation checks run FIRST, against every pool
@@ -159,19 +187,25 @@ def _run(bars: Sequence[Bar]) -> tuple[list[SweepObservation], DetectionCounts]:
                 )
                 recloses = (closes[i] < pool.level) if is_high else (closes[i] > pool.level)
                 if recloses:
-                    sweeps.append(
+                    close_back = (pool.level - closes[i]) if is_high else (closes[i] - pool.level)
+                    observations.append(
                         SweepObservation(
                             kind="SWEEP",
                             side=pool.side,
                             direction=-1 if is_high else 1,
                             level=pool.level,
                             pool_formation_bar=pool.formation_bar,
+                            pool_members=pool.members,
                             penetration_bar=pool.penetration_bar,
                             sweep_bar=i,
                             reclose_bars=0,
+                            pool_age_bars=i - pool.formation_bar,
                             max_penetration=pool.max_penetration,
+                            penetration_ticks=pool.max_penetration / TICK_SIZE,
+                            close_back_ticks=max(0.0, close_back) / TICK_SIZE,
                         )
                     )
+                    sweep_count += 1
                     # resolved: swept, dropped from active
                 else:
                     still_active.append(pool)
@@ -184,19 +218,25 @@ def _run(bars: Sequence[Bar]) -> tuple[list[SweepObservation], DetectionCounts]:
                     pool.max_penetration = depth_i
                 recloses = (closes[i] < pool.level) if is_high else (closes[i] > pool.level)
                 if recloses:
-                    sweeps.append(
+                    close_back = (pool.level - closes[i]) if is_high else (closes[i] - pool.level)
+                    observations.append(
                         SweepObservation(
                             kind="SWEEP",
                             side=pool.side,
                             direction=-1 if is_high else 1,
                             level=pool.level,
                             pool_formation_bar=pool.formation_bar,
+                            pool_members=pool.members,
                             penetration_bar=p,
                             sweep_bar=i,
                             reclose_bars=i - p,
+                            pool_age_bars=i - pool.formation_bar,
                             max_penetration=pool.max_penetration,
+                            penetration_ticks=pool.max_penetration / TICK_SIZE,
+                            close_back_ticks=max(0.0, close_back) / TICK_SIZE,
                         )
                     )
+                    sweep_count += 1
                     # resolved: swept, dropped from active
                 elif i - p >= RECLOSE_WINDOW:
                     pass  # resolved: invalidated, no event, dropped from active
@@ -211,45 +251,59 @@ def _run(bars: Sequence[Bar]) -> tuple[list[SweepObservation], DetectionCounts]:
             hist[:] = [e for e in hist if (i - e.formation_index) <= MEMBER_WINDOW]
             mates = [e for e in hist if abs(e.price - r_price) <= POOL_TOL]
             if mates:
-                member_prices = [e.price for e in mates] + [r_price]
+                member_prices = tuple([e.price for e in mates] + [r_price])
                 level = max(member_prices) if side == HIGH else min(member_prices)
                 suppressed = any(
                     p.side == side and abs(p.level - level) <= POOL_TOL for p in active
                 )
                 if not suppressed:
-                    active.append(_Pool(side=side, level=level, formation_bar=i))
+                    active.append(
+                        _Pool(side=side, level=level, formation_bar=i, members=member_prices)
+                    )
                     pool_count += 1
+                    observations.append(
+                        PoolFormedObservation(
+                            kind="POOL_FORMED",
+                            side=side,
+                            direction=-1 if side == HIGH else 1,
+                            level=level,
+                            formation_bar=i,
+                            pool_members=member_prices,
+                        )
+                    )
             hist.append(_PivotRecord(formation_index=formation_index, price=r_price))
 
-    return sweeps, DetectionCounts(pivots=pivot_count, pools=pool_count, sweeps=len(sweeps))
+    return observations, DetectionCounts(pivots=pivot_count, pools=pool_count, sweeps=sweep_count)
 
 
 class LiquiditySweepDetector(Detector):
     def detect(self, data: Sequence[Bar], config: DetectorConfig) -> ObservationSet:
-        sweeps, _counts = _run(data)
+        observations, _counts = _run(data)
         return ObservationSet(
             detector_name=DETECTOR_NAME,
             detector_version=DETECTOR_VERSION,
             source_sha256=config.source_sha256,
             span_start_utc=config.span_start_utc,
             span_end_utc=config.span_end_utc,
-            observations=tuple(sweeps),
+            observations=tuple(observations),
         )
 
     def detect_with_counts(
         self, data: Sequence[Bar], config: DetectorConfig
     ) -> tuple[ObservationSet, DetectionCounts]:
-        """Same as `detect()`, plus the diagnostic pivot/pool/sweep counts
-        for parity-checking against Appendix B §B.6. Not part of the SDK
-        interface -- a detector-specific extra, used only by tests/tools.
+        """Same as `detect()`, plus pivot/pool/sweep counts as a
+        convenience for parity-checking against Appendix B §B.6 -- pools
+        and sweeps are also directly countable from `detect()`'s own
+        ObservationSet by `kind`; this just saves the caller from doing
+        that arithmetic itself.
         """
-        sweeps, counts = _run(data)
+        observations, counts = _run(data)
         obs_set = ObservationSet(
             detector_name=DETECTOR_NAME,
             detector_version=DETECTOR_VERSION,
             source_sha256=config.source_sha256,
             span_start_utc=config.span_start_utc,
             span_end_utc=config.span_end_utc,
-            observations=tuple(sweeps),
+            observations=tuple(observations),
         )
         return obs_set, counts

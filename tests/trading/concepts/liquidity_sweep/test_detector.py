@@ -31,6 +31,14 @@ def _detect(bars):
     return LiquiditySweepDetector().detect_with_counts(bars, _CONFIG)
 
 
+def _sweeps(obs_set):
+    return [o for o in obs_set.observations if o.kind == "SWEEP"]
+
+
+def _pool_formed(obs_set):
+    return [o for o in obs_set.observations if o.kind == "POOL_FORMED"]
+
+
 # --- P1: planted truth ----------------------------------------------------
 
 
@@ -42,7 +50,7 @@ def test_p1_planted_truth_high_sweep_detected():
     )
     obs_set, counts = _detect(bars)
     assert counts.pivots >= 3
-    sweep = next(o for o in obs_set.observations if o.pool_formation_bar == 33)
+    sweep = next(o for o in _sweeps(obs_set) if o.pool_formation_bar == 33)
     assert sweep.side == HIGH
     assert sweep.direction == -1
     assert sweep.level == 101.2
@@ -59,7 +67,7 @@ def test_p1_planted_truth_low_sweep_detected():
     # above any of these levels, so it recloses a LOW pool on its own.
     bars = _bars(60, low={10: 98.9, 30: 98.7, 40: 98.6})
     obs_set, _counts = _detect(bars)
-    sweep = next(o for o in obs_set.observations if o.pool_formation_bar == 33)
+    sweep = next(o for o in _sweeps(obs_set) if o.pool_formation_bar == 33)
     assert sweep.side == LOW
     assert sweep.direction == 1
     assert sweep.level == 98.7
@@ -80,7 +88,7 @@ def test_p2_penetration_below_min_pen_never_sweeps():
         close={40: 101.0},
     )
     obs_set, _counts = _detect(bars)
-    assert not any(o.pool_formation_bar == 33 for o in obs_set.observations)
+    assert not any(o.pool_formation_bar == 33 for o in _sweeps(obs_set))
 
 
 def test_p2_reclose_one_bar_too_late_is_invalidation_not_sweep():
@@ -94,7 +102,7 @@ def test_p2_reclose_one_bar_too_late_is_invalidation_not_sweep():
         close={40: 101.3, 41: 101.3, 42: 101.3, 43: 101.0},
     )
     obs_set, _counts = _detect(bars)
-    assert not any(o.pool_formation_bar == 33 for o in obs_set.observations)
+    assert not any(o.pool_formation_bar == 33 for o in _sweeps(obs_set))
 
 
 def test_p2_lone_pivot_with_no_mate_forms_no_pool():
@@ -161,9 +169,9 @@ def test_m2_membership_is_a_star_not_a_transitive_chain():
         high={10: 100.50, 30: 100.25, 40: 100.60, 60: 100.05, 70: 100.31},
     )
     obs_set, _counts = _detect(bars)
-    pool1_sweep = next(o for o in obs_set.observations if o.pool_formation_bar == 33)
+    pool1_sweep = next(o for o in _sweeps(obs_set) if o.pool_formation_bar == 33)
     assert pool1_sweep.level == 100.50
-    pool2_sweep = next(o for o in obs_set.observations if o.pool_formation_bar == 63)
+    pool2_sweep = next(o for o in _sweeps(obs_set) if o.pool_formation_bar == 63)
     assert pool2_sweep.level == 100.25, (
         "star rule: pool2 must be {r2, r3} only (level 100.25); "
         "a transitive/chained implementation would wrongly pull r1 back "
@@ -182,7 +190,7 @@ def test_m3_level_frozen_and_suppression_ignores_resolved_pools():
     )
     obs_set, counts = _detect(bars)
     assert counts.pools == 2
-    formed_at_83 = any(o.pool_formation_bar == 83 for o in obs_set.observations) or True
+    formed_at_83 = any(o.pool_formation_bar == 83 for o in _sweeps(obs_set)) or True
     assert formed_at_83  # existence check only; full lifecycle covered by pool count
 
 
@@ -199,7 +207,8 @@ def test_m4_pool_cannot_form_and_be_swept_on_the_same_bar():
     )
     obs_set, counts = _detect(bars)
     assert counts.pools == 1
-    assert obs_set.observations == ()  # no sweep: the pool didn't exist yet at bar 33
+    assert _sweeps(obs_set) == []  # no sweep: the pool didn't exist yet at bar 33
+    assert len(_pool_formed(obs_set)) == 1  # but it DID form
 
 
 def test_m5_reclose_at_exactly_p_plus_2_is_a_sweep():
@@ -211,7 +220,7 @@ def test_m5_reclose_at_exactly_p_plus_2_is_a_sweep():
         close={40: 101.3, 41: 101.3, 42: 101.0},
     )
     obs_set, _counts = _detect(bars)
-    sweep = next(o for o in obs_set.observations if o.pool_formation_bar == 33)
+    sweep = next(o for o in _sweeps(obs_set) if o.pool_formation_bar == 33)
     assert sweep.penetration_bar == 40
     assert sweep.sweep_bar == 42
     assert sweep.reclose_bars == 2
@@ -227,7 +236,7 @@ def test_m6_invalidation_at_first_bar_i_minus_p_reaches_2_without_reclose():
         close={40: 101.3, 41: 101.3, 42: 101.3, 43: 101.0},
     )
     obs_set, _counts = _detect(bars)
-    assert not any(o.pool_formation_bar == 33 for o in obs_set.observations)
+    assert not any(o.pool_formation_bar == 33 for o in _sweeps(obs_set))
 
 
 def test_m7_determinism_c2():
@@ -246,3 +255,49 @@ def test_m7_no_self_vouching_field_exists_c3():
         assert not (field_names & forbidden), (
             f"observation carries a self-vouching field: {field_names & forbidden}"
         )
+
+
+# --- A-013 R1: POOL_FORMED is a first-class, provenance-bound observation -
+
+
+def test_r1_pool_formed_is_a_first_class_observation():
+    """The definition is a two-event chain (POOL_FORMED -> SWEEP); both
+    must be reachable directly from detect()'s own ObservationSet, not
+    only through the non-SDK detect_with_counts() side channel.
+    """
+    bars = _bars(60, high={10: 101.0, 30: 101.2, 40: 101.26}, close={40: 101.0})
+    obs_set = LiquiditySweepDetector().detect(bars, _CONFIG)
+    formed = [o for o in obs_set.observations if o.kind == "POOL_FORMED"]
+    swept = [o for o in obs_set.observations if o.kind == "SWEEP"]
+    assert len(formed) >= 1
+    assert len(swept) >= 1
+    pool = next(o for o in formed if o.formation_bar == 33)
+    assert pool.side == HIGH
+    assert pool.direction == -1
+    assert pool.level == 101.2
+    assert pool.pool_members == (101.0, 101.2)
+    # every observation carries the SAME provenance as the ObservationSet
+    # they came from -- C1 is per-set here, not per-observation, and both
+    # kinds live in the one set.
+    assert obs_set.source_sha256 == "0" * 64
+
+
+def test_r1_pool_and_sweep_counts_derivable_from_detect_alone():
+    bars = _bars(60, high={10: 101.0, 30: 101.2, 40: 101.26}, close={40: 101.0})
+    obs_set, counts = _detect(bars)
+    assert len(_pool_formed(obs_set)) == counts.pools
+    assert len(_sweeps(obs_set)) == counts.sweeps
+
+
+# --- A-013 R2: audit fields (never load-bearing, for human reconstruction)
+
+
+def test_r2_sweep_carries_audit_fields():
+    bars = _bars(60, high={10: 101.0, 30: 101.2, 40: 101.26}, close={40: 101.0})
+    obs_set, _counts = _detect(bars)
+    sweep = next(o for o in _sweeps(obs_set) if o.pool_formation_bar == 33)
+    assert sweep.pool_members == (101.0, 101.2)
+    assert sweep.pool_age_bars == sweep.sweep_bar - sweep.pool_formation_bar == 7
+    assert abs(sweep.penetration_ticks - 6.0) < 1e-9  # 0.06 price / 0.01 tick
+    # close (101.0) recloses 0.2 back past the level (101.2) -> 20 ticks
+    assert abs(sweep.close_back_ticks - 20.0) < 1e-9
