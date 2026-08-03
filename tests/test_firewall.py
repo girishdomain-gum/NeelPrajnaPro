@@ -5,6 +5,15 @@ a broken or side-effecting module under either side cannot escape the check.
 
 Design after reference/NeelPrajnaPro_v1 @ 67b1d69 (the two-sided firewall
 concept), re-implemented from the plan doc, not the old code.
+
+KNOWN LIMITATION: this scan catches STATIC `import` / `from ... import`
+statements only. A dynamic import — `importlib.import_module("runtime.x")`
+or `__import__("runtime.x")` — passes straight through undetected, because
+neither produces an `ast.Import`/`ast.ImportFrom` node. No dynamic imports
+exist in this codebase today, so this is acceptable for S01, but it is a
+real, tested hole, not an assumed guarantee. Re-examine at S07 when
+`runtime/` gains real code — see `test_dynamic_imports_are_not_caught`
+below, which proves the hole exists rather than leaving it implicit.
 """
 
 import ast
@@ -91,6 +100,19 @@ def test_unusually_written_real_imports_are_caught(tmp_path):
     found_names = {name for _, _, name in find_violations(tmp_path, "runtime")}
     assert "runtime" in found_names
     assert "runtime.deep.sub.module" in found_names
+
+
+def test_dynamic_imports_are_not_caught(tmp_path):
+    """Documents the known limitation (see module docstring): a dynamic
+    import is real, static-analysis-invisible, and gets through today. This
+    test exists so the hole is proven and tracked, not assumed away.
+    """
+    (tmp_path / "mod.py").write_text(
+        "import importlib\n"
+        "importlib.import_module('runtime.something')\n"
+        "__import__('runtime.something_else')\n"
+    )
+    assert find_violations(tmp_path, "runtime") == []
 
 
 # --- V3/V5: the drill — proven able to fail, on both sides of the wall ---
