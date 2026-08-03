@@ -16,16 +16,20 @@ the repo, not what is planned.
 │   ├── HYPOTHESIS_SPECIFICATION.md   AM-04: concept/measurement/judgment format
 │   ├── concepts/
 │   │   └── LS-01_liquidity_sweep.md   the liquidity_sweep concept spec
+│   ├── measurements/
+│   │   └── LS-01-R001_filtered_sweep.md   S07: SPECIFIED, NOT REGISTERED
 │   ├── detectors/                 S06: prose definitions, written and
 │   │   ├── fair_value_gap.md       APPROVED before any detector code
-│   │   ├── order_block.md          (A-018's definition gate)
+│   │   ├── order_block.md          (A-018's definition gate; order_block.md
+│   │   │                           also carries A-020's consumed-swing fix)
 │   │   └── market_structure_shift.md
 │   └── retrospectives/
 │       ├── S01.md
 │       ├── S02.md
 │       ├── S03.md
 │       ├── S04.md
-│       └── S05.md
+│       ├── S05.md
+│       └── S06.md
 ├── tools/
 │   └── run_job.sh              the Owner's one command; the Architect's job runner
 ├── mql5/
@@ -33,7 +37,13 @@ the repo, not what is planned.
 │       └── QRF/
 │           └── ExportXAUUSD.mq5   S03: the MT5 script the launcher runs to
 │                                  export XAUUSD bars (compiled .ex5 is
-│                                  never tracked, per .gitignore)
+│                                  never tracked, per .gitignore). S07
+│                                  Phase 1B extended it to accept an
+│                                  optional staged historical cutoff
+│                                  (MQL5\Files\QRF\export_end_time.txt)
+│                                  so a fresh window can be exported
+│                                  strictly BEFORE already-examined time,
+│                                  not just "most recent N bars"
 ├── data/
 │   └── provenance/              S03: provenance twins, TRACKED IN GIT — the
 │       └── *.provenance.json     proof of what an export was, never the

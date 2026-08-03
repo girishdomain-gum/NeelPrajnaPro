@@ -12,9 +12,13 @@
 #property strict
 #property script_show_inputs
 
-input int InpBarCount = 5000; // lookback, most-recent-N bars (no ini-supplied
-                               // date range for a plain [StartUp] script run --
-                               // see the Python-side report for why)
+input int InpBarCount = 5000; // lookback, most-recent-N bars by default
+
+// S07 Phase 1B: optional historical cutoff. If MQL5\Files\QRF\
+// export_end_time.txt exists (one line: a unix epoch second), the export
+// requests InpBarCount bars ENDING at that historical time instead of
+// "most recent" -- staged the same way Fable's own hc_capture job stages
+// its input file into the terminal's own MQL5\Files before launch.
 
 #define PINNED_SYMBOL "XAUUSD"
 
@@ -44,9 +48,42 @@ void OnStart()
       return;
    }
 
+   int start_shift = 0;
+   bool historical = false;
+   long end_time_epoch = 0;
+   int bar_count = InpBarCount;
+   string range_file = "QRF\\export_end_time.txt";
+   if(FileIsExist(range_file))
+   {
+      int rf = FileOpen(range_file, FILE_READ|FILE_TXT|FILE_ANSI);
+      if(rf != INVALID_HANDLE)
+      {
+         string line1 = FileReadString(rf);
+         string line2 = "";
+         if(!FileIsEnding(rf))
+            line2 = FileReadString(rf);
+         FileClose(rf);
+         end_time_epoch = (long)StringToInteger(line1);
+         int staged_count = (int)StringToInteger(line2);
+         if(staged_count > 0)
+            bar_count = staged_count;
+         if(end_time_epoch > 0)
+         {
+            start_shift = iBarShift(_Symbol, _Period, (datetime)end_time_epoch, false);
+            if(start_shift < 0)
+            {
+               Print("QRF_EXPORT_REFUSED iBarShift failed for end_time=", end_time_epoch,
+                     " error=", GetLastError());
+               return;
+            }
+            historical = true;
+         }
+      }
+   }
+
    MqlRates rates[];
    ArraySetAsSeries(rates, false);
-   int copied = CopyRates(_Symbol, _Period, 0, InpBarCount, rates);
+   int copied = CopyRates(_Symbol, _Period, start_shift, bar_count, rates);
    if(copied <= 0)
    {
       Print("QRF_EXPORT_REFUSED no rates copied, error=", GetLastError());
@@ -110,7 +147,9 @@ void OnStart()
    FileWrite(meta_handle, "\"digits\": " + IntegerToString(digits) + ",");
    FileWrite(meta_handle, "\"point\": " + DoubleToString(point, 8) + ",");
    FileWrite(meta_handle, "\"trade_tick_size\": " + DoubleToString(tick_size, 8) + ",");
-   FileWrite(meta_handle, "\"requested_bar_count\": " + IntegerToString(InpBarCount) + ",");
+   FileWrite(meta_handle, "\"requested_bar_count\": " + IntegerToString(bar_count) + ",");
+   FileWrite(meta_handle, "\"requested_end_utc_cutoff\": " +
+             (historical ? IntegerToString(end_time_epoch) : "null") + ",");
    FileWrite(meta_handle, "\"row_count\": " + IntegerToString(copied) + ",");
    FileWrite(meta_handle, "\"returned_start_utc\": " + IntegerToString((long)rates[0].time) + ",");
    FileWrite(meta_handle, "\"returned_end_utc\": " + IntegerToString((long)rates[copied-1].time) + ",");

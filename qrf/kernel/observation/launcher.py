@@ -163,6 +163,8 @@ def run_export(
     ini_dir: Path | None = None,
     pinned_probe_seconds: float | None = None,
     timeout_s: int = 120,
+    end_time_utc_cutoff: int | None = None,
+    bar_count: int | None = None,
 ) -> dict:
     """Launch the pinned Vantage terminal, run ExportXAUUSD.mq5 on
     (XAUUSD, `period`), wait for it to self-close, then harvest the CSV +
@@ -173,6 +175,14 @@ def run_export(
     offset), copy the CSV to `out_dir` (never inside the repo), and write
     its provenance twin to `twin_path` (tracked in git). Returns the full
     provenance payload.
+
+    `end_time_utc_cutoff` (S07 Phase 1B): if given, requests bars ENDING
+    at that historical unix-epoch second instead of "most recent" --
+    staged into the terminal's own MQL5\\Files\\QRF\\export_end_time.txt
+    before launch (the same staging pattern Fable's own hc_capture job
+    uses for its input file), read by the script via `iBarShift`.
+    `bar_count`, if given alongside it, overrides the script's own
+    default bar count (staged as the file's second line).
     """
     require_exact_symbol(PINNED_SYMBOL)
 
@@ -185,8 +195,16 @@ def run_export(
 
     csv_in_term = Path(TERM_FILES_DIR) / CSV_FILENAME_IN_TERM
     meta_in_term = Path(TERM_FILES_DIR) / META_FILENAME_IN_TERM
+    range_file_in_term = Path(TERM_FILES_DIR) / "export_end_time.txt"
     csv_in_term.unlink(missing_ok=True)
     meta_in_term.unlink(missing_ok=True)
+    range_file_in_term.unlink(missing_ok=True)
+    if end_time_utc_cutoff is not None:
+        range_file_in_term.parent.mkdir(parents=True, exist_ok=True)
+        lines = [str(end_time_utc_cutoff)]
+        if bar_count is not None:
+            lines.append(str(bar_count))
+        range_file_in_term.write_text("\n".join(lines), encoding="ascii")
 
     t0 = time.time()
     proc = subprocess.Popen([TERMINAL_EXE, f"/config:{ini_path}"])
@@ -230,7 +248,7 @@ def run_export(
         "point": meta["point"],
         "trade_tick_size": meta["trade_tick_size"],
         "requested_start_utc": None,
-        "requested_end_utc": None,
+        "requested_end_utc": meta.get("requested_end_utc_cutoff"),
         "returned_start_utc": meta["returned_start_utc"],
         "returned_end_utc": meta["returned_end_utc"],
         "row_count": meta["row_count"],
