@@ -1,14 +1,4 @@
-# QRF .gitignore — ARCH-001 Session 0
-# Rule: datastore/journal/ IS tracked (the ledger). bulk/ and index/ are
-# derived/heavy and rebuildable, so they are ignored.
-
-# --- Derived / heavy datastore (rebuildable, never authoritative) ---
-datastore/bulk/
-datastore/index/
-
-# --- Ledger single-writer lock (runtime only) ---
-datastore/journal/*.lock
-*.jsonl.lock
+# QRF .gitignore — fresh-start era (S01)
 
 # --- Python ---
 __pycache__/
@@ -24,36 +14,15 @@ dist/
 .ruff_cache/
 .mypy_cache/
 
-# --- IVF drill scratch (tampered copies; must never be tracked) ---
-ivf/reports/drill_s3_tmp/
-ivf/reports/*_tmp/
-*.json+
-
 # --- MT5 compiled artifacts (source .mq5 is tracked; binaries are not) ---
 *.ex5
 *.ex4
 
-# --- Exploration artifacts (notebooks etc.) ---
-experiments/
-*.ipynb_checkpoints/
+# --- Firewall drill tamper files (tests/test_firewall.py plants these under
+# qrf/ and runtime/ to prove the wall can fail; try/finally removes them, but
+# this rule is the last line of defence if a run is killed mid-drill) ---
+_drill_tamper_tmp.py
 
 # NOTE: uv.lock is intentionally NOT ignored — it must be committed.
 
-# ops scratch area - never tracked (F-19 standing rule)
-ops/incoming/
-
-# raw bulk market data - never tracked (AM-07/O-049; near-miss O-044's own
-# class: an ignore rule is a claim about a path, so BOTH incoming/ paths are
-# named explicitly, never "tidied" into one -- see AM-07 item 4). Real
-# exports now land in the external evidence store (EXTERNAL_EVIDENCE_STORE,
-# F:\NeelPrajnaProData\incoming, outside the repo); this repo-local path is
-# legacy-only post-AM-07 (its provenance .txt twins stay tracked, see below;
-# only the .csv payloads and any NEW file here are meant to be ignored).
-data/incoming/
-
-# Word lock files
-~$*
-docs/**/~$*
-
 comms/
-bridge/
