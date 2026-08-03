@@ -93,3 +93,70 @@ class LedgerImbalance(QRFError):
     def __init__(self, detail: str) -> None:
         self.detail = detail
         super().__init__(f"ledger imbalance: {detail}")
+
+
+class SymbolRefused(QRFError):
+    """Raised when a requested symbol is not an EXACT match for the pinned
+    symbol (A-007 §2.4) — never "closest match", refuse by name.
+    """
+
+    def __init__(self, requested: str, pinned: str) -> None:
+        self.requested = requested
+        self.pinned = pinned
+        super().__init__(f"symbol refused: requested {requested!r}, pinned symbol is {pinned!r}")
+
+
+class ProvenanceViolation(QRFError):
+    """Raised when a CSV does not match its provenance twin: a missing
+    twin, a twin missing its hash field, or a recomputed hash that does
+    not match what the twin records.
+    """
+
+    def __init__(self, what: str, detail: str) -> None:
+        self.what = what
+        self.detail = detail
+        super().__init__(f"provenance violation ({what}): {detail}")
+
+
+class TerminalBusy(QRFError):
+    """Raised when the pinned terminal install is already running: MT5
+    silently ignores a second /config launch of the same install, which
+    would look like success while doing nothing — refuse instead.
+    """
+
+    def __init__(self, hits: object) -> None:
+        self.hits = hits
+        super().__init__(f"terminal busy, refusing to launch a second instance: {hits}")
+
+
+class TerminalMismatch(QRFError):
+    """Raised when a completed export's own metadata (broker/server/
+    account/symbol) does not match the pinned facts, even though the
+    terminal was launched by an explicit, hard-coded path. Defense in
+    depth: an incident this sprint showed a bare `mt5.initialize()` (no
+    explicit path) can silently attach to the wrong running terminal
+    entirely; this check catches the same class of surprise even if the
+    launch path itself were ever wrong.
+    """
+
+    def __init__(self, field: str, expected: object, actual: object) -> None:
+        self.field = field
+        self.expected = expected
+        self.actual = actual
+        super().__init__(f"terminal mismatch on {field}: expected {expected!r}, got {actual!r}")
+
+
+class ClockDrift(QRFError):
+    """Raised when a newly measured server-clock offset disagrees with the
+    pinned offset from an earlier batch — mixing two time bases in one
+    dataset silently destroys every timing-based measurement, so this is
+    refused rather than guessed past.
+    """
+
+    def __init__(self, pinned_offset_seconds: float, measured_offset_seconds: float) -> None:
+        self.pinned_offset_seconds = pinned_offset_seconds
+        self.measured_offset_seconds = measured_offset_seconds
+        super().__init__(
+            f"clock drift: pinned offset {pinned_offset_seconds}s, "
+            f"measured offset {measured_offset_seconds}s"
+        )

@@ -6,7 +6,11 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Windows, deliberately (A-010): this project is Windows-only, forever
+    # (the MT5 terminal, and everything S03 onward builds against it, is
+    # Windows-only). CI must tell the truth about the platform the code
+    # actually runs on, not the cheapest platform that happens to import it.
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 

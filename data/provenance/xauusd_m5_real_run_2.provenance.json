@@ -1,0 +1,22 @@
+{
+  "account": 25867273,
+  "broker": "Vantage Markets (Pty) Ltd",
+  "clock_drift_probe_seconds": 7252.936553001404,
+  "clock_measurement_note": "NOT a server UTC offset -- a noisy, latency-inflated probe (server_time_at_export vs. Python wall-clock read immediately after the terminal self-closed) valid ONLY for batch-to-batch drift detection; never use it to convert a timestamp. See clock.py.",
+  "csv_filename": "xauusd_m5_real_run_2.csv",
+  "digits": 2,
+  "export_timestamp_utc": 1785767143,
+  "point": 0.01,
+  "requested_bar_count": 5000,
+  "requested_end_utc": null,
+  "requested_start_utc": null,
+  "returned_end_utc": 1785774300,
+  "returned_start_utc": 1783518600,
+  "row_count": 5000,
+  "server": "VantageMarkets-Demo",
+  "sha256": "4b239e4d5588eba4f8414b4091fe8aeb969d53636b190a21a2a36584f890e008",
+  "symbol": "XAUUSD",
+  "terminal_build": 6090,
+  "timeframe": "M5",
+  "trade_tick_size": 0.01
+}
