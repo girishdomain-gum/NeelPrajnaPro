@@ -27,7 +27,7 @@ def _metadata(**overrides) -> dict:
         "returned_end_utc": 1_700_003_540,
         "row_count": 2,
         "export_timestamp_utc": 1_700_003_601,
-        "server_clock_offset_seconds": 7200.0,
+        "clock_drift_probe_seconds": 7200.0,
     }
     base.update(overrides)
     return base

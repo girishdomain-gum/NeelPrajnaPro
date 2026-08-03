@@ -39,7 +39,7 @@ from pathlib import Path
 
 from qrf.errors import TerminalBusy, TerminalMismatch
 from qrf.kernel.observation import provenance
-from qrf.kernel.observation.clock import measure_offset
+from qrf.kernel.observation.clock import measure_drift_probe
 from qrf.kernel.observation.symbols import PINNED_SYMBOL, require_exact_symbol
 
 # --- CONFIG: every path/pin lives HERE, never supplied by a caller -------
@@ -138,16 +138,18 @@ def run_export(
     twin_path: Path,
     csv_filename: str,
     ini_dir: Path | None = None,
-    pinned_offset_seconds: float | None = None,
+    pinned_probe_seconds: float | None = None,
     timeout_s: int = 120,
 ) -> dict:
     """Launch the pinned Vantage terminal, run ExportXAUUSD.mq5 on
     (XAUUSD, `period`), wait for it to self-close, then harvest the CSV +
-    metadata it wrote, check every pinned fact, measure the server clock
-    offset (self-policing against `pinned_offset_seconds` if given, per
-    A-007 §3.5c), copy the CSV to `out_dir` (never inside the repo), and
-    write its provenance twin to `twin_path` (tracked in git). Returns the
-    full provenance payload.
+    metadata it wrote, check every pinned fact, measure a clock DRIFT
+    PROBE (self-policing against `pinned_probe_seconds` if given, per
+    A-007 §3.5c -- see clock.py: this is a noisy, latency-inflated value
+    for batch-to-batch drift detection only, never a true server UTC
+    offset), copy the CSV to `out_dir` (never inside the repo), and write
+    its provenance twin to `twin_path` (tracked in git). Returns the full
+    provenance payload.
     """
     require_exact_symbol(PINNED_SYMBOL)
 
@@ -182,11 +184,11 @@ def run_export(
     meta = json.loads(meta_in_term.read_text(encoding="utf-8"))
     _check_pinned_facts(meta)
 
-    measured_offset = measure_offset(meta["server_time_at_export"], wall_clock_after)
-    if pinned_offset_seconds is not None:
+    measured_probe = measure_drift_probe(meta["server_time_at_export"], wall_clock_after)
+    if pinned_probe_seconds is not None:
         from qrf.kernel.observation.clock import check_clock_pin
 
-        check_clock_pin(pinned_offset_seconds, measured_offset)
+        check_clock_pin(pinned_probe_seconds, measured_probe)
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -210,12 +212,15 @@ def run_export(
         "returned_end_utc": meta["returned_end_utc"],
         "row_count": meta["row_count"],
         "export_timestamp_utc": int(wall_clock_after),
-        "server_clock_offset_seconds": measured_offset,
+        "clock_drift_probe_seconds": measured_probe,
         "requested_bar_count": meta["requested_bar_count"],
         "clock_measurement_note": (
-            "server_time_at_export vs. Python wall-clock read immediately after "
-            f"the terminal self-closed; bounded uncertainty <= the full launch-"
-            f"run-close round trip ({wall_clock_after - t0:.1f}s this run)."
+            "NOT a server UTC offset -- a noisy, latency-inflated probe "
+            "(server_time_at_export vs. Python wall-clock read immediately "
+            "after the terminal self-closed) valid ONLY for batch-to-batch "
+            "drift detection; never use it to convert a timestamp. Bounded "
+            f"uncertainty <= the full launch-run-close round trip "
+            f"({wall_clock_after - t0:.1f}s this run). See clock.py."
         ),
     }
     return provenance.write_twin(dest_csv, metadata, twin_path)

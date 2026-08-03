@@ -7,6 +7,13 @@ plus everything needed to know what the data IS -- is TRACKED IN GIT,
 under `data/provenance/` in this repo. `verify()` is the only sanctioned
 way past this file: it recomputes the CSV's hash, and refuses on any
 mismatch, a missing twin, or a twin missing its own hash field.
+
+FIELD NAMING NOTE (A-009/F-04): `clock_drift_probe_seconds` is named for
+what it IS -- a noisy, latency-inflated batch-to-batch drift probe -- not
+for what it might look like (a server UTC offset). See
+qrf.kernel.observation.clock's module docstring for the full constraint.
+Never rename this back to something like `server_clock_offset_seconds`;
+that name is exactly what caused the hazard.
 """
 
 from __future__ import annotations
@@ -34,7 +41,7 @@ REQUIRED_FIELDS = {
     "returned_end_utc",
     "row_count",
     "export_timestamp_utc",
-    "server_clock_offset_seconds",
+    "clock_drift_probe_seconds",
     "sha256",
 }
 
