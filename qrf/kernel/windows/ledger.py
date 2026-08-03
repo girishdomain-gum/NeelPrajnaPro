@@ -47,10 +47,21 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from qrf.errors import LedgerImbalance, SchemaViolation, WindowConflict
+from qrf.errors import CapabilityRequired, LedgerImbalance, SchemaViolation, WindowConflict
 from qrf.kernel.records.store import RecordStore
 
 LABELS = frozenset({"TRAINING", "EXPLORATION", "VIRGIN"})
+
+
+class VerdictCapability:
+    """A-016 R1: `record_verdict()` requires an instance of exactly this
+    type. This is not a hard security boundary -- Python has none across
+    modules -- but it restricts writing a verdict in practice to code
+    that deliberately imports THIS class and constructs it, rather than
+    treating `record_verdict()` as a plain public method anyone can call
+    with a hand-built dict. `qrf.kernel.battery.battery.Battery` is the
+    only code in this project that does so.
+    """
 
 
 def validate_window_payload(payload: dict) -> None:
@@ -74,6 +85,15 @@ def validate_window_payload(payload: dict) -> None:
         required = {"op", "window_id", "hypothesis_id"}
         if not required.issubset(payload):
             raise SchemaViolation("burn payload missing required fields", payload)
+    elif op == "verdict":
+        # S05: the Battery's atomic verdict+burn -- one append that both
+        # consumes the window and records the judgment. See
+        # WindowLedger.record_verdict() and qrf.kernel.battery.
+        required = {"op", "window_id", "hypothesis_id", "verdict"}
+        if not required.issubset(payload):
+            raise SchemaViolation("verdict payload missing required fields", payload)
+        if not isinstance(payload["verdict"], dict):
+            raise SchemaViolation("verdict payload's 'verdict' field must be a dict", payload)
     else:
         raise SchemaViolation("unknown window ledger op", op)
 
@@ -85,6 +105,7 @@ class _WindowState:
     end: float
     label: str
     burned_by: str | None = field(default=None)
+    verdict: dict | None = field(default=None)
 
 
 class WindowLedger:
@@ -111,11 +132,17 @@ class WindowLedger:
                     end=payload["end"],
                     label=payload["label"],
                 )
-            else:  # "burn" -- validated at write time, nothing else reaches the chain
+            elif payload["op"] == "burn":
                 wid = payload["window_id"]
                 if wid not in windows:
                     raise LedgerImbalance(f"burn references unknown window_id {wid!r}")
                 windows[wid].burned_by = payload["hypothesis_id"]
+            else:  # "verdict" -- also burns, atomically, in the same record
+                wid = payload["window_id"]
+                if wid not in windows:
+                    raise LedgerImbalance(f"verdict references unknown window_id {wid!r}")
+                windows[wid].burned_by = payload["hypothesis_id"]
+                windows[wid].verdict = payload["verdict"]
         return windows
 
     def reserve(self, window_id: str, start: float, end: float, label: str) -> None:
@@ -145,6 +172,50 @@ class WindowLedger:
                 "already-burned", f"window {window_id!r} already burned by {w.burned_by!r}"
             )
         self._store.append({"op": "burn", "window_id": window_id, "hypothesis_id": hypothesis_id})
+
+    def record_verdict(
+        self, window_id: str, hypothesis_id: str, verdict: dict, capability: VerdictCapability
+    ) -> None:
+        """S05: the Battery's ONLY entry point for consuming a window with
+        a judgment. Identical safety checks to `burn()` (VIRGIN,
+        not-yet-burned), but the verdict and the burn are the SAME
+        RecordStore.append() call -- one JSON line carries both, so the
+        S02 atomicity argument (see module docstring) applies to the
+        verdict exactly as it does to a bare burn: there is no state in
+        which a verdict exists but the window is unburned, or the
+        reverse, because they are not two events.
+
+        A-016 R1: `capability` must be a `VerdictCapability` instance —
+        refused by name (CapabilityRequired) otherwise. See that class's
+        docstring for exactly what this restricts and does not.
+        """
+        if not isinstance(capability, VerdictCapability):
+            raise CapabilityRequired("WindowLedger.record_verdict")
+        windows = self._rebuild()
+        w = windows.get(window_id)
+        if w is None:
+            raise WindowConflict("unknown", f"no such window: {window_id!r}")
+        if w.label != "VIRGIN":
+            raise WindowConflict(
+                "not-virgin", f"window {window_id!r} is {w.label}, never usable as evidence"
+            )
+        if w.burned_by is not None:
+            raise WindowConflict(
+                "already-burned", f"window {window_id!r} already burned by {w.burned_by!r}"
+            )
+        self._store.append(
+            {
+                "op": "verdict",
+                "window_id": window_id,
+                "hypothesis_id": hypothesis_id,
+                "verdict": verdict,
+            }
+        )
+
+    def get_verdict(self, window_id: str) -> dict | None:
+        windows = self._rebuild()
+        w = windows.get(window_id)
+        return w.verdict if w is not None else None
 
     def balances(self) -> dict:
         windows = self._rebuild()
