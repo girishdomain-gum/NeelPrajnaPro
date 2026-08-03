@@ -35,15 +35,20 @@ the repo, not what is planned.
 ├── mql5/
 │   └── Scripts/
 │       └── QRF/
-│           └── ExportXAUUSD.mq5   S03: the MT5 script the launcher runs to
-│                                  export XAUUSD bars (compiled .ex5 is
-│                                  never tracked, per .gitignore). S07
-│                                  Phase 1B extended it to accept an
-│                                  optional staged historical cutoff
-│                                  (MQL5\Files\QRF\export_end_time.txt)
-│                                  so a fresh window can be exported
-│                                  strictly BEFORE already-examined time,
-│                                  not just "most recent N bars"
+│           ├── ExportXAUUSD.mq5   S03: the MT5 script the launcher runs to
+│           │                     export XAUUSD bars (compiled .ex5 is
+│           │                     never tracked, per .gitignore). S07
+│           │                     Phase 1B extended it to accept an
+│           │                     optional staged historical cutoff
+│           │                     (MQL5\Files\QRF\export_end_time.txt)
+│           │                     so a fresh window can be exported
+│           │                     strictly BEFORE already-examined time,
+│           │                     not just "most recent N bars"
+│           └── QueryHistoryDepth.mq5   S07 F-07: capability query ONLY
+│                                       (SeriesInfoInteger SERIES_FIRSTDATE,
+│                                       no CopyRates) — proved M5 XAUUSD
+│                                       history begins 2025-09-23, ruling
+│                                       out any pre-2024 untouched span
 ├── data/
 │   └── provenance/              S03: provenance twins, TRACKED IN GIT — the
 │       └── *.provenance.json     proof of what an export was, never the
@@ -67,7 +72,10 @@ the repo, not what is planned.
 │   │   │   └── bulk.py           BulkStore — hash-binds bulk files to a manifest
 │   │   ├── windows/             S02: the window ledger (market time as a
 │   │   │   ├── __init__.py       spendable, accounted resource)
-│   │   │   └── ledger.py         WindowLedger — reserve/burn/balances
+│   │   │   └── ledger.py         WindowLedger — reserve/burn/balances, plus
+│   │                         supersede() (S07 F-07/A-025 R3): retracts a
+│   │                         mistaken VIRGIN reservation without editing
+│   │                         or deleting the original record
 │   │   ├── observation/         S03: first contact with the real world
 │   │   │   ├── __init__.py
 │   │   │   ├── symbols.py         exact-symbol enforcement (E1)
