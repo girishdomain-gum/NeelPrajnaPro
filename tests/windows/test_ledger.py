@@ -1,6 +1,10 @@
 """Drills for the window ledger (A-004 §4, §5 D9-D14)."""
 
-from qrf.errors import LedgerImbalance, TornTail, WindowConflict
+import os
+
+import pytest
+
+from qrf.errors import LedgerImbalance, TornTail, WindowConflict, WriterLockHeld
 from qrf.kernel.windows.ledger import WindowLedger
 from tests.drills.harness import DrillLog, run_drill
 
@@ -165,10 +169,15 @@ def test_d13_ledger_imbalance_detected_drill(tmp_path):
 
 
 def test_d14_burn_atomicity_drill(tmp_path):
-    """Simulates a hard kill mid-write of the one append that burns a
-    window. Proves the claim in the module docstring: the window is never
-    left 'consumed but unburned' — either the burn fully lands, or it
-    leaves no trace once the torn tail is recovered.
+    """Simulates a REAL hard kill mid-write of the one append that burns a
+    window: bytes for the burn record land incomplete AND the writer lock
+    is left behind, exactly as a genuine crash would (never `__exit__`
+    running). A-005/F-02: the original version of this drill left only
+    the torn tail, which no real crash produces in isolation -- re-drilled
+    honestly here. Proves the module docstring's claim: the window is
+    never left "consumed but unburned" -- either the burn fully lands, or
+    recovery (via the deliberate `break_lock()` then `recover_torn_tail()`
+    path) leaves no trace at all.
     """
     log = DrillLog()
 
@@ -179,8 +188,12 @@ def test_d14_burn_atomicity_drill(tmp_path):
         ledger.reserve("W1", 0, 10, "VIRGIN")
         if crash:
             # simulate a process killed mid-write of the burn record: bytes
-            # land on disk, but the line is never completed.
-            with open(ledger._store.path, "a", encoding="utf-8") as f:  # noqa: SLF001
+            # land incomplete AND the lock is never released.
+            store = ledger._store  # noqa: SLF001
+            fd = os.open(store._lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)  # noqa: SLF001
+            os.write(fd, b"99999")
+            os.close(fd)
+            with open(store.path, "a", encoding="utf-8") as f:
                 f.write('{"seq":1,"prev_hash":"deadbeef longtruncatedgarbage')
             ledger.balances()  # must refuse loudly, never guess
         else:
@@ -197,9 +210,14 @@ def test_d14_burn_atomicity_drill(tmp_path):
     )
     assert result.tampered_exception is TornTail
 
-    # Recovery: the interrupted burn leaves no trace once the torn tail is
-    # truncated -- exactly as if burn() had never been called.
+    # Recovery must be BLOCKED by the stale lock, not silently bypassed --
+    # exactly the failure the original (F-02) drill never exercised.
     tampered_ledger = WindowLedger(tmp_path / "tampered" / "windows.jsonl")
+    with pytest.raises(WriterLockHeld):
+        tampered_ledger._store.recover_torn_tail()  # noqa: SLF001
+
+    # The one deliberate, documented way through:
+    assert tampered_ledger._store.break_lock() is True  # noqa: SLF001
     assert tampered_ledger._store.recover_torn_tail() is True  # noqa: SLF001
     balances = tampered_ledger.balances()
     assert balances["burned"] == 0
@@ -208,3 +226,22 @@ def test_d14_burn_atomicity_drill(tmp_path):
     # And the window is still genuinely burnable -- no limbo state.
     tampered_ledger.burn("W1", "H1")
     assert tampered_ledger.balances()["burned"] == 1
+
+
+# --- R3: the ledger's honesty boundary -----------------------------------
+
+
+def test_r3_unrecorded_look_is_not_detected(tmp_path):
+    """KNOWN LIMITATION (see ledger.py's module docstring): the ledger can
+    only refuse designations that overlap RECORDED windows. Nothing here
+    stops a span of market time that a human looked at -- but never
+    reserved -- from later being designated VIRGIN. This is not a defect
+    to fix; it is the seam the S05 Owner ceremony exists to close. Proven
+    here rather than left implicit, exactly as S01 proved the
+    dynamic-import hole in the firewall.
+    """
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    # Nothing has ever been reserved over [0, 100) -- the ledger has no
+    # record that anyone looked at it, whether or not a human actually did.
+    ledger.reserve("V1", 0, 100, "VIRGIN")  # succeeds: the hole, proven
+    assert ledger.balances()["virgin_unburned"] == 1

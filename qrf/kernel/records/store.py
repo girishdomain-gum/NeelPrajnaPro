@@ -20,6 +20,20 @@ Guarantees:
     anything is written; a bad payload is refused, never coerced.
   - VERIFICATION as a first-class operation: `verify()` walks the whole
     chain and returns it, or raises naming the exact failing index.
+
+CRASH RECOVERY (A-005 R1): a process that dies mid-`append()` never runs
+`__exit__`, so the writer `.lock` file survives the crash alongside the
+torn tail it left. `recover_torn_tail()` itself needs the lock (it is a
+write), so it is correctly BLOCKED by that stale lock, not bricked by it:
+the lock is never broken automatically (an auto-timeout could break a lock
+held by a writer that is merely slow, not dead, which is worse than a
+deadlock). Recovery from a genuine crash is a deliberate two-step
+operator action: call `break_lock()` — an explicit admission "I have
+confirmed out of band that the previous writer is dead, not slow" — and
+only then does `recover_torn_tail()` become reachable. Exercised
+end-to-end (lock and torn tail both left behind, exactly as a real death
+would) in tests/records/test_store.py::test_d14_crash_recovery_with_lock_held
+and, at the window-ledger level, tests/windows/test_ledger.py's D14 drill.
 """
 
 from __future__ import annotations
@@ -79,34 +93,36 @@ class RecordStore:
         self._lock_path.unlink(missing_ok=True)
         return False
 
-    def _lines(self) -> list[str]:
-        if not self.path.exists():
-            return []
-        text = self.path.read_text(encoding="utf-8")
-        lines = text.split("\n")
-        if lines and lines[-1] == "":
-            lines = lines[:-1]
-        return lines
-
-    def _tail_state(self) -> tuple[list[dict], str | None]:
-        """Return (parsed complete records, torn tail text or None). Only
-        the LAST line is ever a candidate torn tail; every earlier line
-        that fails to parse is corruption, not a crash artifact, and is
-        left for `verify()` to report precisely.
+    def _tail_state(self) -> tuple[list[dict], str | None, int]:
+        """Return (parsed complete records, torn tail text or None, byte
+        length of the confirmed-good prefix). Only the LAST line is ever a
+        candidate torn tail; every earlier line that fails to parse is
+        corruption, not a crash artifact, and is left for `verify()` to
+        report precisely. The byte length lets `recover_torn_tail()`
+        truncate the file exactly, rather than re-emit its content.
         """
-        lines = self._lines()
+        if not self.path.exists():
+            return [], None, 0
+        raw = self.path.read_bytes()
+        lines = raw.split(b"\n")
+        if lines and lines[-1] == b"":
+            lines = lines[:-1]
         if not lines:
-            return [], None
+            return [], None, 0
         try:
             json.loads(lines[-1])
         except json.JSONDecodeError:
-            return [json.loads(line) for line in lines[:-1]], lines[-1]
-        return [json.loads(line) for line in lines], None
+            good = lines[:-1]
+            good_len = sum(len(line) + 1 for line in good)
+            torn_text = lines[-1].decode("utf-8", "replace")
+            return [json.loads(line) for line in good], torn_text, good_len
+        good_len = sum(len(line) + 1 for line in lines)
+        return [json.loads(line) for line in lines], None, good_len
 
     def append(self, payload: dict) -> Record:
         self._validator(payload)
         with self:
-            records, torn = self._tail_state()
+            records, torn, _ = self._tail_state()
             if torn is not None:
                 raise TornTail(
                     len(records), "refusing to append: an unrecovered torn tail exists"
@@ -128,7 +144,7 @@ class RecordStore:
         confirming every earlier record is sound) if the final line is
         incomplete.
         """
-        records, torn = self._tail_state()
+        records, torn, _ = self._tail_state()
         prev_hash = GENESIS_HASH
         out = []
         for i, rec in enumerate(records):
@@ -148,23 +164,34 @@ class RecordStore:
         return out
 
     def recover_torn_tail(self) -> bool:
-        """If the final line is an incomplete torn tail, truncate it off and
-        return True — the aborted write leaves no trace, as if it had never
-        been attempted. If the chain is already clean, return False. Never
-        removes a complete record, however it inspects the file first.
+        """If the final line is an incomplete torn tail, TRUNCATE the file
+        at the byte offset where the last complete record ends and return
+        True — the aborted write leaves no trace, as if it had never been
+        attempted. If the chain is already clean, return False. This only
+        ever removes bytes; it never re-emits or rewrites a complete
+        record, so nothing that hashes the ledger FILE itself (as opposed
+        to its parsed content) can be invalidated by recovery.
+
+        Requires the writer lock, exactly like `append()` — if a genuine
+        crash left the lock held, call `break_lock()` first (a deliberate,
+        separate admission that the previous writer is dead, not slow).
         """
-        records, torn = self._tail_state()
+        _records, torn, good_len = self._tail_state()
         if torn is None:
             return False
         with self:
-            self.path.write_text(
-                "".join(json.dumps(r) + "\n" for r in _reserialize(records)), encoding="utf-8"
-            )
+            with open(self.path, "r+b") as f:
+                f.truncate(good_len)
         return True
 
-
-def _reserialize(records: list[dict]) -> list[dict]:
-    # Records are already the exact dicts read from disk; re-emitting them
-    # verbatim (not re-deriving hashes) guarantees recovery never rewrites
-    # history, only drops the unparsable trailing garbage.
-    return records
+    def break_lock(self) -> bool:
+        """Deliberately remove the writer lock, e.g. after confirming out
+        of band that the process which held it has died. This bypasses
+        single-writer protection: never call it while another writer might
+        genuinely still be active. Returns True if a lock was removed,
+        False if none existed.
+        """
+        if self._lock_path.exists():
+            self._lock_path.unlink()
+            return True
+        return False

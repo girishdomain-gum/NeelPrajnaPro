@@ -1,6 +1,7 @@
 """Drills for the record store's guarantees (A-004 §3, §5 D1-D6)."""
 
 import json
+import os
 
 import pytest
 
@@ -191,6 +192,66 @@ def test_recover_torn_tail_leaves_no_trace(tmp_path):
     assert [r.payload for r in store.verify()] == [{"n": 1}, {"n": 2}, {"n": 3}]
     # a clean chain has nothing to recover
     assert store.recover_torn_tail() is False
+
+
+def test_recover_torn_tail_truncates_never_rewrites(tmp_path):
+    """A-005 R2: recovery must remove bytes, never re-emit them. Proven by
+    checking the recovered file is byte-identical to the file as it stood
+    before the crash, not merely equivalent once re-parsed.
+    """
+    path = tmp_path / "ledger.jsonl"
+    store = _make_three_record_chain(path)
+    clean_bytes = path.read_bytes()
+    with open(path, "a", encoding="utf-8") as f:
+        f.write('{"seq":3,"broken')
+    assert path.read_bytes() != clean_bytes
+    store.recover_torn_tail()
+    assert path.read_bytes() == clean_bytes
+
+
+# --- D14 (record-store level): a REAL crash leaves the lock held too ----
+
+
+def test_d14_crash_recovery_with_lock_held(tmp_path):
+    """A-005 R1/F-02: the honest re-drill. A real crash mid-append never
+    runs `__exit__`, so it leaves the writer `.lock` file behind ALONGSIDE
+    the torn tail -- not just the torn tail in isolation, which is what
+    the original (wrong) drill exercised (F-02). Control: a clean store
+    with no crash behaves normally. Tampered: simulate a real crash (torn
+    tail AND stale lock both present) and prove (a) recovery is correctly
+    BLOCKED while the stale lock stands -- never silently bypassed, the
+    exact failure the original drill missed; (b) `break_lock()` is the
+    one deliberate, documented way through; (c) recovery and further use
+    are then fully clean, with no lingering limbo.
+    """
+    # control: an ordinary store, no crash, behaves normally
+    clean_store = RecordStore(tmp_path / "clean" / "l.jsonl", _validator)
+    clean_store.append({"n": 1})
+    assert [r.payload for r in clean_store.verify()] == [{"n": 1}]
+
+    # tampered: simulate a process dying mid-append -- incomplete bytes
+    # for a second record land, AND the writer lock is never released,
+    # because __exit__ never runs on a hard kill.
+    store = RecordStore(tmp_path / "real_crash" / "l.jsonl", _validator)
+    store.append({"n": 1})
+    fd = os.open(store._lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)  # noqa: SLF001
+    os.write(fd, b"99999")
+    os.close(fd)
+    with open(store.path, "a", encoding="utf-8") as f:
+        f.write('{"seq":1,"prev_hash":"deadbeef longtruncatedgarbage')
+
+    # recovery must be BLOCKED by the stale lock, not silently bypassed
+    with pytest.raises(WriterLockHeld):
+        store.recover_torn_tail()
+
+    # the one deliberate, documented way through
+    assert store.break_lock() is True
+    assert store.recover_torn_tail() is True
+    assert [r.payload for r in store.verify()] == [{"n": 1}]
+
+    # and the store is fully usable again -- no lingering limbo
+    store.append({"n": 2})
+    assert [r.payload for r in store.verify()] == [{"n": 1}, {"n": 2}]
 
 
 # --- D5: single-writer refusal ------------------------------------------

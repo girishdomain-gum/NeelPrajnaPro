@@ -18,14 +18,28 @@ is a single RecordStore.append() call, which is itself atomic at the file
 level (one line, written then fsync'd before the writer lock is released).
 A crash during that append therefore has exactly two possible outcomes,
 never a third: the line lands completely (the window is burned, full
-stop), or it does not land at all — RecordStore.verify() detects the
-incomplete trailing bytes as a TornTail and refuses every further
-operation until `RecordStore.recover_torn_tail()` truncates it away, after
-which the window is exactly as if burn() had never been called. There is
-no state in which a window is "used as evidence" yet not recorded as
-burned, because those are the same event. See
-tests/windows/test_ledger.py::test_burn_atomicity_drill for the drill
-(D14) that exercises this by simulating the crash and the recovery.
+stop), or it does not land at all. In the second case RecordStore.verify()
+detects the incomplete trailing bytes as a TornTail; because the crash
+also leaves the writer lock held (see qrf.kernel.records.store's crash
+recovery note, A-005 R1), recovery is a deliberate two-step operator
+action — `break_lock()` then `recover_torn_tail()` — never automatic, so a
+merely-slow writer is never mistaken for a dead one. Once recovered, the
+window is exactly as if burn() had never been called. There is no state in
+which a window is "used as evidence" yet not recorded as burned, because
+those are the same event. See tests/windows/test_ledger.py's D14 drill,
+which leaves BOTH the torn tail and the lock behind, as a real death does.
+
+KNOWN LIMITATION (A-005 R3): this ledger can only enforce honesty over
+spans it KNOWS about. Reserving overlap detection catches a VIRGIN
+designation over any RECORDED window — but if a person looks at a span of
+market time and never reserves it here, nothing in this module stops that
+same span later being designated VIRGIN. This is not a software defect (no
+program can observe a human reading a chart); it is the exact seam where
+the whole guarantee rests on someone telling the truth about what they
+have seen, and it is why the Owner ceremony at S05 exists — the typed
+designation is the human key on a lock the machine cannot turn alone. See
+tests/windows/test_ledger.py::test_r3_unrecorded_look_is_not_detected for
+the test that proves this hole rather than leaving it implicit.
 """
 
 from __future__ import annotations
