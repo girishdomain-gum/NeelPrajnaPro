@@ -1,4 +1,10 @@
 """THE WALL: qrf/ never imports runtime/, runtime/ never imports qrf.kernel.
+THE INNER WALL (AM-02.3, S04): nothing under qrf/kernel/ may import
+qrf.trading.* either — the judge (qrf.kernel) must not import the
+proposers (the detectors, qrf.trading.concepts.*), or it inherits their
+beliefs, the same failure the outer wall prevents, one level in. The
+reverse (qrf.trading.* importing qrf.kernel.*) is required and allowed —
+detectors must import kernel types to emit ObservationSets.
 
 Enforced by STATIC ANALYSIS with `ast` — files are parsed, never imported, so
 a broken or side-effecting module under either side cannot escape the check.
@@ -81,6 +87,14 @@ def test_runtime_never_imports_qrf_kernel():
     )
 
 
+def test_qrf_kernel_never_imports_qrf_trading():
+    """THE INNER WALL (AM-02.3): the judge must not import the proposers."""
+    violations = find_violations(REPO_ROOT / "qrf" / "kernel", "qrf.trading")
+    assert not violations, (
+        "qrf/kernel/ must never import qrf.trading/, found:\n" + _format_violations(violations)
+    )
+
+
 # --- V4: precision --------------------------------------------------------
 
 
@@ -137,6 +151,39 @@ def test_firewall_drill_qrf_side():
     try:
         result = run_drill(
             name="firewall-qrf-forbids-runtime",
+            checker=checker,
+            clean_input=False,
+            tampered_input=True,
+            expected_exception=IntegrityViolation,
+            log=log,
+        )
+    finally:
+        tamper_file.unlink(missing_ok=True)
+
+    assert result.tampered_exception is IntegrityViolation
+
+
+def test_inner_wall_drill_qrf_kernel_side():
+    """Control: clean qrf/kernel/ tree, GREEN. Tampered: a planted file
+    importing qrf.trading.something under qrf/kernel/, RED. Mirrors S01's
+    outer-wall drill shape exactly.
+    """
+    log = DrillLog()
+    kernel_root = REPO_ROOT / "qrf" / "kernel"
+    tamper_file = kernel_root / "_drill_tamper_tmp.py"
+
+    def checker(plant: bool):
+        if plant:
+            tamper_file.write_text("import qrf.trading.something\n")
+        else:
+            tamper_file.unlink(missing_ok=True)
+        violations = find_violations(kernel_root, "qrf.trading")
+        if violations:
+            raise IntegrityViolation("forbidden import found under qrf/kernel/", violations)
+
+    try:
+        result = run_drill(
+            name="inner-wall-kernel-forbids-trading",
             checker=checker,
             clean_input=False,
             tampered_input=True,

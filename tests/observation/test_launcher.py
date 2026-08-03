@@ -25,12 +25,33 @@ def test_build_startup_ini_is_utf16le_with_bom(tmp_path):
     assert "ShutdownTerminal=1" in text
 
 
-def test_terminal_running_returns_a_list_without_raising():
+def test_terminal_running_returns_a_result_without_raising():
     # Cross-platform smoke test: on a machine/CI runner with no
     # `powershell` at all, the broad except still returns a safe,
     # erring-strict fallback rather than crashing.
     result = launcher.terminal_running()
-    assert isinstance(result, list)
+    assert result.path in ("cim", "fallback")
+    assert isinstance(result.hits, tuple)
+
+
+def test_terminal_running_exercises_the_real_cim_path_on_windows():
+    """A-011: proof, not an argument from the mechanism. CI now runs on
+    windows-latest (A-010), where PowerShell/CIM is genuinely present --
+    this asserts the primary path actually ran, rather than "arguing
+    strongly" that it must have.
+    """
+    import sys
+
+    if sys.platform != "win32":
+        import pytest as _pytest
+
+        _pytest.skip("this proof only applies where PowerShell/CIM can run at all")
+    result = launcher.terminal_running()
+    assert result.path == "cim", (
+        "expected the real PowerShell/CIM path to run on Windows; got the "
+        "erring-strict fallback instead -- that is a FINDING (A-011), not "
+        "a passing test"
+    )
 
 
 def _base_meta(**overrides) -> dict:
