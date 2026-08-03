@@ -1,7 +1,7 @@
 # DETECTOR DEFINITION — Order Block (M6)
 
-**Status:** APPROVED WITH CHANGES (A-019). R1/R3/R4 applied below. Code
-follows this document, not the reverse.
+**Status:** APPROVED WITH CHANGES (A-019, then A-020 R1/R2). Code follows
+this document, not the reverse.
 
 **Origin:** The Owner's material names two methods (A-018 §2.2). The
 Owner's own one-line gloss (`SMC_Concept_Glossary.md`) states:
@@ -49,12 +49,26 @@ output):
 
 A **structure break**, at bar `b`, is:
 - **BULLISH** iff `close[b]` is strictly greater than the most recently
-  CONFIRMED swing high at the time bar `b` closes.
+  CONFIRMED, NOT-YET-CONSUMED swing high at the time bar `b` closes.
 - **BEARISH** iff `close[b]` is strictly less than the most recently
-  confirmed swing low.
+  confirmed, not-yet-consumed swing low.
 
 (If no swing high/low has yet been confirmed, no break can be evaluated
 — see §2, "cold start".)
+
+**A-020 R1 (REQUIRED FIX) — a swing is CONSUMED by the break that breaks
+it.** The original version of this rule let the SAME confirmed swing be
+"broken" again on every subsequent bar until a new swing confirmed —
+1,624 order blocks in 5,000 bars (one every three bars) was the evidence
+this was wrong: an impulsive structure-breaking move cannot be happening
+a third of the time. The fix: once bar `b` closes beyond a confirmed
+swing, THAT SWING IS SPENT — it can never be broken again. The next break
+on that side requires a NEWLY confirmed swing to appear first. This
+mirrors a principle this house already uses twice: S02's window is burned
+by the verdict that uses it, and the sweep detector's pool is resolved so
+it cannot be swept twice. A level, once taken, is spent — no new constant
+invented, no cooldown window, no minimum gap; consistency with an
+existing rule instead of a new parameter.
 
 Given a structure break at bar `b` (direction `D`), the **origin candle**
 is the NEAREST bar `j < b` whose candle color is opposite `D`:
@@ -90,6 +104,11 @@ constant and cannot be tuned.
 - **Each structure break produces AT MOST one order block** (the single
   nearest origin candle within `[s, b-1]`, or none) — never a set of
   candidate blocks to choose from later.
+- **A consumed swing produces NO further breaks** (A-020 R1). "One break"
+  means one CONFIRMED SWING broken exactly once; it does not mean "one
+  bar" -- a sustained trend that closes beyond the same swing for many
+  consecutive bars must still yield exactly one order block, from the
+  FIRST such bar only.
 
 ## 3. Frozen constants (module-level, per A-012's own precedent)
 
@@ -133,3 +152,11 @@ ENTIRE same-colored run and return the opposite candle furthest back
 undocumented rule, not this one. The planted-truth drill specifically
 constructs a run long enough that "nearest" and "furthest" opposite
 candles differ, to catch this.
+
+**A-020 R1's own trap, named so it is never re-introduced:** testing the
+break condition on EVERY bar without consuming the swing once broken. A
+per-bar predicate ("is this bar's close beyond the swing?") is a faithful
+but wrong reading of an under-specified rule — it reports the SAME break
+again on every subsequent bar of a sustained move, one order block per
+bar, most sharing the same origin candle. The swing must be treated as a
+resource a break spends, not a standing condition re-tested forever.
