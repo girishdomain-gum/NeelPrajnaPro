@@ -160,3 +160,87 @@ class ClockDrift(QRFError):
             f"clock drift: pinned offset {pinned_offset_seconds}s, "
             f"measured offset {measured_offset_seconds}s"
         )
+
+
+class InsufficientResamples(QRFError):
+    """Raised when the allocated alpha is smaller than the add-one
+    estimator's minimum achievable p-value (1/(1+N)) -- the test cannot
+    possibly reject at this N, so the battery refuses to run it rather
+    than return a foregone "not significant" (A-015 §2.4).
+    """
+
+    def __init__(self, n_resamples: int, alpha: float) -> None:
+        self.n_resamples = n_resamples
+        self.alpha = alpha
+        min_p = 1 / (1 + n_resamples)
+        super().__init__(
+            f"insufficient resamples: N={n_resamples} gives a minimum "
+            f"achievable p-value of {min_p}, which cannot reject at "
+            f"alpha={alpha}"
+        )
+
+
+class HypothesisNotRegistered(QRFError):
+    """Raised when the battery is asked to judge a hypothesis id that has
+    no registration record -- a verdict may only be computed against
+    something frozen in advance.
+    """
+
+    def __init__(self, hypothesis_id: str) -> None:
+        self.hypothesis_id = hypothesis_id
+        super().__init__(f"hypothesis not registered: {hypothesis_id!r}")
+
+
+class BudgetExhausted(QRFError):
+    """Raised when a family's registration ledger is already at capacity
+    (AM-03: 100 per family) -- a 101st registration is refused, never
+    silently accepted past the cap.
+    """
+
+    def __init__(self, family_id: str, capacity: int) -> None:
+        self.family_id = family_id
+        self.capacity = capacity
+        super().__init__(f"family {family_id!r} is at capacity ({capacity}); registration refused")
+
+
+class RegistrationMismatch(QRFError):
+    """Raised when a registration attempt reuses an existing hypothesis
+    id with any frozen field changed -- a change to a frozen field MINTS
+    A NEW HYPOTHESIS, it never edits the old one (A-015 §4.1).
+    """
+
+    def __init__(self, hypothesis_id: str, field: str) -> None:
+        self.hypothesis_id = hypothesis_id
+        self.field = field
+        super().__init__(
+            f"registration {hypothesis_id!r} already exists with a different "
+            f"{field!r}; a changed frozen field must be a NEW hypothesis id"
+        )
+
+
+class CeremonyRefused(QRFError):
+    """Raised when a registration ceremony's typed phrase is missing or
+    does not match the expected hash. The phrase itself never appears in
+    this exception, in any log, or anywhere on disk -- only its hash is
+    ever compared or stored (A-015 §4.3).
+    """
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(f"ceremony refused: {reason}")
+
+
+class UnverifiedObservations(QRFError):
+    """Raised when an ObservationSet's source_sha256 does not match the
+    hash the caller independently verified (e.g. via S03's
+    provenance.verify()) -- the battery never trusts an ObservationSet's
+    own say-so about its provenance (A-015 §3.3/B5).
+    """
+
+    def __init__(self, expected_sha256: str, actual_sha256: str) -> None:
+        self.expected_sha256 = expected_sha256
+        self.actual_sha256 = actual_sha256
+        super().__init__(
+            f"unverified observations: expected sha256 {expected_sha256!r}, "
+            f"got {actual_sha256!r}"
+        )

@@ -35,7 +35,10 @@ the repo, not what is planned.
 │   │                            WriterLockHeld, ChainCorruption, TornTail,
 │   │                            BulkMismatch, WindowConflict, LedgerImbalance,
 │   │                            SymbolRefused, ProvenanceViolation, ClockDrift,
-│   │                            TerminalBusy, TerminalMismatch
+│   │                            TerminalBusy, TerminalMismatch,
+│   │                            InsufficientResamples, HypothesisNotRegistered,
+│   │                            BudgetExhausted, RegistrationMismatch,
+│   │                            CeremonyRefused, UnverifiedObservations
 │   ├── kernel/
 │   │   ├── __init__.py
 │   │   ├── records/             S02: the record store (evidence as proof)
@@ -53,12 +56,23 @@ the repo, not what is planned.
 │   │   │   ├── clock.py           server-clock drift probe + self-policing (E5)
 │   │   │   ├── ingest.py          verify-then-bind into S02's BulkStore (E4/E6)
 │   │   │   └── launcher.py        the ONLY module touching a live MT5 terminal
-│   │   └── detection/           S04: the Detector SDK (AM-01) — the JUDGE's
-│   │       ├── __init__.py       vocabulary. INNER WALL: nothing here may
-│   │       ├── types.py          import qrf.trading.* (extends the firewall)
-│   │       │                     Bar, DetectorConfig, Observation (C1/C3),
-│   │       │                     ObservationSet
-│   │       └── interface.py       Detector ABC (C2: detect() must be pure)
+│   │   ├── detection/           S04: the Detector SDK (AM-01) — the JUDGE's
+│   │   │   ├── __init__.py       vocabulary. INNER WALL: nothing here may
+│   │   │   ├── types.py          import qrf.trading.* (extends the firewall)
+│   │   │   │                     Bar, DetectorConfig, Observation (C1/C3),
+│   │   │   │                     ObservationSet
+│   │   │   └── interface.py       Detector ABC (C2: detect() must be pure)
+│   │   ├── null/                S05: the null model
+│   │   │   ├── __init__.py
+│   │   │   └── resampling.py      block resampling, add-one p-value (N1-N4)
+│   │   ├── registration/        S05: the trial ledger + the Owner's ceremony
+│   │   │   ├── __init__.py
+│   │   │   ├── alpha.py           geometric alpha spending (AM-03)
+│   │   │   ├── ledger.py          TrialLedger — per-family, capacity 100 (R1-R3)
+│   │   │   └── ceremony.py        phrase-gated registration (R4/R5)
+│   │   └── battery/              S05: the sole verdict writer
+│   │       ├── __init__.py
+│   │       └── battery.py         Battery — refuses before it reports (B1-B5)
 │   └── trading/                 S04: the PROPOSERS (AM-02) — detectors live
 │       ├── __init__.py           here, never in qrf/kernel/; may import
 │       └── concepts/             qrf.kernel.* freely (the allowed direction)
@@ -95,8 +109,18 @@ the repo, not what is planned.
 │   │   └── test_launcher.py
 │   ├── kernel/
 │   │   ├── __init__.py
-│   │   └── detection/           (SDK types are exercised via the sweep
-│   │       └── __init__.py       detector's own tests; no separate suite yet)
+│   │   ├── detection/           (SDK types are exercised via the sweep
+│   │   │   └── __init__.py       detector's own tests; no separate suite yet)
+│   │   ├── null/                 S05: N1-N4
+│   │   │   ├── __init__.py
+│   │   │   └── test_resampling.py
+│   │   ├── registration/         S05: R1-R3 (ledger) + R4-R5 (ceremony)
+│   │   │   ├── __init__.py
+│   │   │   ├── test_ledger.py
+│   │   │   └── test_ceremony.py
+│   │   └── battery/              S05: B1-B5, honest atomicity, known-answer
+│   │       ├── __init__.py       both directions
+│   │       └── test_battery.py
 │   └── trading/                 S04: P1/P2 + M1-M7 (all synthetic bars;
 │       ├── __init__.py           the parquet parity check is run by hand,
 │       └── concepts/             see the sprint report)
