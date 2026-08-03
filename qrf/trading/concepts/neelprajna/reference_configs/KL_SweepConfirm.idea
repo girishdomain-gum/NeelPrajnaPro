@@ -1,7 +1,0 @@
-# Strategy idea: key-level sweep + confirmation (design doc §1.3)
-name:  KL_SweepConfirm
-kind:  SEQ
-rr:    2.0
-trail: on
-step:  guard=B3+B6 adv=T3 win=0 inv=NONE
-step:  guard=B6 adv=T1|T8 win=6 inv=B1

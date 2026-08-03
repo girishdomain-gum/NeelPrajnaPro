@@ -1,3 +1,0 @@
-# .gitkeep — keeps docs/coordination/sessions/ tracked when empty.
-# Session logs (PROTOCOL v1.1): the Developer's on-disk status channel.
-# The Architect reads these instead of console output (NOTE-008).
