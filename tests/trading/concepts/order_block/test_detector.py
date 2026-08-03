@@ -1,5 +1,5 @@
 """Order Block detector drills (docs/detectors/order_block.md, origin-candle
-method, A-019 R1/R3/R4).
+method, A-019 R1/R3/R4; A-020 R1/R2).
 """
 
 from qrf.kernel.detection.types import Bar, DetectorConfig
@@ -90,6 +90,30 @@ def test_clean_control_no_opposite_candle_in_bound_no_block():
     )
     obs_set = _detect(bars)
     assert not any(o.break_bar == 20 for o in obs_set.observations)
+
+
+# --- A-020 R1/R2: a swing consumed by its break cannot break again -------
+
+
+def test_r2_sustained_trend_yields_exactly_one_order_block():
+    """The regression this fix exists for: a sustained close beyond the
+    same confirmed swing for MANY consecutive bars must still yield
+    EXACTLY ONE order block (from the first breaching bar), never one
+    per bar. This drill would have FAILED before A-020 R1 (it would have
+    found ten).
+    """
+    bars = _bars(
+        40,
+        high={10: 101.0},
+        open_={15: 100.5},
+        close={15: 100.1, **{b: 101.0 + b * 0.01 for b in range(20, 30)}},
+    )
+    obs_set = _detect(bars)
+    matches = [o for o in obs_set.observations if o.broken_swing_bar == 10]
+    assert len(matches) == 1, (
+        f"expected exactly one order block from the sustained trend, got {len(matches)}"
+    )
+    assert matches[0].break_bar == 20  # the FIRST breaching bar, not a later one
 
 
 # --- the nearest-vs-furthest origin candle trap (Sec6) --------------------

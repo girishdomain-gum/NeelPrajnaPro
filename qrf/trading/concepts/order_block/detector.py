@@ -7,11 +7,19 @@ range" method (a different, unbuilt detector).
 Rule: swings (SWING_K=3, confirmed at i+SWING_K, independently declared
 -- see MSS's own note on why the same value is not a shared dependency).
 A structure break at bar b is a close strictly beyond the most recently
-confirmed swing high (bullish) or low (bearish). The origin candle is the
-NEAREST opposite-colored candle in [s, b-1], where s is the broken
-swing's own formation index (A-019 R1: the search is bounded by the
-swing being broken, not an arbitrary lookback). The block zone is that
-candle's own [low, high].
+confirmed, NOT-YET-CONSUMED swing high (bullish) or low (bearish). The
+origin candle is the NEAREST opposite-colored candle in [s, b-1], where s
+is the broken swing's own formation index (A-019 R1: the search is
+bounded by the swing being broken, not an arbitrary lookback). The block
+zone is that candle's own [low, high].
+
+A-020 R1: a swing is CONSUMED by the break that breaks it -- once used,
+it can never break again; the next break on that side requires a NEWLY
+confirmed swing. Without this, a sustained trend re-breaks the SAME
+already-broken swing on every subsequent bar (1,624 order blocks in
+5,000 real bars was the evidence this was wrong -- one every three bars,
+which cannot be a real impulsive move). Mirrors S02's window-burns-on-use
+and the sweep detector's resolved-pool-cannot-be-swept-twice principle.
 """
 
 from __future__ import annotations
@@ -110,6 +118,10 @@ def _run(bars: Sequence[Bar]) -> list[OrderBlockObservation]:
                         zone_high=highs[origin],
                     )
                 )
+            # A-020 R1: the swing is CONSUMED by this break, whether or not
+            # an origin candle was found -- it can never break again until
+            # a new swing high confirms.
+            last_swing_high = None
 
         if last_swing_low is not None and closes[b] < last_swing_low[1]:
             s = last_swing_low[0]
@@ -126,6 +138,7 @@ def _run(bars: Sequence[Bar]) -> list[OrderBlockObservation]:
                         zone_high=highs[origin],
                     )
                 )
+            last_swing_low = None  # A-020 R1: consumed, same as above.
 
     return observations
 
