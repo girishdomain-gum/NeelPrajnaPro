@@ -1,7 +1,7 @@
 # DETECTOR DEFINITION — Market Structure Shift (M5)
 
-**Status:** PROPOSED, awaiting Architect approval (A-018 §3 step 2). No
-code exists against this definition yet.
+**Status:** APPROVED (A-019). R2/R3/R4 confirm/extend this document below.
+Code follows this document, not the reverse.
 
 **Origin:** The Owner's material refers to structure turning,
 higher-timeframe bias, and "who is currently in control" (A-018 §2.3).
@@ -54,6 +54,15 @@ a single break is evidence structure CHANGED, not proof of a new,
 established trend, which would need its own two ascending/descending
 swings to confirm again under this same rule.
 
+**A-019 R2 (ruling, confirmed): KEEP the reset-to-UNDEFINED.** Assuming
+the opposite trend immediately would let a SECOND shift fire off a single
+break in what is still incoherent structure — manufacturing events in
+exactly the choppy conditions §1.6 says the concept is not asserted for.
+Resetting makes the detector UNDER-report rather than over-report, the
+correct failure direction for an instrument whose output will later be
+counted. Drilled explicitly: two breaks in a row from incoherent
+structure must yield ONE event, not two.
+
 ## 2. What this deliberately does NOT capture
 
 Stated plainly, per A-018 §2.3's own instruction:
@@ -86,9 +95,20 @@ Stated plainly, per A-018 §2.3's own instruction:
 - `SWING_K = 3` — same value as `order_block.md`, same reasoning,
   independently declared as this detector's own frozen constant (not an
   import of the other detector's constant, so the two can diverge in
-  future without either silently affecting the other).
+  future without either silently affecting the other). A-019 R3
+  (ruling, confirmed): this duplication is correct, not an unwanted
+  coupling — the same value by coincidence of reasoning, not by
+  dependency; the two detectors are free to diverge tomorrow without
+  either being edited.
 
-## 4. The mechanic a careless reader would get wrong
+## 4. What the observation carries (A-019 R4)
+
+Raw material only, nothing evaluative (C3): the broken swing's index and
+price, the shift direction, and the prevailing structure immediately
+before the shift (BULLISH or BEARISH — never UNDEFINED, since no shift
+fires from there).
+
+## 5. The mechanic a careless reader would get wrong
 
 "Ascending" for structure must be checked using the two MOST RECENT
 confirmed swings of each type, compared to EACH OTHER — not compared

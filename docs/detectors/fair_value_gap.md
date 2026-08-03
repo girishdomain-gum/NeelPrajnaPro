@@ -1,7 +1,7 @@
 # DETECTOR DEFINITION — Fair Value Gap (M7)
 
-**Status:** PROPOSED, awaiting Architect approval (A-018 §3 step 2). No code
-exists against this definition yet.
+**Status:** APPROVED as written (A-019), entire. R4 adds an observation
+field, below. Code follows this document, not the reverse.
 
 **Origin:** The Owner's own one-line gloss (`F:\QRF\docs\reference\
 SMC_Concept_Glossary.md`, "Contributed by: Owner (Girish)"): *"3-candle
@@ -62,7 +62,16 @@ pattern is complete the instant its third candle closes.
   consumer of the observations, not the detector (C3: it reports what it
   saw, not an interpretation).
 
-## 4. The mechanic a careless reader would get wrong
+## 4. What the observation carries (A-019 R4)
+
+Raw material only, nothing evaluative (C3): the gap bounds AND the gap
+SIZE (the bound-to-bound distance). "No minimum size" (§3) is a decision
+about what counts as a gap at all, never about what gets recorded — the
+size is always carried so a later MEASUREMENT can apply whatever filter
+it needs; a size threshold is a measurement's parameter, never this
+detector's.
+
+## 5. The mechanic a careless reader would get wrong
 
 Testing `high[i] < low[i+2]` for bullish and `low[i] > high[i+2]` for
 bearish are NOT symmetric copies of the same comparison with signs

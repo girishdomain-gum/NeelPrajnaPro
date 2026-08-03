@@ -1,7 +1,7 @@
 # DETECTOR DEFINITION — Order Block (M6)
 
-**Status:** PROPOSED, awaiting Architect approval (A-018 §3 step 2). No
-code exists against this definition yet.
+**Status:** APPROVED WITH CHANGES (A-019). R1/R3/R4 applied below. Code
+follows this document, not the reverse.
 
 **Origin:** The Owner's material names two methods (A-018 §2.2). The
 Owner's own one-line gloss (`SMC_Concept_Glossary.md`) states:
@@ -71,10 +71,16 @@ The **order block zone** is `[low[j], high[j]]` — the origin candle's
 own full price range, frozen at the moment the structure break confirms
 it (bar `b`). The order block becomes visible at bar `b`.
 
-If no opposite-colored candle is found within `MAX_LOOKBACK` bars
-strictly before `b` (frozen constant, see §3), no order block is emitted
-for that break — this is a real, expected outcome (a long uniform run
-before a break), not an error.
+**Search bound (A-019 R1): the swing that was broken, not a bar count.**
+The origin candle belongs to the impulsive move that broke structure, and
+that move begins at the swing `s` which the break at `b` broke. So the
+backward search for `j` runs from `b-1` down to `s` INCLUSIVE, never
+further — nothing outside the broken structure can supply an origin
+candle. If no opposite-colored candle exists in `[s, b-1]`, no order
+block is emitted for that break — a real, expected outcome (the entire
+impulsive leg was one color), not an error. This bound is DERIVED from
+the structure the break is defined against; it needs no separate
+constant and cannot be tuned.
 
 ## 2. Cold start and one-break-one-block
 
@@ -82,8 +88,8 @@ before a break), not an error.
   structure break can be evaluated (there is nothing confirmed yet to
   break). This is a plain, silent "not yet" — no event, no error.
 - **Each structure break produces AT MOST one order block** (the single
-  nearest origin candle, or none if `MAX_LOOKBACK` is exceeded) — never a
-  set of candidate blocks to choose from later.
+  nearest origin candle within `[s, b-1]`, or none) — never a set of
+  candidate blocks to choose from later.
 
 ## 3. Frozen constants (module-level, per A-012's own precedent)
 
@@ -91,15 +97,13 @@ before a break), not an error.
   swing-based reasoning (the sweep detector's `PIVOT_K`), and because it
   is the smallest window that still requires confirmation on both sides.
   This is an independently-chosen constant for THIS detector, not a
-  borrowed dependency on the sweep detector's value.
-- `MAX_LOOKBACK = 50` bars — proposed as generous enough that a real
-  origin candle is essentially always found in a genuine impulsive move
-  (which by definition is a short run of same-direction candles), while
-  still bounding the search so a pathological same-direction run cannot
-  make the detector scan indefinitely. I am not confident this is the
-  only defensible value — if you disagree, please say so; I have no
-  strong basis to prefer 50 over, say, 30 or 100, and would rather you
-  rule on it than have it hide as an arbitrary choice.
+  borrowed dependency on the sweep detector's value. (A-019 R3: the
+  Market Structure Shift detector declares the SAME value, independently
+  — this is a coincidence of reasoning, not a shared dependency; the two
+  are free to diverge in the future without either being edited.)
+
+(A-019 R1: `MAX_LOOKBACK` is removed. The backward search is bounded by
+the broken swing itself — see §1 — which needs no constant.)
 
 ## 4. What this detector does NOT do (deliberately)
 
@@ -112,7 +116,14 @@ before a break), not an error.
 - No "the range" (cluster) method — see §0.
 - No higher-timeframe context of any kind.
 
-## 5. The mechanic a careless reader would get wrong
+## 5. What the observation carries (A-019 R4)
+
+Raw material only, nothing evaluative (C3): zone bounds (`low[j]`,
+`high[j]`), the origin candle's index `j`, the break bar's index `b`, and
+the break direction. A later measurement decides what, if anything, is
+significant about any of these — this detector only reports them.
+
+## 6. The mechanic a careless reader would get wrong
 
 Searching backward for the origin candle must stop at the FIRST (nearest)
 opposite-colored candle, not the LAST (furthest) one within the impulsive
