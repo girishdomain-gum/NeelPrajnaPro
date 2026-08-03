@@ -136,6 +136,16 @@ def validate_window_payload(payload: dict) -> None:
             raise SchemaViolation("verdict payload missing required fields", payload)
         if not isinstance(payload["verdict"], dict):
             raise SchemaViolation("verdict payload's 'verdict' field must be a dict", payload)
+    elif op == "supersede":
+        # S07 F-07 (A-024/A-025 R3): retracts a VIRGIN reservation's
+        # occupancy of its span without editing or deleting the
+        # original "reserve" record. See WindowLedger.supersede() and
+        # the module docstring's CORRECTION MECHANISM section.
+        required = {"op", "window_id", "reason"}
+        if not required.issubset(payload):
+            raise SchemaViolation("supersede payload missing required fields", payload)
+        if not isinstance(payload["reason"], str) or not payload["reason"].strip():
+            raise SchemaViolation("supersede 'reason' must be a non-empty string", payload)
     else:
         raise SchemaViolation("unknown window ledger op", op)
 
@@ -148,6 +158,7 @@ class _WindowState:
     label: str
     burned_by: str | None = field(default=None)
     verdict: dict | None = field(default=None)
+    superseded_by_reason: str | None = field(default=None)
 
 
 class WindowLedger:
@@ -179,17 +190,24 @@ class WindowLedger:
                 if wid not in windows:
                     raise LedgerImbalance(f"burn references unknown window_id {wid!r}")
                 windows[wid].burned_by = payload["hypothesis_id"]
-            else:  # "verdict" -- also burns, atomically, in the same record
+            elif payload["op"] == "verdict":  # also burns, atomically, in the same record
                 wid = payload["window_id"]
                 if wid not in windows:
                     raise LedgerImbalance(f"verdict references unknown window_id {wid!r}")
                 windows[wid].burned_by = payload["hypothesis_id"]
                 windows[wid].verdict = payload["verdict"]
+            else:  # "supersede"
+                wid = payload["window_id"]
+                if wid not in windows:
+                    raise LedgerImbalance(f"supersede references unknown window_id {wid!r}")
+                windows[wid].superseded_by_reason = payload["reason"]
         return windows
 
     def reserve(self, window_id: str, start: float, end: float, label: str) -> None:
         windows = self._rebuild()
         for w in windows.values():
+            if w.superseded_by_reason is not None:
+                continue
             if start < w.end and w.start < end:
                 raise WindowConflict(
                     "overlap",
@@ -259,18 +277,55 @@ class WindowLedger:
         w = windows.get(window_id)
         return w.verdict if w is not None else None
 
+    def supersede(self, window_id: str, reason: str) -> None:
+        """S07 F-07 (A-024/A-025 R3): retract a mistaken VIRGIN reservation's
+        occupancy of its span. See the module docstring's CORRECTION
+        MECHANISM section for the full rationale; enforced here:
+
+          1. Only a VIRGIN, unburned window may be superseded -- TRAINING
+             and EXPLORATION are refused by name (closes the laundering
+             hole: contaminate a window, "correct" the record that proved
+             it, re-reserve as VIRGIN).
+          2. A burned window is refused by name -- a verdict's window can
+             never be retracted this way.
+          3. An already-superseded window is refused.
+          4. `reason` is required and non-empty.
+        """
+        if not isinstance(reason, str) or not reason.strip():
+            raise SchemaViolation("supersede 'reason' must be a non-empty string", reason)
+        windows = self._rebuild()
+        w = windows.get(window_id)
+        if w is None:
+            raise WindowConflict("unknown", f"no such window: {window_id!r}")
+        if w.label != "VIRGIN":
+            raise WindowConflict(
+                "not-virgin",
+                f"window {window_id!r} is {w.label}, only VIRGIN windows may be superseded",
+            )
+        if w.burned_by is not None:
+            raise WindowConflict(
+                "already-burned", f"window {window_id!r} already burned by {w.burned_by!r}"
+            )
+        if w.superseded_by_reason is not None:
+            raise WindowConflict("already-superseded", f"window {window_id!r} already superseded")
+        self._store.append({"op": "supersede", "window_id": window_id, "reason": reason})
+
     def balances(self) -> dict:
         windows = self._rebuild()
         by_label = {"TRAINING": 0, "EXPLORATION": 0, "VIRGIN": 0}
         burned = 0
+        superseded = 0
         for w in windows.values():
             by_label[w.label] += 1
             if w.burned_by is not None:
                 burned += 1
-        virgin_unburned = by_label["VIRGIN"] - burned
+            if w.superseded_by_reason is not None:
+                superseded += 1
+        virgin_unburned = by_label["VIRGIN"] - burned - superseded
         if virgin_unburned < 0:
             raise LedgerImbalance(
-                f"more burns ({burned}) than VIRGIN windows ({by_label['VIRGIN']})"
+                f"more burns+supersedes ({burned + superseded}) than VIRGIN windows "
+                f"({by_label['VIRGIN']})"
             )
         return {
             "total_windows": sum(by_label.values()),
@@ -278,4 +333,5 @@ class WindowLedger:
             "exploration": by_label["EXPLORATION"],
             "virgin_unburned": virgin_unburned,
             "burned": burned,
+            "superseded": superseded,
         }
