@@ -15,7 +15,8 @@ the repo, not what is planned.
 │   ├── SPRINT_EXECUTION_MODEL_v2.md
 │   └── retrospectives/
 │       ├── S01.md
-│       └── S02.md
+│       ├── S02.md
+│       └── S03.md
 ├── tools/
 │   └── run_job.sh              the Owner's one command; the Architect's job runner
 ├── mql5/
@@ -35,25 +36,40 @@ the repo, not what is planned.
 │   │                            BulkMismatch, WindowConflict, LedgerImbalance,
 │   │                            SymbolRefused, ProvenanceViolation, ClockDrift,
 │   │                            TerminalBusy, TerminalMismatch
-│   └── kernel/
-│       ├── __init__.py
-│       ├── records/             S02: the record store (evidence as proof)
-│       │   ├── __init__.py
-│       │   ├── store.py          RecordStore — append-only, hash-chained,
-│       │   │                     single-writer, torn-tail detection
-│       │   └── bulk.py           BulkStore — hash-binds bulk files to a manifest
-│       ├── windows/             S02: the window ledger (market time as a
-│       │   ├── __init__.py       spendable, accounted resource)
-│       │   └── ledger.py         WindowLedger — reserve/burn/balances
-│       └── observation/         S03: first contact with the real world
+│   ├── kernel/
+│   │   ├── __init__.py
+│   │   ├── records/             S02: the record store (evidence as proof)
+│   │   │   ├── __init__.py
+│   │   │   ├── store.py          RecordStore — append-only, hash-chained,
+│   │   │   │                     single-writer, torn-tail detection
+│   │   │   └── bulk.py           BulkStore — hash-binds bulk files to a manifest
+│   │   ├── windows/             S02: the window ledger (market time as a
+│   │   │   ├── __init__.py       spendable, accounted resource)
+│   │   │   └── ledger.py         WindowLedger — reserve/burn/balances
+│   │   ├── observation/         S03: first contact with the real world
+│   │   │   ├── __init__.py
+│   │   │   ├── symbols.py         exact-symbol enforcement (E1)
+│   │   │   ├── provenance.py      the provenance twin: write_twin/verify (E2/E3/E7)
+│   │   │   ├── clock.py           server-clock drift probe + self-policing (E5)
+│   │   │   ├── ingest.py          verify-then-bind into S02's BulkStore (E4/E6)
+│   │   │   └── launcher.py        the ONLY module touching a live MT5 terminal
+│   │   └── detection/           S04: the Detector SDK (AM-01) — the JUDGE's
+│   │       ├── __init__.py       vocabulary. INNER WALL: nothing here may
+│   │       ├── types.py          import qrf.trading.* (extends the firewall)
+│   │       │                     Bar, DetectorConfig, Observation (C1/C3),
+│   │       │                     ObservationSet
+│   │       └── interface.py       Detector ABC (C2: detect() must be pure)
+│   └── trading/                 S04: the PROPOSERS (AM-02) — detectors live
+│       ├── __init__.py           here, never in qrf/kernel/; may import
+│       └── concepts/             qrf.kernel.* freely (the allowed direction)
 │           ├── __init__.py
-│           ├── symbols.py         exact-symbol enforcement (E1)
-│           ├── provenance.py      the provenance twin: write_twin/verify (E2/E3/E7)
-│           ├── clock.py           server-clock offset measurement + self-policing (E5)
-│           ├── ingest.py          verify-then-bind into S02's BulkStore (E4/E6)
-│           └── launcher.py        the ONLY module touching a live MT5 terminal:
-│                                  launches Vantage by explicit path, runs the
-│                                  MQL5 script, harvests, checks the pins
+│           └── liquidity_sweep/
+│               ├── __init__.py
+│               └── detector.py    LiquiditySweepDetector, H-07 track, NP-ADR-008
+│                                  §5 v1.1 as pinned by Appendix B — frozen
+│                                  constants, exact parity: 3099 pivots /
+│                                  465 pools / 325 sweeps on the designated
+│                                  16,029-bar window
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py              shared fixtures
@@ -70,13 +86,24 @@ the repo, not what is planned.
 │   ├── windows/                 S02: D9-D14 (window ledger drills)
 │   │   ├── __init__.py
 │   │   └── test_ledger.py
-│   └── observation/             S03: E1-E7 (all terminal-independent; see
-│       ├── __init__.py           launcher.py's own docstring for why
-│       ├── test_symbols.py       run_export() itself has no CI test)
-│       ├── test_provenance.py
-│       ├── test_clock.py
-│       ├── test_ingest.py
-│       └── test_launcher.py
+│   ├── observation/             S03: E1-E7 (all terminal-independent; see
+│   │   ├── __init__.py           launcher.py's own docstring for why
+│   │   ├── test_symbols.py       run_export() itself has no CI test)
+│   │   ├── test_provenance.py
+│   │   ├── test_clock.py
+│   │   ├── test_ingest.py
+│   │   └── test_launcher.py
+│   ├── kernel/
+│   │   ├── __init__.py
+│   │   └── detection/           (SDK types are exercised via the sweep
+│   │       └── __init__.py       detector's own tests; no separate suite yet)
+│   └── trading/                 S04: P1/P2 + M1-M7 (all synthetic bars;
+│       ├── __init__.py           the parquet parity check is run by hand,
+│       └── concepts/             see the sprint report)
+│           ├── __init__.py
+│           └── liquidity_sweep/
+│               ├── __init__.py
+│               └── test_detector.py
 ├── .gitignore
 ├── BOOT_PROMPT_ARCHITECT.md
 ├── BOOT_PROMPT_DEVELOPER.md

@@ -35,6 +35,7 @@ import json
 import shutil
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from qrf.errors import TerminalBusy, TerminalMismatch
@@ -61,8 +62,26 @@ CSV_FILENAME_IN_TERM = "xauusd_export.csv"
 META_FILENAME_IN_TERM = "xauusd_export.meta.json"
 
 
-def terminal_running() -> list[str]:
-    """List any running process matching TERMINAL_EXE's exact path (via
+@dataclass(frozen=True)
+class TerminalRunningResult:
+    """A-011 (carried into S04): distinguishes the two ways this check can
+    conclude, so CI can SHOW which one ran rather than an author arguing
+    it from the mechanism. `path` is "cim" when the PowerShell/CIM query
+    genuinely executed (the real matching logic ran, whether or not it
+    found a hit), or "fallback" when it could not run at all (no
+    PowerShell, a non-zero exit, or an exception) -- erring strict in
+    that case by treating it as busy.
+    """
+
+    path: str  # "cim" | "fallback"
+    hits: tuple[str, ...]
+
+    def __bool__(self) -> bool:
+        return bool(self.hits)
+
+
+def terminal_running() -> TerminalRunningResult:
+    """Check any running process matching TERMINAL_EXE's exact path (via
     PowerShell CIM, matching Fable's approach). Other installs (a
     different broker's terminal, entirely) are not our concern and are
     never refused -- only a second instance of THIS install, which MT5
@@ -83,9 +102,13 @@ def terminal_running() -> list[str]:
             timeout=60,
         )
     except Exception:
-        return ["<could not query running processes -- erring strict>"]
+        return TerminalRunningResult(
+            path="fallback", hits=("<could not query running processes -- erring strict>",)
+        )
     if result.returncode != 0:
-        return ["<could not query running processes -- erring strict>"]
+        return TerminalRunningResult(
+            path="fallback", hits=("<could not query running processes -- erring strict>",)
+        )
     target = TERMINAL_EXE.lower()
     hits = []
     for line in (result.stdout or "").splitlines():
@@ -94,7 +117,7 @@ def terminal_running() -> list[str]:
         pid, _, path = line.strip().partition("|")
         if path and path.strip().lower() == target:
             hits.append(f"pid {pid} {path.strip()}")
-    return hits
+    return TerminalRunningResult(path="cim", hits=tuple(hits))
 
 
 def build_startup_ini(ini_path: Path, symbol: str, period: str) -> None:
@@ -155,7 +178,7 @@ def run_export(
 
     busy = terminal_running()
     if busy:
-        raise TerminalBusy(busy)
+        raise TerminalBusy(busy.hits)
 
     ini_path = Path(ini_dir if ini_dir is not None else out_dir) / f"{csv_filename}.startup.ini"
     build_startup_ini(ini_path, PINNED_SYMBOL, period)
