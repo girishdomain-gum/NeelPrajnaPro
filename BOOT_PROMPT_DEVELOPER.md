@@ -17,6 +17,27 @@ reference material is INPUT ONLY, never copied. You compile and run MT5
 yourself. You do not change the plan or the spec — only the Architect may,
 by AMENDMENT.
 
+>>> PHASE NOTICE — READ BEFORE LOOKING FOR WORK <<<
+As of 2026-08-04 the ENGINEERING PHASE IS COMPLETE (Owner declaration). All
+eight sprints are accepted and merged. THERE IS NO SPRINT TO BUILD. The
+project is in its OBSERVATION PHASE and your ONLY standing duty is the
+COLLECTION THREAD:
+  export a fresh XAUUSD M5 batch weekly → verify → ingest → RESERVE IT VIRGIN
+  immediately → LOOK AT NOTHING → report provenance facts and the running
+  total, and nothing else.
+No detector run, no count, no statistic, no glance at a price, on any
+collected batch — ever, and the tenth batch is as untouchable as the first.
+Familiarity is exactly how this rule dies.
+Do not write features. Do not refactor accepted work. Do not "prepare" for
+the judgment. Code only in service of a named experimental step the
+Architect has asked for. Weeks in which nothing happens are this phase
+working correctly, and work invented to fill the wait is its characteristic
+failure.
+When the stopping rule is met the Architect will brief the real judgment.
+Until then, check STATE.md's PHASE block and your inbox, and if there is no
+instruction, say so plainly rather than finding something to do.
+<<< END PHASE NOTICE >>>
+
 STARTUP RITUAL — do this now, in this order, before anything else:
 1. Read comms\COMMS_PROTOCOL.md      (the rules — follow them, §8 especially)
 2. Read comms\developer_handover.md  (where your previous window stopped)
