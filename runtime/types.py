@@ -13,6 +13,12 @@ refusing (`MalformedRelease`) if the recomputed hash disagrees with the
 one the dict claims. This is what makes `Belief.update()` requiring a
 `ReleasedKnowledge` instance more than a formality: you cannot build one
 except by passing this check first.
+
+`direction` IS SIGNIFICANT-CONDITIONAL (A-030 R1), re-checked here
+independently of qrf/kernel/publication/release.py's own enforcement:
+required (and must be one of DIRECTIONS) when `significant` is True;
+the KEY ITSELF must be structurally ABSENT (not present as null) when
+`significant` is False. Both violations refuse by name.
 """
 
 from __future__ import annotations
@@ -36,7 +42,8 @@ ALLOWED_FIELDS = frozenset(
         "sealed_hash",
     }
 )
-DIRECTIONS = frozenset({"long", "short", "none"})
+REQUIRED_FIELDS = ALLOWED_FIELDS - {"direction"}
+DIRECTIONS = frozenset({"long", "short"})
 
 
 def _canonical_bytes(payload: dict) -> bytes:
@@ -55,7 +62,7 @@ class ReleasedKnowledge:
     hypothesis_id: str
     measurement_id: str
     significant: bool
-    direction: str
+    direction: str | None
     valid_from: int
     valid_until: int
     sealed_hash: str
@@ -68,14 +75,26 @@ class ReleasedKnowledge:
         extra = set(release) - ALLOWED_FIELDS
         if extra:
             raise MalformedRelease("unrecognised field(s)", sorted(extra))
-        missing = ALLOWED_FIELDS - set(release)
+        missing = REQUIRED_FIELDS - set(release)
         if missing:
             raise MalformedRelease("missing required field(s)", sorted(missing))
 
-        if release["direction"] not in DIRECTIONS:
-            raise MalformedRelease("direction not recognised", release["direction"])
         if not isinstance(release["significant"], bool):
             raise MalformedRelease("significant must be bool", release["significant"])
+
+        # A-030 R1: direction is significant-conditional, both ways.
+        if release["significant"]:
+            if "direction" not in release:
+                raise MalformedRelease(
+                    "direction is required for a significant release", release
+                )
+            if release["direction"] not in DIRECTIONS:
+                raise MalformedRelease("direction not recognised", release["direction"])
+        elif "direction" in release:
+            raise MalformedRelease(
+                "direction must be structurally absent for a not-significant release",
+                release["direction"],
+            )
         for field in ("valid_from", "valid_until"):
             value = release[field]
             if isinstance(value, bool) or not isinstance(value, int):
@@ -98,4 +117,4 @@ class ReleasedKnowledge:
                 (release["release_id"], release["sealed_hash"]),
             )
 
-        return ReleasedKnowledge(**release)
+        return ReleasedKnowledge(**{**release, "direction": release.get("direction")})

@@ -66,8 +66,11 @@ def build_instruction(
     """
     if action not in ACTIONS:
         raise ValueError(f"action must be one of {sorted(ACTIONS)}, got {action!r}")
-    if release.direction == "none":
-        raise ValueError("cannot build an instruction from a 'none'-direction release")
+    if not release.significant or release.direction is None:
+        raise ValueError(
+            "cannot build an instruction from a not-significant release "
+            "(A-030 R1: direction is structurally absent when significant is False)"
+        )
     return Instruction(
         instruction_id=f"{release.release_id}:{action}",
         hypothesis_id=release.hypothesis_id,

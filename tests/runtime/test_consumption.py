@@ -66,6 +66,22 @@ def test_expired_instruction_refused_before_staging_drill(tmp_path):
     assert not tampered_stage_path.exists()
 
 
+def test_staged_json_has_no_space_after_colon(tmp_path):
+    """A-030 R2 regression: RefusalEA.mq5's hand-written JSON reader
+    matches the literal `"key":"value"` shape with NO space after the
+    colon. The default json.dumps() spacing parsed fine on the Python
+    side but silently made every field lookup fail on the real,
+    compiled EA (discovered by actually running it against a real
+    staged file, not by any Python-only test) -- guard the exact byte
+    shape here so it can never regress silently again.
+    """
+    instr = _instruction()
+    result = consume(instr, now=1500, stage_path=tmp_path / "staged.json")
+    staged_text = result.staged_path.read_text(encoding="ascii")
+    assert '": "' not in staged_text
+    assert '"instruction_id":"' in staged_text
+
+
 def test_feedback_log_round_trip_and_seq(tmp_path):
     log_path = tmp_path / "feedback.jsonl"
     r1 = ingest_feedback({"instruction_id": "x:open", "result": "refused_expired"}, log_path)

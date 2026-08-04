@@ -46,7 +46,18 @@ def consume(instruction: Instruction, now: int, stage_path: Path) -> Consumption
 
     stage_path = Path(stage_path)
     stage_path.parent.mkdir(parents=True, exist_ok=True)
-    stage_path.write_text(json.dumps(instruction.to_dict(), sort_keys=True), encoding="ascii")
+    # COMPACT JSON, no spaces (separators=(",", ":")): RefusalEA.mq5's own
+    # hand-written JSON reader matches the literal `"key":"value"` shape
+    # with no space after the colon -- proven the hard way (A-030 R2's
+    # live run): the default json.dumps() spacing parsed on the Python
+    # side but silently failed EVERY field lookup on the real EA, which
+    # then refused with "missing instruction_id" on a payload that in
+    # fact carried one. Never caught by a Python-only test; only running
+    # the compiled EA against a real staged file surfaced it.
+    stage_path.write_text(
+        json.dumps(instruction.to_dict(), sort_keys=True, separators=(",", ":")),
+        encoding="ascii",
+    )
     return ConsumptionResult(instruction_id=instruction.instruction_id, staged_path=stage_path)
 
 
