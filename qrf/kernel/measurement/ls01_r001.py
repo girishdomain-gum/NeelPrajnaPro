@@ -82,6 +82,27 @@ def signed_forward_return(
     return direction * raw_return
 
 
+def qualifying_events_with_valid_horizon(
+    sweep_observations,
+    shift_observations,
+    bars: Sequence[_HasClose],
+    context_window: int = CONTEXT_WINDOW,
+    horizon: int = HORIZON,
+):
+    """F-09/A-035 R2: the ONE definition of "the qualifying set" -- events
+    that qualify per `qualifying_events()` AND whose horizon fits inside
+    `bars` (`sweep_bar + horizon < len(bars)`). Used identically by the
+    real observed statistic AND every circular-shift null resample, so
+    the two are never compared over different populations. Returns
+    `(valid_events, excluded_count)` -- the count is reported in the
+    verdict (A-035 R2: "a reader should know how many events the horizon
+    cost at the tail").
+    """
+    qualifying = qualifying_events(sweep_observations, shift_observations, context_window)
+    valid = tuple(e for e in qualifying if e.sweep_bar + horizon < len(bars))
+    return valid, len(qualifying) - len(valid)
+
+
 def ls01_r001_statistic(
     sweep_observations,
     shift_observations,
@@ -90,15 +111,15 @@ def ls01_r001_statistic(
     horizon: int = HORIZON,
 ) -> float:
     """Pure: (ObservationSets' observations + bars) -> a number. The mean
-    signed forward return over qualifying events; 0.0 if none qualify or
-    none has a computable forward return (see the module docstring).
+    signed forward return over the qualifying set with a valid horizon
+    (see `qualifying_events_with_valid_horizon`); 0.0 if that set is
+    empty (see the module docstring's empty-population design decision).
     """
-    qualifying = qualifying_events(sweep_observations, shift_observations, context_window)
-    returns = []
-    for sweep in qualifying:
-        r = signed_forward_return(bars, sweep.sweep_bar, sweep.direction, horizon)
-        if r is not None:
-            returns.append(r)
+    valid, _excluded = qualifying_events_with_valid_horizon(
+        sweep_observations, shift_observations, bars, context_window, horizon
+    )
+    returns = [signed_forward_return(bars, e.sweep_bar, e.direction, horizon) for e in valid]
+    returns = [r for r in returns if r is not None]  # defensive; valid ones are never None
     if not returns:
         return 0.0
     return sum(returns) / len(returns)

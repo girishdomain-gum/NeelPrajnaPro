@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from qrf.kernel.measurement.ls01_r001 import (
     ls01_r001_statistic,
     qualifying_events,
+    qualifying_events_with_valid_horizon,
     signed_forward_return,
 )
 
@@ -137,3 +138,35 @@ def test_statistic_sign_matches_direction():
     bars = _bars([100.0] * 5 + [100.0] + [90.0] * 10)  # decline after the sweep bar
     stat = ls01_r001_statistic([sweep], [shift], bars, horizon=1)
     assert stat > 0
+
+
+# --- A-035 R2: one shared qualifying-set definition, horizon-bounded ------
+
+
+def test_valid_horizon_excludes_events_running_past_the_end():
+    """A sweep at bar 8 with horizon=5 in a 10-bar series needs bar 13,
+    which does not exist -- excluded from the valid set, and the
+    exclusion is counted.
+    """
+    sweep_near_end = _FakeSweep(kind="SWEEP", sweep_bar=8, direction=1)
+    sweep_with_room = _FakeSweep(kind="SWEEP", sweep_bar=2, direction=1)
+    shift = _FakeShift(kind="STRUCTURE_SHIFT", shift_bar=1)
+    bars = _bars([100.0] * 10)
+    valid, excluded = qualifying_events_with_valid_horizon(
+        [sweep_near_end, sweep_with_room], [shift], bars, context_window=10, horizon=5
+    )
+    assert sweep_with_room in valid
+    assert sweep_near_end not in valid
+    assert excluded == 1
+
+
+def test_statistic_uses_only_the_valid_set():
+    """ls01_r001_statistic must average over exactly the same set
+    qualifying_events_with_valid_horizon() would return -- not a
+    superset that happens to skip None results some other way.
+    """
+    sweep_near_end = _FakeSweep(kind="SWEEP", sweep_bar=8, direction=1)
+    shift = _FakeShift(kind="STRUCTURE_SHIFT", shift_bar=1)
+    bars = _bars([100.0] * 10)
+    # the only qualifying sweep has no valid horizon -> empty population -> 0.0
+    assert ls01_r001_statistic([sweep_near_end], [shift], bars, horizon=5) == 0.0

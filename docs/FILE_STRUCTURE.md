@@ -157,15 +157,34 @@ the repo, not what is planned.
 │   │   │                          release byte-reproducible from its inputs
 │   │   └── measurement/          S08 Phase 1 (A-032 §2.3): the ONE genuinely
 │   │       ├── __init__.py        new module — pure: (ObservationSets +
-│   │       └── ls01_r001.py        bars) -> a number. Duck-typed on the
-│   │                              inner wall's qrf.trading side on purpose
-│   │                              (reads .kind/.sweep_bar/.direction/
-│   │                              .shift_bar, never imports the detector
-│   │                              modules). qualifying_events() reads ONLY
-│   │                              bar indices (causality by construction);
-│   │                              signed_forward_return() is the only place
-│   │                              bars are read, strictly after
-│   │                              qualification is decided
+│   │       ├── ls01_r001.py        bars) -> a number. Duck-typed on the
+│   │       │                      inner wall's qrf.trading side on purpose
+│   │       │                      (reads .kind/.sweep_bar/.direction/
+│   │       │                      .shift_bar, never imports the detector
+│   │       │                      modules). qualifying_events() reads ONLY
+│   │       │                      bar indices (causality by construction);
+│   │       │                      signed_forward_return() is the only place
+│   │       │                      bars are read, strictly after
+│   │       │                      qualification is decided.
+│   │       │                      qualifying_events_with_valid_horizon()
+│   │       │                      (F-09/A-035 R2) is the ONE shared
+│   │       │                      qualifying-set definition, used
+│   │       │                      identically by the real statistic AND
+│   │       │                      the circular-shift null
+│   │       └── circular_shift_null.py   F-09/A-034/A-035: the CORRECT null
+│   │                              for LS-01-R001 — replaces block-
+│   │                              resampling, which S08's rehearsal
+│   │                              proved BLIND to a real population-wide
+│   │                              effect (D-024). Detection runs ONCE, on
+│   │                              real data, never re-run for the null;
+│   │                              one circular-shift offset per resample
+│   │                              (min magnitude = block_length_from_
+│   │                              detector(MEMBER_WINDOW), zero
+│   │                              discretion, A-035 R1) applied to ALL
+│   │                              real events simultaneously, preserving
+│   │                              event clustering + series structure,
+│   │                              destroying only the event-outcome
+│   │                              pairing
 │   └── trading/                 S04+S06: the PROPOSERS (AM-02) — detectors
 │       ├── __init__.py           live here, never in qrf/kernel/; may import
 │       └── concepts/             qrf.kernel.* freely (the allowed direction)
@@ -228,10 +247,15 @@ the repo, not what is planned.
 │   │   │                          RECORDED IN THE MODULE DOCSTRING: not
 │   │   │                          significant across three independent
 │   │   │                          constructions (uniform/10x-magnitude/
-│   │   │                          clustered) — a finding about the null
-│   │   │                          construction against a population-wide
-│   │   │                          effect, reported per instruction rather
-│   │   │                          than tuned away
+│   │   │                          clustered) — F-09, the finding that led
+│   │   │                          to the circular-shift null (A-034/A-035)
+│   │   ├── test_s08_power_check_v2.py  A-035 acceptance test, SAME
+│   │   │                          fixture, NEW circular-shift null.
+│   │   │                          CONVICT p=0.002, ACQUIT p=0.830, and
+│   │   │                          the specific criterion the old null
+│   │   │                          failed — p IMPROVES with effect size
+│   │   │                          (0.05x -> 0.2x: p 0.094 -> 0.002) —
+│   │   │                          confirmed. Also skipped by default
 │   │   ├── detection/           (SDK types are exercised via the sweep
 │   │   │   └── __init__.py       detector's own tests; no separate suite yet)
 │   │   ├── null/                 S05: N1-N4
@@ -249,8 +273,15 @@ the repo, not what is planned.
 │   │   └── test_release.py         significant-conditional) drills
 │   ├── measurement/               S08 Phase 1: X3/X4/X5 drills for
 │   │   ├── __init__.py             ls01_r001.py, on lightweight duck-typed
-│   │   └── test_ls01_r001.py       fakes (this module is duck-typed on
-│   │                                purpose, see its own docstring)
+│   │   ├── test_ls01_r001.py       fakes (this module is duck-typed on
+│   │   │                            purpose, see its own docstring); also
+│   │   │                            A-035 R2's shared-qualifying-set drills
+│   │   └── test_circular_shift_null.py   F-09/A-035: determinism,
+│   │                                min_offset enforcement (both sides of
+│   │                                the wrap), one-offset-for-all-events,
+│   │                                and a direct proof that shifting a
+│   │                                real planted move away from its own
+│   │                                window changes the computed return
 │   ├── trading/                 S04+S06: planted-truth + clean-control per
 │       ├── __init__.py           detector (all synthetic bars; real-run
 │       └── concepts/             counts are run by hand, see sprint reports)
