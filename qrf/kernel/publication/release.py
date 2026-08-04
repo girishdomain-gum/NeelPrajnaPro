@@ -5,8 +5,8 @@
 WHAT CROSSES, NEVER HOW: a release states the FINDING (which hypothesis,
 which measurement, whether it was significant, which direction it
 implies, and a validity window for any instruction built from it) and
-never the DERIVATION (p_value, alpha, n_resamples, seed, block_length,
-observed_statistic). AM-04 holds at the boundary too: a release names a
+never the DERIVATION (p_value, alpha, n_resamples, seed, null_name,
+null_parameters, observed_statistic). AM-04 holds at the boundary too: a release names a
 MEASUREMENT id, never the concept, and never phrases anything as "the
 concept is true" -- it is silent on the concept entirely.
 

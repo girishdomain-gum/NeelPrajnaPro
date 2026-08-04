@@ -14,7 +14,8 @@ SYNTHETIC_VERDICT = Verdict(
     significant=True,
     n_resamples=5000,
     seed=1,
-    block_length=20,
+    null_name="block_resampling_v1",
+    null_parameters={"block_length": 20},
     observed_statistic=0.0012,
     source_sha256="0" * 64,
 )
@@ -26,7 +27,8 @@ NOT_SIGNIFICANT_VERDICT = Verdict(
     significant=False,
     n_resamples=5000,
     seed=1,
-    block_length=20,
+    null_name="block_resampling_v1",
+    null_parameters={"block_length": 20},
     observed_statistic=0.0001,
     source_sha256="0" * 64,
 )
@@ -52,7 +54,7 @@ def test_publish_only_carries_allowed_fields():
         "sealed_hash",
     }
     # the derivation side never appears, even by field name
-    for forbidden in ("p_value", "alpha", "n_resamples", "seed", "block_length",
+    for forbidden in ("p_value", "alpha", "n_resamples", "seed", "null_name", "null_parameters",
                        "observed_statistic", "source_sha256"):
         assert forbidden not in release
 

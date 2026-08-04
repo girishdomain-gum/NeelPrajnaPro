@@ -273,3 +273,16 @@ class UnverifiedObservations(QRFError):
             f"unverified observations: expected sha256 {expected_sha256!r}, "
             f"got {actual_sha256!r}"
         )
+
+
+class NullNotSpecified(QRFError):
+    """Raised when `Battery.judge()` is called without a `null_runner`
+    (F-11, A-044): a verdict must always say which null produced it, so
+    there is no default null a caller can silently fall back to -- an
+    omitted null is refused, never quietly resolved to whichever null
+    happened to be the old hardcoded one.
+    """
+
+    def __init__(self, hypothesis_id: str) -> None:
+        self.hypothesis_id = hypothesis_id
+        super().__init__(f"no null_runner supplied for hypothesis {hypothesis_id!r}")

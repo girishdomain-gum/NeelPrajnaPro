@@ -101,7 +101,8 @@ def test_staged_field_names_match_instruction_to_dict():
 
     verdict = Verdict(
         hypothesis_id="SYNTHETIC-DEMO-H001", p_value=0.01, alpha=0.025, significant=True,
-        n_resamples=5000, seed=1, block_length=20, observed_statistic=0.0012,
+        n_resamples=5000, seed=1, null_name="block_resampling_v1",
+        null_parameters={"block_length": 20}, observed_statistic=0.0012,
         source_sha256="0" * 64,
     )
     release = publish(verdict, measurement_id="LS-01-R001", direction="long",
