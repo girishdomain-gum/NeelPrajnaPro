@@ -32,6 +32,7 @@ from pathlib import Path
 from qrf.kernel.battery.battery import Battery
 from qrf.kernel.detection.types import Bar, DetectorConfig
 from qrf.kernel.measurement.ls01_r001 import ls01_r001_statistic
+from qrf.kernel.null.resampling import block_resampling_null_runner
 from qrf.kernel.observation import provenance
 from qrf.kernel.observation.ingest import ingest_csv
 from qrf.kernel.records.bulk import BulkStore
@@ -312,16 +313,15 @@ def _run_rehearsal(
         return ls01_r001_statistic(rs_sweep.observations, rs_shift.observations, resampled_bars)
 
     battery = Battery(trial_ledger, window_ledger)
+    null_runner = block_resampling_null_runner(
+        series, statistic_fn, block_length, n_resamples=500, seed=1
+    )
     verdict = battery.judge(
         hypothesis_id=registration.hypothesis_id,
         observation_set=sweep_set,
         verified_source_sha256=twin_payload["sha256"],
-        series=series,
-        statistic_fn=statistic_fn,
         observed_statistic=observed_statistic,
-        block_length=block_length,
-        n_resamples=500,
-        seed=1,
+        null_runner=null_runner,
     )
 
     # 2.7 -- publish, consume, mirror.

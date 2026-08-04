@@ -59,7 +59,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from qrf.kernel.null.outcome import NullOutcome
 from qrf.kernel.null.resampling import add_one_pvalue, check_alpha_achievable
+
+CIRCULAR_SHIFT_NULL_NAME = "circular_shift_v1"
 
 
 class _HasClose(Protocol):
@@ -155,3 +158,41 @@ def run_circular_shift_null_test(
         excluded_count=excluded_count,
         null_statistics=null_statistics,
     )
+
+
+def circular_shift_null_runner(
+    qualifying_events, bars, min_offset, n_resamples, seed, excluded_count, horizon
+):
+    """F-11: build a `null_runner` for `Battery.judge()` -- a callable of
+    exactly `(observed_statistic, alpha) -> NullOutcome`, the same shape
+    `block_resampling_null_runner` produces, so `Battery.judge()` can
+    accept either without knowing which one it got. See that function's
+    docstring for why `alpha` is deferred to Battery rather than captured
+    here.
+    """
+
+    def run(observed_statistic: float, alpha: float) -> NullOutcome:
+        result = run_circular_shift_null_test(
+            qualifying_events,
+            bars,
+            observed_statistic,
+            min_offset,
+            n_resamples,
+            seed,
+            alpha,
+            excluded_count,
+            horizon,
+        )
+        return NullOutcome(
+            null_name=CIRCULAR_SHIFT_NULL_NAME,
+            p_value=result.p_value,
+            n_resamples=result.n_resamples,
+            seed=result.seed,
+            parameters={
+                "min_offset": result.min_offset,
+                "excluded_count": result.excluded_count,
+                "horizon": horizon,
+            },
+        )
+
+    return run

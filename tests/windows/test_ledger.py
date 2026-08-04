@@ -389,3 +389,121 @@ def test_supersede_empty_reason_refused_drill(tmp_path):
         log=log,
     )
     assert result.tampered_exception is SchemaViolation
+
+
+# --- A-049 (last Stage A item): optional `reserve` reason -----------------
+
+
+def test_reserve_with_a_reason_validates_and_reads_back(tmp_path):
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    ledger.reserve("V1", 0, 100, "VIRGIN", reason="A-049 test: with a reason")
+    ledger.balances()  # must not raise -- the mixed-shape chain still validates
+    records = list(ledger._store.verify())  # noqa: SLF001 -- reading the record back
+    assert records[0].payload["reason"] == "A-049 test: with a reason"
+
+
+def test_reserve_without_a_reason_validates_and_reads_back():
+    """The OLD five-field shape, produced by the default -- proving the
+    optional field did not change what an old-shaped call produces.
+    """
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as d:
+        ledger = WindowLedger(Path(d) / "windows.jsonl")
+        ledger.reserve("V1", 0, 100, "VIRGIN")  # no reason argument at all
+        ledger.balances()  # must not raise
+        records = list(ledger._store.verify())  # noqa: SLF001
+        assert "reason" not in records[0].payload
+
+
+def test_reserve_empty_reason_refused_drill(tmp_path):
+    log = DrillLog()
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+
+    def checker(empty_reason: bool):
+        if empty_reason:
+            ledger.reserve("V-tampered", 0, 100, "VIRGIN", reason="   ")
+        else:
+            ledger.reserve("V-clean", 200, 300, "VIRGIN", reason="a real reason")
+
+    result = run_drill(
+        name="A049-reserve-empty-reason-refused",
+        checker=checker,
+        clean_input=False,
+        tampered_input=True,
+        expected_exception=SchemaViolation,
+        log=log,
+    )
+    assert result.tampered_exception is SchemaViolation
+
+
+def test_reserve_reason_optionality_both_shapes_coexist(tmp_path):
+    """The core A-049 property: a reservation WITH a reason and one
+    WITHOUT must BOTH validate on the SAME chain -- this is not a
+    control/tampered pair (run_drill requires the tampered half to
+    RAISE, which is the wrong shape for "both inputs are equally
+    valid"), so it is asserted directly. The mixed-shape chain
+    verifying at all (`balances()` not raising) is the property under
+    test; the two sibling drills above cover the failure modes
+    (a reason secretly required, or an invalid reason silently
+    accepted).
+    """
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    ledger.reserve("V-with", 0, 100, "VIRGIN", reason="has a reason")
+    ledger.reserve("V-without", 200, 300, "VIRGIN")
+    balances = ledger.balances()  # must not raise -- the mixed chain verifies
+    assert balances["virgin_unburned"] == 2
+
+
+def test_reserve_reason_does_not_break_the_real_live_ledger_chain():
+    """A-049's real risk, checked against the REAL live ledger's actual
+    five RECORDS (four `reserve` + one `supersede`, reusing the second
+    `reserve`'s window_id -- hence FOUR distinct windows, not five), not
+    a fixture: appending a mixed-shape record (with a `reason`) on top
+    must not break hash-chain verification. Uses a COPY of the real file
+    so the live ledger is never written to by a test.
+    """
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    real_ledger_path = Path(r"F:\NeelPrajnaProData\datastore\s02_windows\ledger.jsonl")
+    if not real_ledger_path.exists():
+        pytest.skip("real live ledger not present")
+
+    with tempfile.TemporaryDirectory() as d:
+        copy_path = Path(d) / "ledger_copy.jsonl"
+        shutil.copyfile(real_ledger_path, copy_path)
+
+        ledger = WindowLedger(copy_path)
+        records_before = list(ledger._store.verify())  # noqa: SLF001
+        assert len(records_before) == 5  # the real record count as of A-049
+        balances_before = ledger.balances()  # the real chain, verified, before any new record
+        assert balances_before["total_windows"] == 4  # 4 distinct window_ids among those 5 records
+
+        # append ONE new mixed-shape (with-reason) record on top of the
+        # real five (none of which carry a `reserve` reason; the one
+        # `supersede` record already had its own, unrelated, reason field)
+        # and prove the WHOLE chain -- old shapes and the new one together
+        # -- still verifies:
+        ledger.reserve(
+            "a049_schema_change_test_window",
+            9_000_000_000,
+            9_000_000_100,
+            "TRAINING",
+            reason="A-049: proving the schema change on a copy of the real chain",
+        )
+        balances_after = ledger.balances()  # must not raise -- the mixed chain verifies
+        assert balances_after["total_windows"] == 5
+        assert balances_after["training"] == 1
+
+        records_after = list(ledger._store.verify())  # noqa: SLF001 -- full chain re-verified
+        assert len(records_after) == 6
+        # none of the four original "reserve" ops gained a "reason" key:
+        for record in records_after[:4]:
+            if record.payload["op"] == "reserve":
+                assert "reason" not in record.payload
+        assert records_after[5].payload["reason"] == (
+            "A-049: proving the schema change on a copy of the real chain"
+        )

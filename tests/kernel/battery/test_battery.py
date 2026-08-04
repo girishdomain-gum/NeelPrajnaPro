@@ -1,5 +1,5 @@
-"""B1-B5, the honest atomicity drill, and the known-answer test in both
-directions (A-015 §5).
+"""B1-B5, the honest atomicity drill, the known-answer test in both
+directions (A-015 §5), and F-11's pluggable-null drills (A-044).
 """
 
 import os
@@ -9,12 +9,15 @@ import pytest
 from qrf.errors import (
     CapabilityRequired,
     HypothesisNotRegistered,
+    NullNotSpecified,
     UnverifiedObservations,
     WindowConflict,
     WriterLockHeld,
 )
 from qrf.kernel.battery.battery import Battery
 from qrf.kernel.detection.types import ObservationSet
+from qrf.kernel.measurement.circular_shift_null import circular_shift_null_runner
+from qrf.kernel.null.resampling import block_resampling_null_runner
 from qrf.kernel.registration.ceremony import complete_registration
 from qrf.kernel.registration.ledger import TrialLedger
 from qrf.kernel.windows.ledger import VerdictCapability, WindowLedger
@@ -37,10 +40,10 @@ def _obs_set(sha256="a" * 64):
     )
 
 
-def _setup(tmp_path, family="fam-a", hid="H1", window_id="W1"):
+def _setup(tmp_path, family="fam-a", hid="H1", window_id="W1", start=0, end=1000):
     trials = TrialLedger(tmp_path / "trials.jsonl")
     windows = WindowLedger(tmp_path / "windows.jsonl")
-    windows.reserve(window_id, 0, 1000, "VIRGIN")
+    windows.reserve(window_id, start, end, "VIRGIN")
     reg = complete_registration(
         trials,
         typed_phrase=PHRASE,
@@ -71,6 +74,10 @@ def _first_three_mean(series):
     return sum(series[:3]) / 3
 
 
+def _block_null(series, block_length=10, n_resamples=2000, seed=1):
+    return block_resampling_null_runner(series, _first_three_mean, block_length, n_resamples, seed)
+
+
 # --- Known-answer test, BOTH directions -----------------------------------
 
 
@@ -81,12 +88,8 @@ def test_known_answer_planted_effect_is_detected(tmp_path):
         hypothesis_id="H-effect",
         observation_set=_obs_set(),
         verified_source_sha256="a" * 64,
-        series=series,
-        statistic_fn=_first_three_mean,
         observed_statistic=_first_three_mean(series),
-        block_length=10,
-        n_resamples=2000,
-        seed=1,
+        null_runner=_block_null(series),
     )
     assert verdict.significant is True
     assert verdict.p_value < verdict.alpha
@@ -99,12 +102,8 @@ def test_known_answer_no_effect_is_not_significant(tmp_path):
         hypothesis_id="H-noeffect",
         observation_set=_obs_set(),
         verified_source_sha256="a" * 64,
-        series=series,
-        statistic_fn=_first_three_mean,
         observed_statistic=_first_three_mean(series),
-        block_length=10,
-        n_resamples=2000,
-        seed=1,
+        null_runner=_block_null(series),
     )
     assert verdict.significant is False
     assert verdict.p_value == 1.0  # every null draw ties the observed (all zeros)
@@ -120,12 +119,8 @@ def test_b3_already_burned_window_refused_drill(tmp_path):
         hypothesis_id="H1",
         observation_set=_obs_set(),
         verified_source_sha256="a" * 64,
-        series=series,
-        statistic_fn=_first_three_mean,
         observed_statistic=_first_three_mean(series),
-        block_length=10,
-        n_resamples=2000,
-        seed=1,
+        null_runner=_block_null(series, seed=1),
     )
     assert windows.balances()["burned"] == 1
     with pytest.raises(WindowConflict):
@@ -133,12 +128,8 @@ def test_b3_already_burned_window_refused_drill(tmp_path):
             hypothesis_id="H1",
             observation_set=_obs_set(),
             verified_source_sha256="a" * 64,
-            series=series,
-            statistic_fn=_first_three_mean,
             observed_statistic=_first_three_mean(series),
-            block_length=10,
-            n_resamples=2000,
-            seed=2,
+            null_runner=_block_null(series, seed=2),
         )
 
 
@@ -147,17 +138,14 @@ def test_b3_already_burned_window_refused_drill(tmp_path):
 
 def test_b4_unregistered_hypothesis_refused(tmp_path):
     battery, _trials, _windows, _reg = _setup(tmp_path)
+    series = _no_effect_series()
     with pytest.raises(HypothesisNotRegistered):
         battery.judge(
             hypothesis_id="H-never-registered",
             observation_set=_obs_set(),
             verified_source_sha256="a" * 64,
-            series=_no_effect_series(),
-            statistic_fn=_first_three_mean,
             observed_statistic=0.0,
-            block_length=10,
-            n_resamples=2000,
-            seed=1,
+            null_runner=_block_null(series),
         )
 
 
@@ -166,17 +154,14 @@ def test_b4_unregistered_hypothesis_refused(tmp_path):
 
 def test_b5_unverified_observations_refused(tmp_path):
     battery, _trials, _windows, _reg = _setup(tmp_path, hid="H1")
+    series = _no_effect_series()
     with pytest.raises(UnverifiedObservations):
         battery.judge(
             hypothesis_id="H1",
             observation_set=_obs_set(sha256="a" * 64),
             verified_source_sha256="b" * 64,  # does not match the ObservationSet's own hash
-            series=_no_effect_series(),
-            statistic_fn=_first_three_mean,
             observed_statistic=0.0,
-            block_length=10,
-            n_resamples=2000,
-            seed=1,
+            null_runner=_block_null(series),
         )
 
 
@@ -266,12 +251,122 @@ def test_b2_verdict_burn_atomicity_honest_crash_drill(tmp_path):
         hypothesis_id="H1",
         observation_set=_obs_set(),
         verified_source_sha256="a" * 64,
-        series=series,
-        statistic_fn=_first_three_mean,
         observed_statistic=_first_three_mean(series),
-        block_length=10,
-        n_resamples=2000,
-        seed=1,
+        null_runner=_block_null(series),
     )
     assert verdict.significant is True
     assert windows.balances()["burned"] == 1
+
+
+# --- F-11 (A-044): the pluggable null, drilled ----------------------------
+
+
+def test_f11_judge_refuses_without_a_null_runner_drill(tmp_path):
+    """A verdict computed under an unstated null is exactly the failure
+    F-11 exists to close: `null_runner=None` must refuse, never silently
+    fall back to any particular null. TWO hypotheses/windows, one per
+    half, so both halves genuinely call `battery.judge()` -- a real
+    control run (succeeds, burns its own window) and a real tampered run
+    (refused, its window stays virgin), never a value substituted for
+    the call itself.
+    """
+    log = DrillLog()
+    trials = TrialLedger(tmp_path / "trials.jsonl")
+    windows = WindowLedger(tmp_path / "windows.jsonl")
+    battery = Battery(trials, windows)
+    series = _no_effect_series()
+
+    def checker(supply_null: bool):
+        hid = "H-null-control" if supply_null else "H-null-tampered"
+        start, end = (0, 1000) if supply_null else (5000, 6000)
+        windows.reserve(hid, start, end, "VIRGIN")
+        complete_registration(
+            trials,
+            typed_phrase=PHRASE,
+            expected_phrase_hash=PHRASE_HASH,
+            hypothesis_id=hid,
+            family_id="fam-null-drill",
+            statement_hash="s1",
+            detector_name="liquidity_sweep",
+            detector_version="H-07-v1.1-appendixB",
+            data_span_start_utc=start,
+            data_span_end_utc=end,
+            window_id=hid,
+            thresholds_hash="t1",
+        )
+        battery.judge(
+            hypothesis_id=hid,
+            observation_set=_obs_set(),
+            verified_source_sha256="a" * 64,
+            observed_statistic=_first_three_mean(series),
+            null_runner=_block_null(series) if supply_null else None,
+        )
+
+    result = run_drill(
+        name="F11-judge-refuses-without-null-runner",
+        checker=checker,
+        clean_input=True,
+        tampered_input=False,
+        expected_exception=NullNotSpecified,
+        log=log,
+    )
+    assert result.tampered_exception is NullNotSpecified
+    assert windows.balances()["burned"] == 1  # only the control's window was burned
+    assert windows.balances()["virgin_unburned"] == 1  # the tampered window untouched
+
+
+def test_f11_block_resampling_and_circular_shift_verdicts_are_distinguishable(tmp_path):
+    """The requirement this drill proves: two verdicts produced by
+    DIFFERENT nulls must be tellable apart from the written record alone
+    -- never inferred, never assumed to be "whichever one Battery always
+    used".
+    """
+    from dataclasses import dataclass
+
+    @dataclass(frozen=True)
+    class _FakeEvent:
+        sweep_bar: int
+        direction: int
+
+    @dataclass(frozen=True)
+    class _FakeBar:
+        close: float
+
+    battery_a, _t1, windows_a, _r1 = _setup(tmp_path, hid="H-block", window_id="W-block")
+    series = _planted_effect_series()
+    verdict_block = battery_a.judge(
+        hypothesis_id="H-block",
+        observation_set=_obs_set(),
+        verified_source_sha256="a" * 64,
+        observed_statistic=_first_three_mean(series),
+        null_runner=_block_null(series),
+    )
+
+    bars = tuple(_FakeBar(close=100.0 + (i % 7) * 0.05) for i in range(2000))
+    events = [_FakeEvent(sweep_bar=500, direction=1), _FakeEvent(sweep_bar=700, direction=-1)]
+    cs_runner = circular_shift_null_runner(
+        events, bars, min_offset=200, n_resamples=50, seed=3, excluded_count=0, horizon=10
+    )
+    battery_b, _t2, windows_b, _r2 = _setup(
+        tmp_path, family="fam-cs", hid="H-cs", window_id="W-cs", start=2000, end=3000
+    )
+    verdict_cs = battery_b.judge(
+        hypothesis_id="H-cs",
+        observation_set=_obs_set(),
+        verified_source_sha256="a" * 64,
+        observed_statistic=0.01,
+        null_runner=cs_runner,
+    )
+
+    assert verdict_block.null_name == "block_resampling_v1"
+    assert "block_length" in verdict_block.null_parameters
+    assert verdict_cs.null_name == "circular_shift_v1"
+    assert "min_offset" in verdict_cs.null_parameters
+    assert verdict_block.null_name != verdict_cs.null_name
+
+    # and the DISTINCTION SURVIVES THE WRITTEN RECORD, not just the return
+    # value -- read it back from the window ledger, not from `verdict_*`:
+    stored_block = windows_a.get_verdict("W-block")
+    stored_cs = windows_b.get_verdict("W-cs")
+    assert stored_block["null_name"] == "block_resampling_v1"
+    assert stored_cs["null_name"] == "circular_shift_v1"

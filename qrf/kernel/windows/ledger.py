@@ -82,6 +82,17 @@ RULES:
 Nothing is ever deleted or edited: the original `"reserve"` record and
 the `"supersede"` record both remain in the chain forever, so the
 ledger's history shows both the mistake and its correction, permanently.
+
+OPTIONAL `reserve` REASON (A-049, Stage A's last item): `reserve()` takes
+an OPTIONAL `reason` string, matching what `supersede` already carries --
+a reservation's justification can now live IN the record itself instead
+of only in a `window_id` string. OPTIONAL means exactly that: a reserve
+payload with no `"reason"` key is still valid, and every record written
+before this change (and every future reservation that does not supply
+one) keeps that exact shape. NEVER RETROFITTED: an existing record's
+absence of a reason is accurate history and is never edited in after the
+fact (law 11) -- see `stage_a_replay_source_s07_fresh_window` on the real
+ledger, reserved before this schema existed, which will never gain one.
 """
 
 from __future__ import annotations
@@ -123,6 +134,18 @@ def validate_window_payload(payload: dict) -> None:
             raise SchemaViolation("start/end must be numeric market-time markers", payload)
         if not start < end:
             raise SchemaViolation("start must be strictly before end", (start, end))
+        # A-049 (last Stage A item): OPTIONAL free-text `reason`, matching
+        # what `supersede` already carries. OPTIONAL means exactly that --
+        # a reserve payload with NO "reason" key at all is still valid (the
+        # five existing real records, and every record before this turn,
+        # have that shape and are NEVER retrofitted, law 11). Only a
+        # PRESENT "reason" is validated, and held to the same standard
+        # `supersede`'s already is: non-empty, or it is a small dishonesty
+        # written into an append-only chain forever.
+        if "reason" in payload:
+            if not isinstance(payload["reason"], str) or not payload["reason"].strip():
+                raise SchemaViolation("reserve 'reason', if present, must be a non-empty string",
+                                       payload["reason"])
     elif op == "burn":
         required = {"op", "window_id", "hypothesis_id"}
         if not required.issubset(payload):
@@ -159,6 +182,7 @@ class _WindowState:
     burned_by: str | None = field(default=None)
     verdict: dict | None = field(default=None)
     superseded_by_reason: str | None = field(default=None)
+    reserve_reason: str | None = field(default=None)  # A-049: None on every pre-existing record
 
 
 class WindowLedger:
@@ -184,6 +208,7 @@ class WindowLedger:
                     start=payload["start"],
                     end=payload["end"],
                     label=payload["label"],
+                    reserve_reason=payload.get("reason"),  # absent on every pre-A-049 record
                 )
             elif payload["op"] == "burn":
                 wid = payload["window_id"]
@@ -203,7 +228,18 @@ class WindowLedger:
                 windows[wid].superseded_by_reason = payload["reason"]
         return windows
 
-    def reserve(self, window_id: str, start: float, end: float, label: str) -> None:
+    def reserve(
+        self, window_id: str, start: float, end: float, label: str, reason: str | None = None
+    ) -> None:
+        """A-049: `reason` is OPTIONAL. Omitting it (the default) produces
+        the EXACT SAME five-field payload shape every reservation before
+        this turn used -- the schema change adds a capability, it does not
+        change what an old-shaped call produces. A non-empty string
+        justification is written into the append-only record itself (same
+        idea as `supersede`'s existing `reason`) when supplied.
+        """
+        if reason is not None and (not isinstance(reason, str) or not reason.strip()):
+            raise SchemaViolation("reserve 'reason', if given, must be a non-empty string", reason)
         windows = self._rebuild()
         for w in windows.values():
             if w.superseded_by_reason is not None:
@@ -214,9 +250,16 @@ class WindowLedger:
                     f"[{start},{end}) overlaps existing window {w.window_id!r} "
                     f"[{w.start},{w.end}) labelled {w.label}",
                 )
-        self._store.append(
-            {"op": "reserve", "window_id": window_id, "start": start, "end": end, "label": label}
-        )
+        payload = {
+            "op": "reserve",
+            "window_id": window_id,
+            "start": start,
+            "end": end,
+            "label": label,
+        }
+        if reason is not None:
+            payload["reason"] = reason
+        self._store.append(payload)
 
     def burn(self, window_id: str, hypothesis_id: str) -> None:
         windows = self._rebuild()

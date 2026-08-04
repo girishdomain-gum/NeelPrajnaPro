@@ -37,6 +37,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from qrf.errors import InsufficientResamples
+from qrf.kernel.null.outcome import NullOutcome
+
+BLOCK_RESAMPLING_NULL_NAME = "block_resampling_v1"
 
 
 def block_length_from_detector(member_window: int) -> int:
@@ -128,3 +131,30 @@ def run_null_test(
         block_length=block_length,
         null_statistics=null_statistics,
     )
+
+
+def block_resampling_null_runner(series, statistic_fn, block_length, n_resamples, seed):
+    """F-11: build a `null_runner` for `Battery.judge()` -- a callable of
+    exactly `(observed_statistic, alpha) -> NullOutcome`. Captures
+    `series`/`statistic_fn`/`block_length`/`n_resamples`/`seed` now;
+    `alpha` is supplied by Battery only once it has looked up the
+    registration, so `check_alpha_achievable` (inside `run_null_test`)
+    still runs AFTER the hypothesis-lookup/observation-verification
+    refusals and BEFORE any resampling -- the same ordering `judge()` has
+    always had, just relocated behind this closure instead of being
+    Battery's own business to know about block-resampling's internals.
+    """
+
+    def run(observed_statistic: float, alpha: float) -> NullOutcome:
+        result = run_null_test(
+            series, statistic_fn, observed_statistic, block_length, n_resamples, seed, alpha
+        )
+        return NullOutcome(
+            null_name=BLOCK_RESAMPLING_NULL_NAME,
+            p_value=result.p_value,
+            n_resamples=result.n_resamples,
+            seed=result.seed,
+            parameters={"block_length": result.block_length},
+        )
+
+    return run
