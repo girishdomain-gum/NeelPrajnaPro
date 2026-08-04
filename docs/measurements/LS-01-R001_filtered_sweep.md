@@ -66,16 +66,88 @@ bar data, and it must be a pure function of them.
 
 ## 5. The null
 
-**The block-resampling null built and drilled in S05.** Block length derived
-from the detector's own constant by the stated zero-discretion rule. The
-add-one p-value estimator, structurally incapable of returning 0.0. Seeded and
-reproducible; the seed is recorded in the verdict.
+**THE CIRCULAR-SHIFT NULL** (amended 2026-08-04 after F-09; see below for
+what was rejected and why).
+
+Detection runs EXACTLY ONCE, on the real data, and is never re-run for the
+null. The null does not manufacture events, real or synthetic. It asks a
+different question of the SAME real events: *would this event's outcome look
+unusual if it had been paired with a different moment's return instead of its
+own?*
+
+Mechanism: for each resample, draw ONE integer offset `s` and apply it to
+EVERY qualifying event simultaneously; each event's forward return is
+recomputed from the close series at `(sweep_bar + s)` and
+`(sweep_bar + s + horizon)`, wrapping circularly. The resample's statistic is
+the mean of those signed returns. The p-value is the add-one estimator
+(S05's `add_one_pvalue`, unchanged), which remains structurally incapable of
+returning 0.0.
+
+| Property | Value / rule |
+|---|---|
+| Offset magnitude | at least **MEMBER_WINDOW = 200** bars, and at most `n_bars - 200`, so the offset AND its wrapped complement both clear the detector's own dependence length. Derived with zero discretion from an already-frozen constant — the same derivation S05 used for block length, reused rather than reinvented |
+| Offsets per resample | ONE, applied rigidly to all events. Independent per-event shifts would destroy the events' mutual clustering as well as their outcome link, testing two things at once and making any rejection ambiguous |
+| Qualifying set | defined ONCE (`qualifying_events_with_valid_horizon`), excluding any event whose `sweep_bar + horizon` runs past the end of the data, and used identically for the observed statistic and every resample. The excluded count is recorded in the verdict |
+| Seed | recorded in the verdict; same seed and inputs reproduce the null exactly |
+
+**PRESERVES:** the real events (positions, directions, count); the real close
+series' own structure; the events' clustering relative to each other.
+**DESTROYS:** only the correspondence between a given event and the specific
+return that actually followed it — exactly and solely the event-outcome link
+the hypothesis is about.
+
+### 5.1 What was rejected, and why (F-09 — this record is part of the spec)
+
+The original specification named a **block-resampling null over the raw bar
+series, with detection re-run inside each resample**. It was rejected before
+any registration, because the S08 dress rehearsal proved it CANNOT DETECT ITS
+OWN EFFECT.
+
+At the real block length (200) and real alpha, on a realistic jittered
+population of ~170 events, a planted effect returned p ≈ 0.561 — and scaling
+that effect TEN-FOLD made p **worse** (0.762). A test that is merely
+underpowered improves as the effect grows; this got worse, which is the
+signature of blindness rather than weakness.
+
+The reason: each resampled block carried its events AND the returns that
+followed them, welded together, so every resample still contained the full
+association. The effect was being compared against itself.
+
+**THE RULE THIS FORGES: a null must DESTROY the thing being tested.**
+Block-resampling a price series is the correct null for a question about the
+SERIES; it is the wrong null for a question about an EVENT-OUTCOME LINK.
+S05's null model is not at fault — the defect was the PAIRING of that null
+with this statistic, which is a measurement-level choice and lives here.
+
+### 5.2 Acceptance evidence (required before registration, and met)
+
+On the same fixture that exposed F-09, at the real offset rule and real
+alpha = 0.025:
+
+| Check | Result |
+|---|---|
+| CONVICT — planted effect | p = 0.001996, significant |
+| ACQUIT — effect removed | p = 0.830, not significant |
+| MONOTONICITY — p must improve as effect size grows | 0.05x → p = 0.094 (not significant); 0.2x → p = 0.0020; 1x → p = 0.0020 (add-one floor at N = 500) |
+
+The monotonicity check is the acceptance criterion, not a diagnostic: it is
+the specific test whose failure exposed F-09, and it must positively confirm
+any null this measurement is ever judged under.
+
+### 5.3 N for the real judgment
+
+N must be large enough to represent alpha = 0.025 (S05's
+`check_alpha_achievable` refuses otherwise), and large enough that a real
+result is not pinned to the add-one floor as it was at N = 500 above.
+**N = 5,000 for the real run**, giving a floor of 1/5,001 ≈ 0.0002 — two
+orders below alpha, so the verdict reports a resolved p-value rather than a
+saturated one. The offset space (n_bars − 400 distinct values) is far larger
+than N, so resamples are not exhausted.
 
 **Matched controls (volatility regime, time-of-day, prior trend) are NOT used
 and are NOT registered.** That engine does not exist and has never been
-validated. The Owner withdrew it for exactly that reason. It may become a
-separate measurement after it is built and drilled — never assumed into being
-by a registration.
+validated. It may become a separate measurement after it is built and
+drilled — never assumed into being by a registration.
 
 ## 6. Alpha
 
