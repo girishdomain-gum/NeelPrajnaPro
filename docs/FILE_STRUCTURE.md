@@ -145,15 +145,27 @@ the repo, not what is planned.
 │   │   ├── battery/              S05: the sole verdict writer
 │   │   │   ├── __init__.py
 │   │   │   └── battery.py         Battery — refuses before it reports (B1-B5)
-│   │   └── publication/          S07: the Publication Boundary (A-029 §2.3)
-│   │       ├── __init__.py
-│   │       └── release.py         publish(Verdict) -> a plain dict release,
-│   │                              WHAT crosses (measurement_id, significant,
-│   │                              direction, validity window), never HOW
-│   │                              (no p_value/alpha/seed/observed_statistic);
-│   │                              verify_no_leak() is the boundary's own
-│   │                              allow-list check; sealed_hash makes a
-│   │                              release byte-reproducible from its inputs
+│   │   ├── publication/          S07: the Publication Boundary (A-029 §2.3)
+│   │   │   ├── __init__.py
+│   │   │   └── release.py         publish(Verdict) -> a plain dict release,
+│   │   │                          WHAT crosses (measurement_id, significant,
+│   │   │                          direction — significant-conditional per
+│   │   │                          A-030 R1, validity window), never HOW
+│   │   │                          (no p_value/alpha/seed/observed_statistic);
+│   │   │                          verify_no_leak() is the boundary's own
+│   │   │                          allow-list check; sealed_hash makes a
+│   │   │                          release byte-reproducible from its inputs
+│   │   └── measurement/          S08 Phase 1 (A-032 §2.3): the ONE genuinely
+│   │       ├── __init__.py        new module — pure: (ObservationSets +
+│   │       └── ls01_r001.py        bars) -> a number. Duck-typed on the
+│   │                              inner wall's qrf.trading side on purpose
+│   │                              (reads .kind/.sweep_bar/.direction/
+│   │                              .shift_bar, never imports the detector
+│   │                              modules). qualifying_events() reads ONLY
+│   │                              bar indices (causality by construction);
+│   │                              signed_forward_return() is the only place
+│   │                              bars are read, strictly after
+│   │                              qualification is decided
 │   └── trading/                 S04+S06: the PROPOSERS (AM-02) — detectors
 │       ├── __init__.py           live here, never in qrf/kernel/; may import
 │       └── concepts/             qrf.kernel.* freely (the allowed direction)
@@ -199,6 +211,14 @@ the repo, not what is planned.
 │   │   └── test_launcher.py
 │   ├── kernel/
 │   │   ├── __init__.py
+│   │   ├── test_s08_rehearsal.py  S08 Phase 1 (A-032): X1/X2/X6 — the
+│   │   │                          full judgment sequence end to end, twice
+│   │   │                          (planted effect -> significant, no
+│   │   │                          effect -> not significant), entirely
+│   │   │                          against THROWAWAY stores under
+│   │   │                          pytest's own tmp_path; X6 hashes the
+│   │   │                          REAL window ledger before/after to
+│   │   │                          prove it untouched
 │   │   ├── detection/           (SDK types are exercised via the sweep
 │   │   │   └── __init__.py       detector's own tests; no separate suite yet)
 │   │   ├── null/                 S05: N1-N4
@@ -211,9 +231,13 @@ the repo, not what is planned.
 │   │   └── battery/              S05: B1-B5, honest atomicity, known-answer
 │   │       ├── __init__.py       both directions
 │   │       └── test_battery.py
-│   ├── publication/               S07: W3/W4 (leak drill, byte-reproducibility)
-│   │   ├── __init__.py
-│   │   └── test_release.py
+│   ├── publication/               S07/A-030: W3/W4 (leak drill, byte-
+│   │   ├── __init__.py            reproducibility) + R1 (direction
+│   │   └── test_release.py         significant-conditional) drills
+│   ├── measurement/               S08 Phase 1: X3/X4/X5 drills for
+│   │   ├── __init__.py             ls01_r001.py, on lightweight duck-typed
+│   │   └── test_ls01_r001.py       fakes (this module is duck-typed on
+│   │                                purpose, see its own docstring)
 │   ├── trading/                 S04+S06: planted-truth + clean-control per
 │       ├── __init__.py           detector (all synthetic bars; real-run
 │       └── concepts/             counts are run by hand, see sprint reports)
