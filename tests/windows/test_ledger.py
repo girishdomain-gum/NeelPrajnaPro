@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from qrf.errors import LedgerImbalance, TornTail, WindowConflict, WriterLockHeld
+from qrf.errors import LedgerImbalance, SchemaViolation, TornTail, WindowConflict, WriterLockHeld
 from qrf.kernel.windows.ledger import WindowLedger
 from tests.drills.harness import DrillLog, run_drill
 
@@ -20,6 +20,7 @@ def test_reserve_and_burn_round_trip(tmp_path):
         "exploration": 0,
         "virgin_unburned": 0,
         "burned": 1,
+        "superseded": 0,
     }
 
 
@@ -245,3 +246,146 @@ def test_r3_unrecorded_look_is_not_detected(tmp_path):
     # record that anyone looked at it, whether or not a human actually did.
     ledger.reserve("V1", 0, 100, "VIRGIN")  # succeeds: the hole, proven
     assert ledger.balances()["virgin_unburned"] == 1
+
+
+# --- S07 R3: supersede() -- the correction mechanism (A-024/A-025) -------
+
+
+def test_supersede_control_virgin_unburned(tmp_path):
+    """Control: a VIRGIN, unburned window supersedes cleanly, its span
+    becomes reservable again, and balances() reconciles with the new
+    bucket.
+    """
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    ledger.reserve("V1", 0, 100, "VIRGIN")
+    ledger.supersede("V1", "F-07: mistaken reservation, span already examined elsewhere")
+    balances = ledger.balances()
+    assert balances["superseded"] == 1
+    assert balances["virgin_unburned"] == 0
+    # the span is reservable again -- the whole point of the mechanism
+    ledger.reserve("V2", 0, 100, "VIRGIN")
+    assert ledger.balances()["total_windows"] == 2
+
+
+def test_supersede_exploration_refused_drill(tmp_path):
+    """This is the rule that closes the laundering hole an earlier draft
+    left open: superseding an EXPLORATION window (proof that time was
+    examined) must be refused by name, never permitted just because it
+    happens to be unburned.
+    """
+    log = DrillLog()
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    ledger.reserve("E1", 0, 100, "EXPLORATION")
+
+    def checker(attempt_on_exploration: bool):
+        if attempt_on_exploration:
+            ledger.supersede("E1", "attempted laundering")
+        else:
+            ledger.balances()  # no-op control
+
+    result = run_drill(
+        name="D-supersede-exploration-refused",
+        checker=checker,
+        clean_input=False,
+        tampered_input=True,
+        expected_exception=WindowConflict,
+        log=log,
+    )
+    assert result.tampered_exception is WindowConflict
+    assert ledger.balances()["superseded"] == 0
+
+
+def test_supersede_training_refused_drill(tmp_path):
+    log = DrillLog()
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    ledger.reserve("T1", 0, 100, "TRAINING")
+
+    def checker(attempt_on_training: bool):
+        if attempt_on_training:
+            ledger.supersede("T1", "attempted laundering")
+        else:
+            ledger.balances()
+
+    result = run_drill(
+        name="D-supersede-training-refused",
+        checker=checker,
+        clean_input=False,
+        tampered_input=True,
+        expected_exception=WindowConflict,
+        log=log,
+    )
+    assert result.tampered_exception is WindowConflict
+
+
+def test_supersede_burned_refused_drill(tmp_path):
+    """The guard that stops supersede() from being 'un-burn evidence'
+    under a different name.
+    """
+    log = DrillLog()
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    ledger.reserve("V1", 0, 100, "VIRGIN")
+    ledger.burn("V1", "H1")
+
+    def checker(attempt_on_burned: bool):
+        if attempt_on_burned:
+            ledger.supersede("V1", "attempted un-burn")
+        else:
+            ledger.balances()
+
+    result = run_drill(
+        name="D-supersede-burned-refused",
+        checker=checker,
+        clean_input=False,
+        tampered_input=True,
+        expected_exception=WindowConflict,
+        log=log,
+    )
+    assert result.tampered_exception is WindowConflict
+    assert ledger.balances()["burned"] == 1
+    assert ledger.balances()["superseded"] == 0
+
+
+def test_supersede_twice_refused_drill(tmp_path):
+    log = DrillLog()
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    ledger.reserve("V1", 0, 100, "VIRGIN")
+    ledger.supersede("V1", "F-07: first correction")
+
+    def checker(attempt_second: bool):
+        if attempt_second:
+            ledger.supersede("V1", "attempted second correction")
+        else:
+            ledger.balances()
+
+    result = run_drill(
+        name="D-supersede-twice-refused",
+        checker=checker,
+        clean_input=False,
+        tampered_input=True,
+        expected_exception=WindowConflict,
+        log=log,
+    )
+    assert result.tampered_exception is WindowConflict
+    assert ledger.balances()["superseded"] == 1
+
+
+def test_supersede_empty_reason_refused_drill(tmp_path):
+    log = DrillLog()
+    ledger = WindowLedger(tmp_path / "windows.jsonl")
+    ledger.reserve("V1", 0, 100, "VIRGIN")
+
+    def checker(empty_reason: bool):
+        if empty_reason:
+            ledger.supersede("V1", "   ")
+        else:
+            ledger.supersede("V1", "F-07: a real reason")
+
+    result = run_drill(
+        name="D-supersede-empty-reason-refused",
+        checker=checker,
+        clean_input=False,
+        tampered_input=True,
+        expected_exception=SchemaViolation,
+        log=log,
+    )
+    assert result.tampered_exception is SchemaViolation

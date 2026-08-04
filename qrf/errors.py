@@ -244,6 +244,21 @@ class CapabilityRequired(QRFError):
         super().__init__(f"capability required for: {operation}")
 
 
+class PublicationLeak(QRFError):
+    """S07 (A-029 §2.3): raised when a knowledge release carries a field
+    from the DERIVATION side of the Publication Boundary -- p_value,
+    alpha, n_resamples, seed, block_length, observed_statistic, or a raw
+    source sha256 -- rather than only WHAT is known. The boundary is a
+    fixed allow-list, not a denylist: an unrecognised key is refused by
+    the same check, so a future field must be deliberately added to the
+    allow-list rather than merely not yet being on a forbidden list.
+    """
+
+    def __init__(self, field: str) -> None:
+        self.field = field
+        super().__init__(f"publication leak: {field!r} may not cross the Publication Boundary")
+
+
 class UnverifiedObservations(QRFError):
     """Raised when an ObservationSet's source_sha256 does not match the
     hash the caller independently verified (e.g. via S03's

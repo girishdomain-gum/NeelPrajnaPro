@@ -16,24 +16,83 @@ the repo, not what is planned.
 │   ├── HYPOTHESIS_SPECIFICATION.md   AM-04: concept/measurement/judgment format
 │   ├── concepts/
 │   │   └── LS-01_liquidity_sweep.md   the liquidity_sweep concept spec
+│   ├── measurements/
+│   │   └── LS-01-R001_filtered_sweep.md   S07: SPECIFIED, NOT REGISTERED
 │   ├── detectors/                 S06: prose definitions, written and
 │   │   ├── fair_value_gap.md       APPROVED before any detector code
-│   │   ├── order_block.md          (A-018's definition gate)
+│   │   ├── order_block.md          (A-018's definition gate; order_block.md
+│   │   │                           also carries A-020's consumed-swing fix)
 │   │   └── market_structure_shift.md
 │   └── retrospectives/
 │       ├── S01.md
 │       ├── S02.md
 │       ├── S03.md
 │       ├── S04.md
-│       └── S05.md
+│       ├── S05.md
+│       └── S06.md
 ├── tools/
 │   └── run_job.sh              the Owner's one command; the Architect's job runner
 ├── mql5/
 │   └── Scripts/
 │       └── QRF/
-│           └── ExportXAUUSD.mq5   S03: the MT5 script the launcher runs to
-│                                  export XAUUSD bars (compiled .ex5 is
-│                                  never tracked, per .gitignore)
+│           ├── ExportXAUUSD.mq5   S03: the MT5 script the launcher runs to
+│           │                     export XAUUSD bars (compiled .ex5 is
+│           │                     never tracked, per .gitignore). S07
+│           │                     Phase 1B extended it to accept an
+│           │                     optional staged historical cutoff
+│           │                     (MQL5\Files\QRF\export_end_time.txt)
+│           │                     so a fresh window can be exported
+│           │                     strictly BEFORE already-examined time,
+│           │                     not just "most recent N bars"
+│           └── QueryHistoryDepth.mq5   S07 F-07: capability query ONLY
+│                                       (SeriesInfoInteger SERIES_FIRSTDATE,
+│                                       no CopyRates) — proved M5 XAUUSD
+│                                       history begins 2025-09-23, ruling
+│                                       out any pre-2024 untouched span
+├── mql5/EA/QRF/
+│   └── RefusalEA.mq5           S07 (A-029 §3): fresh, from-scratch, refusal-
+│                                only EA. Reads a staged instruction, VALIDATES
+│                                structure + expiry (against TimeGMT(), never
+│                                S03's latency-inflated clock_drift_probe_
+│                                seconds), REFUSES loudly naming which check
+│                                failed. NO order-placement call anywhere in
+│                                the file (W9, token-scanned in
+│                                tests/runtime/test_ea_source.py) and NO
+│                                pattern logic (AM-02). Compiled clean (0
+│                                errors, 0 warnings) against the real
+│                                terminal; compiled .ex5 never tracked, per
+│                                .gitignore, same as ExportXAUUSD.mq5
+├── runtime/                    S07: the right organ (execution), added this
+│   ├── __init__.py              sprint. Never imports qrf.kernel (the
+│   │                             firewall enforces this both ways) — nothing
+│   │                             here shares a Python type with qrf/; every
+│   │                             boundary crossing is a plain dict, verified
+│   │                             independently on this side (types.py)
+│   ├── errors.py                runtime/'s OWN exceptions — deliberately
+│   │                             independent of qrf.errors, full severance
+│   ├── types.py                 ReleasedKnowledge — the ONLY way to
+│   │                             construct one is from_release_dict(),
+│   │                             which independently recomputes the sealed
+│   │                             hash qrf/kernel/publication/release.py
+│   │                             produced, agreeing byte-for-byte without
+│   │                             sharing code
+│   ├── belief.py                Belief.update() requires an actual
+│   │                             ReleasedKnowledge instance — a raw dict is
+│   │                             refused BY NAME even with every field
+│   │                             correct (A-029 §2.1)
+│   ├── contract.py               Instruction (conditional, expiring) +
+│   │                             build_instruction() — clock source is
+│   │                             documented in this file's own docstring
+│   ├── consumption.py            consume() refuses an expired instruction
+│   │                             BEFORE staging it for the EA;
+│   │                             ingest_feedback() appends execution
+│   │                             feedback as plain JSONL (deliberately NOT
+│   │                             qrf's hash-chained RecordStore — runtime
+│   │                             bookkeeping, never S08 evidence)
+│   └── dashboard.py              render_mirror() — the mirror dashboard.
+│                                 Pure, no side effects, no action-capable
+│                                 control anywhere (W7, drilled by source-
+│                                 text scan in tests/runtime/test_dashboard.py)
 ├── data/
 │   └── provenance/              S03: provenance twins, TRACKED IN GIT — the
 │       └── *.provenance.json     proof of what an export was, never the
@@ -47,7 +106,8 @@ the repo, not what is planned.
 │   │                            TerminalBusy, TerminalMismatch,
 │   │                            InsufficientResamples, HypothesisNotRegistered,
 │   │                            BudgetExhausted, RegistrationMismatch,
-│   │                            CeremonyRefused, UnverifiedObservations
+│   │                            CeremonyRefused, UnverifiedObservations,
+│   │                            PublicationLeak (S07)
 │   ├── kernel/
 │   │   ├── __init__.py
 │   │   ├── records/             S02: the record store (evidence as proof)
@@ -57,7 +117,10 @@ the repo, not what is planned.
 │   │   │   └── bulk.py           BulkStore — hash-binds bulk files to a manifest
 │   │   ├── windows/             S02: the window ledger (market time as a
 │   │   │   ├── __init__.py       spendable, accounted resource)
-│   │   │   └── ledger.py         WindowLedger — reserve/burn/balances
+│   │   │   └── ledger.py         WindowLedger — reserve/burn/balances, plus
+│   │   │                         supersede() (S07 F-07/A-025 R3): retracts a
+│   │   │                         mistaken VIRGIN reservation without editing
+│   │   │                         or deleting the original record
 │   │   ├── observation/         S03: first contact with the real world
 │   │   │   ├── __init__.py
 │   │   │   ├── symbols.py         exact-symbol enforcement (E1)
@@ -79,9 +142,18 @@ the repo, not what is planned.
 │   │   │   ├── alpha.py           geometric alpha spending (AM-03)
 │   │   │   ├── ledger.py          TrialLedger — per-family, capacity 100 (R1-R3)
 │   │   │   └── ceremony.py        phrase-gated registration (R4/R5)
-│   │   └── battery/              S05: the sole verdict writer
+│   │   ├── battery/              S05: the sole verdict writer
+│   │   │   ├── __init__.py
+│   │   │   └── battery.py         Battery — refuses before it reports (B1-B5)
+│   │   └── publication/          S07: the Publication Boundary (A-029 §2.3)
 │   │       ├── __init__.py
-│   │       └── battery.py         Battery — refuses before it reports (B1-B5)
+│   │       └── release.py         publish(Verdict) -> a plain dict release,
+│   │                              WHAT crosses (measurement_id, significant,
+│   │                              direction, validity window), never HOW
+│   │                              (no p_value/alpha/seed/observed_statistic);
+│   │                              verify_no_leak() is the boundary's own
+│   │                              allow-list check; sealed_hash makes a
+│   │                              release byte-reproducible from its inputs
 │   └── trading/                 S04+S06: the PROPOSERS (AM-02) — detectors
 │       ├── __init__.py           live here, never in qrf/kernel/; may import
 │       └── concepts/             qrf.kernel.* freely (the allowed direction)
@@ -139,7 +211,10 @@ the repo, not what is planned.
 │   │   └── battery/              S05: B1-B5, honest atomicity, known-answer
 │   │       ├── __init__.py       both directions
 │   │       └── test_battery.py
-│   └── trading/                 S04+S06: planted-truth + clean-control per
+│   ├── publication/               S07: W3/W4 (leak drill, byte-reproducibility)
+│   │   ├── __init__.py
+│   │   └── test_release.py
+│   ├── trading/                 S04+S06: planted-truth + clean-control per
 │       ├── __init__.py           detector (all synthetic bars; real-run
 │       └── concepts/             counts are run by hand, see sprint reports)
 │           ├── __init__.py
@@ -155,6 +230,16 @@ the repo, not what is planned.
 │           └── market_structure_shift/
 │               ├── __init__.py
 │               └── test_detector.py
+│   └── runtime/                 S07: W1(firewall)/W2/W5/W6/W7/W8/W9
+│       ├── __init__.py
+│       ├── test_types.py
+│       ├── test_belief.py
+│       ├── test_contract.py
+│       ├── test_consumption.py
+│       ├── test_dashboard.py
+│       ├── test_ea_source.py    static token-scan of RefusalEA.mq5
+│       └── test_end_to_end.py   W8: SYNTHETIC verdict, published ->
+│                                 consumed -> feedback ingested
 ├── .gitignore
 ├── BOOT_PROMPT_ARCHITECT.md
 ├── BOOT_PROMPT_DEVELOPER.md
@@ -163,9 +248,12 @@ the repo, not what is planned.
 └── README.md
 ```
 
-`runtime/` does not exist yet (added in S07). The firewall test's
-`SCANNED_ROOTS` constant already names it, so an empty side is checked and
-passes trivially — it is never skipped.
+`runtime/` was added in S07 (A-029) — the transplant ruling (A-028) found no
+clean thin-hands boundary to import from F:\Fable, so every file under it is
+written fresh, quarrying F:\Fable for MECHANICS only (terminal lifecycle,
+file staging), never for pattern logic or bytes. Nothing under it may import
+qrf.kernel — see `tests/test_firewall.py::test_wall_holds_with_real_runtime_code`
+for the wall proven against real content, not an empty directory.
 
 `comms/` lives outside the repo (`.gitignore`d, per protocol). The reference
 snapshot and previous era's comms live outside the repo entirely, under

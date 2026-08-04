@@ -40,6 +40,48 @@ have seen, and it is why the Owner ceremony at S05 exists — the typed
 designation is the human key on a lock the machine cannot turn alone. See
 tests/windows/test_ledger.py::test_r3_unrecorded_look_is_not_detected for
 the test that proves this hole rather than leaving it implicit.
+
+CORRECTION MECHANISM — supersede() (A-024/A-025 R3, S07 F-07): the ledger
+is append-only, and a RESERVATION MISTAKE (a span designated VIRGIN that
+was, on investigation, already examined by something recorded elsewhere)
+was otherwise permanent and uncorrectable. `supersede()` adds a new,
+append-only op that retracts a reservation's occupancy of its span
+without ever editing or deleting the original record.
+
+THE GOVERNING PRINCIPLE, stated because it is binding and not obvious:
+YOU MAY RETRACT A CLAIM THAT TIME IS UNTOUCHED; YOU MAY NEVER RETRACT A
+CLAIM THAT TIME WAS TOUCHED. A VIRGIN reservation is a claim of
+innocence, and claims of innocence can be wrong about our own records --
+exactly what happened here. A TRAINING/EXPLORATION reservation is a claim
+that time WAS looked at, which is a fact about the world; facts about the
+world do not become untrue because they are inconvenient. Combined with
+the burned-window guard below, `supersede()` can only ever make the
+ledger MORE restrictive or correct a false claim of innocence -- it can
+never manufacture innocence for a span already on record as examined.
+
+RULES:
+  1. Only a VIRGIN, UNBURNED window may be superseded. Superseding a
+     TRAINING or EXPLORATION window is refused by name -- this is the
+     rule that closes the laundering hole an earlier draft of this
+     mechanism left open (contaminating a window, then "correcting" the
+     EXPLORATION record that proved it, then re-reserving the same span
+     as VIRGIN).
+  2. Superseding a BURNED window is refused by name -- a verdict's window
+     can never be retracted this way. This is the guard that stops
+     `supersede()` from being "un-burn evidence" under a different name.
+  3. A window may be superseded only ONCE -- superseding an
+     already-superseded window is refused.
+  4. `reason` is required and non-empty -- a correction with no stated
+     reason is itself a small dishonesty. It is written into the
+     append-only chain forever, for a reader years from now who has none
+     of today's context.
+  5. A superseded window's span becomes available again for a NEW
+     reservation (`reserve()`'s overlap check skips superseded windows).
+     `balances()` gains a `superseded` bucket so every window is counted
+     in exactly one bucket, always.
+Nothing is ever deleted or edited: the original `"reserve"` record and
+the `"supersede"` record both remain in the chain forever, so the
+ledger's history shows both the mistake and its correction, permanently.
 """
 
 from __future__ import annotations
@@ -94,6 +136,16 @@ def validate_window_payload(payload: dict) -> None:
             raise SchemaViolation("verdict payload missing required fields", payload)
         if not isinstance(payload["verdict"], dict):
             raise SchemaViolation("verdict payload's 'verdict' field must be a dict", payload)
+    elif op == "supersede":
+        # S07 F-07 (A-024/A-025 R3): retracts a VIRGIN reservation's
+        # occupancy of its span without editing or deleting the
+        # original "reserve" record. See WindowLedger.supersede() and
+        # the module docstring's CORRECTION MECHANISM section.
+        required = {"op", "window_id", "reason"}
+        if not required.issubset(payload):
+            raise SchemaViolation("supersede payload missing required fields", payload)
+        if not isinstance(payload["reason"], str) or not payload["reason"].strip():
+            raise SchemaViolation("supersede 'reason' must be a non-empty string", payload)
     else:
         raise SchemaViolation("unknown window ledger op", op)
 
@@ -106,6 +158,7 @@ class _WindowState:
     label: str
     burned_by: str | None = field(default=None)
     verdict: dict | None = field(default=None)
+    superseded_by_reason: str | None = field(default=None)
 
 
 class WindowLedger:
@@ -137,17 +190,24 @@ class WindowLedger:
                 if wid not in windows:
                     raise LedgerImbalance(f"burn references unknown window_id {wid!r}")
                 windows[wid].burned_by = payload["hypothesis_id"]
-            else:  # "verdict" -- also burns, atomically, in the same record
+            elif payload["op"] == "verdict":  # also burns, atomically, in the same record
                 wid = payload["window_id"]
                 if wid not in windows:
                     raise LedgerImbalance(f"verdict references unknown window_id {wid!r}")
                 windows[wid].burned_by = payload["hypothesis_id"]
                 windows[wid].verdict = payload["verdict"]
+            else:  # "supersede"
+                wid = payload["window_id"]
+                if wid not in windows:
+                    raise LedgerImbalance(f"supersede references unknown window_id {wid!r}")
+                windows[wid].superseded_by_reason = payload["reason"]
         return windows
 
     def reserve(self, window_id: str, start: float, end: float, label: str) -> None:
         windows = self._rebuild()
         for w in windows.values():
+            if w.superseded_by_reason is not None:
+                continue
             if start < w.end and w.start < end:
                 raise WindowConflict(
                     "overlap",
@@ -217,18 +277,55 @@ class WindowLedger:
         w = windows.get(window_id)
         return w.verdict if w is not None else None
 
+    def supersede(self, window_id: str, reason: str) -> None:
+        """S07 F-07 (A-024/A-025 R3): retract a mistaken VIRGIN reservation's
+        occupancy of its span. See the module docstring's CORRECTION
+        MECHANISM section for the full rationale; enforced here:
+
+          1. Only a VIRGIN, unburned window may be superseded -- TRAINING
+             and EXPLORATION are refused by name (closes the laundering
+             hole: contaminate a window, "correct" the record that proved
+             it, re-reserve as VIRGIN).
+          2. A burned window is refused by name -- a verdict's window can
+             never be retracted this way.
+          3. An already-superseded window is refused.
+          4. `reason` is required and non-empty.
+        """
+        if not isinstance(reason, str) or not reason.strip():
+            raise SchemaViolation("supersede 'reason' must be a non-empty string", reason)
+        windows = self._rebuild()
+        w = windows.get(window_id)
+        if w is None:
+            raise WindowConflict("unknown", f"no such window: {window_id!r}")
+        if w.label != "VIRGIN":
+            raise WindowConflict(
+                "not-virgin",
+                f"window {window_id!r} is {w.label}, only VIRGIN windows may be superseded",
+            )
+        if w.burned_by is not None:
+            raise WindowConflict(
+                "already-burned", f"window {window_id!r} already burned by {w.burned_by!r}"
+            )
+        if w.superseded_by_reason is not None:
+            raise WindowConflict("already-superseded", f"window {window_id!r} already superseded")
+        self._store.append({"op": "supersede", "window_id": window_id, "reason": reason})
+
     def balances(self) -> dict:
         windows = self._rebuild()
         by_label = {"TRAINING": 0, "EXPLORATION": 0, "VIRGIN": 0}
         burned = 0
+        superseded = 0
         for w in windows.values():
             by_label[w.label] += 1
             if w.burned_by is not None:
                 burned += 1
-        virgin_unburned = by_label["VIRGIN"] - burned
+            if w.superseded_by_reason is not None:
+                superseded += 1
+        virgin_unburned = by_label["VIRGIN"] - burned - superseded
         if virgin_unburned < 0:
             raise LedgerImbalance(
-                f"more burns ({burned}) than VIRGIN windows ({by_label['VIRGIN']})"
+                f"more burns+supersedes ({burned + superseded}) than VIRGIN windows "
+                f"({by_label['VIRGIN']})"
             )
         return {
             "total_windows": sum(by_label.values()),
@@ -236,4 +333,5 @@ class WindowLedger:
             "exploration": by_label["EXPLORATION"],
             "virgin_unburned": virgin_unburned,
             "burned": burned,
+            "superseded": superseded,
         }

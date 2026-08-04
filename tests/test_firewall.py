@@ -70,6 +70,24 @@ def _format_violations(violations: list[tuple[Path, int, str]]) -> str:
     return "\n".join(f"  {path}:{lineno}: imports {name!r}" for path, lineno, name in violations)
 
 
+# --- S07 W1: the wall holds with REAL runtime/ content present ----------
+
+
+def test_wall_holds_with_real_runtime_code():
+    """Until S07, runtime/ was empty and this scan passed trivially (the
+    module docstring already noted the wall's real test was deferred to
+    when runtime/ gained real code). It now has real content
+    (belief.py, contract.py, consumption.py, dashboard.py, types.py,
+    errors.py) -- this proves the wall holds against that real code, not
+    an empty directory that could never have failed either check.
+    """
+    assert SCANNED_ROOTS["runtime"].exists()
+    real_files = list(SCANNED_ROOTS["runtime"].glob("*.py"))
+    assert len(real_files) >= 5, "expected real runtime/ modules, found too few to be a real test"
+    assert find_violations(SCANNED_ROOTS["runtime"], "qrf.kernel") == []
+    assert find_violations(SCANNED_ROOTS["qrf"], "runtime") == []
+
+
 # --- V1/V2: the two prohibitions ---------------------------------------
 
 
