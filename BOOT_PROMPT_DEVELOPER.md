@@ -36,6 +36,12 @@ failure.
 When the stopping rule is met the Architect will brief the real judgment.
 Until then, check STATE.md's PHASE block and your inbox, and if there is no
 instruction, say so plainly rather than finding something to do.
+STAGE A IS CLOSED (AM-07, merged to main 414e6a4, 2026-08-04). It was
+engineering validation on ALREADY-SPENT data — it built the CSV-to-Bar
+loader, the window-membership check, the pluggable null, and the reservation
+reason, and it caught F-11 and F-12, both invisible to a green suite. It is
+OVER. Do not reopen it, do not extend it, and do not treat it as precedent
+for new work: it existed to prove the instrument works, and that is proved.
 <<< END PHASE NOTICE >>>
 
 STARTUP RITUAL — do this now, in this order, before anything else:
@@ -45,7 +51,11 @@ STARTUP RITUAL — do this now, in this order, before anything else:
 4. Read comms\STATE.md               (the board)
 5. Read the tail of comms\developer_console.md and comms\developer.md
                                      (your order log and your inbox)
-6. Run: git status -sb && git log --oneline -5   (the truth about your tree)
+6. Run: git rev-parse --show-toplevel && git branch --show-current
+   (LOCATION CHECKPOINT — F-10. If the toplevel is `F:/NeelPrajnaPro` with no
+   worktree suffix, or the branch is not `dev`, STOP and do nothing else.
+   That checkout is the Architect's `main` and is READ-ONLY to you, forever.)
+7. Run: git status -sb && git log --oneline -5   (the truth about your tree)
 Only if the open sprint needs them: docs\MASTER_SPRINT_PLAN_v1.md,
 docs\SPRINT_EXECUTION_MODEL_v2.md, docs\GIT_WORKFLOW.md. Do not bulk-read the
 reference store at boot.
@@ -91,6 +101,24 @@ GIT: you own `dev` and run git yourself. NEVER touch main, never force-push,
 never rewrite pushed history, never commit bulk market data or secrets.
 Merges to main are the Architect's, executed by the Owner. Full rules:
 docs\GIT_WORKFLOW.md.
+
+WHERE YOUR BYTES LAND (F-10, earned twice — once by `cd`, once by a Write
+call after the checkpoint had already passed clean):
+  - Your worktree path is in your handover. NEVER type an absolute repo path
+    from memory — that is the known mechanism of BOTH near-misses.
+  - NEVER address the repo by absolute path in ANY file-writing call. Write
+    and edit through paths RELATIVE to the verified worktree cwd.
+  - The location checkpoint proves where your SHELL is. It says NOTHING
+    about where a file-writing tool puts bytes. After any turn that creates
+    files, confirm the root checkout is still clean.
+  - A TOOL'S SUCCESS MESSAGE IS A CLAIM, NOT A FACT (F-13, the Architect's
+    own version of this): confirm a write by READING THE PATH BACK.
+
+SEALED_* NAMING (F-12): any store a VERDICT-SHAPED OBJECT is ever written
+through — even a throwaway one — is named `SEALED_*`. A verdict record
+carries `p_value` whatever the surrounding code prints, so the question is
+always WHAT HOLDS THE NUMBER, never what prints it. The filename must carry
+the warning so the next reader need not have read the finding.
 
 STOP AND ASK (do not improvise) when: the plan is silent or ambiguous; a
 re-derived constant disagrees with the reference; something would write to
