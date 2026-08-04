@@ -219,6 +219,19 @@ the repo, not what is planned.
 │   │   │                          pytest's own tmp_path; X6 hashes the
 │   │   │                          REAL window ledger before/after to
 │   │   │                          prove it untouched
+│   │   ├── test_s08_power_check.py  A-033 R1: power check at the REAL
+│   │   │                          block_length=200/alpha=0.025 against a
+│   │   │                          population shaped like the real one
+│   │   │                          (~170 jittered events, ~20,000-51,000
+│   │   │                          bars). SKIPPED BY DEFAULT (minutes of
+│   │   │                          real compute; run by hand). RESULT
+│   │   │                          RECORDED IN THE MODULE DOCSTRING: not
+│   │   │                          significant across three independent
+│   │   │                          constructions (uniform/10x-magnitude/
+│   │   │                          clustered) — a finding about the null
+│   │   │                          construction against a population-wide
+│   │   │                          effect, reported per instruction rather
+│   │   │                          than tuned away
 │   │   ├── detection/           (SDK types are exercised via the sweep
 │   │   │   └── __init__.py       detector's own tests; no separate suite yet)
 │   │   ├── null/                 S05: N1-N4
